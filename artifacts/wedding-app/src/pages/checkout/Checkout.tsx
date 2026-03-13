@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useParams } from "wouter";
 import { useListGifts, useCreateGiftOrder } from "@workspace/api-client-react";
+import type { GiftOrderInput } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,6 +32,35 @@ interface CheckoutState {
   installmentCount: number;
 }
 
+interface PaymentResultData {
+  success: boolean;
+  message: string;
+  pixQrCode?: string;
+  pixCopyPaste?: string;
+  bankSlipUrl?: string;
+  invoiceUrl?: string;
+}
+
+const INITIAL_STATE: CheckoutState = {
+  giftId: null,
+  giftName: "",
+  amount: 0,
+  step: "select",
+  guestName: "",
+  guestEmail: "",
+  guestCpf: "",
+  paymentMethod: "pix",
+  cardNumber: "",
+  cardName: "",
+  cardExpiry: "",
+  cardCvv: "",
+  cardHolderCpf: "",
+  cardHolderPhone: "",
+  cardHolderPostalCode: "",
+  cardHolderAddressNumber: "",
+  installmentCount: 1,
+};
+
 export default function Checkout() {
   const { weddingId } = useParams();
   const wid = Number(weddingId);
@@ -38,34 +68,8 @@ export default function Checkout() {
   const { data: gifts, isLoading } = useListGifts(wid);
   const createOrderMutation = useCreateGiftOrder();
 
-  const [state, setState] = useState<CheckoutState>({
-    giftId: null,
-    giftName: "",
-    amount: 0,
-    step: "select",
-    guestName: "",
-    guestEmail: "",
-    guestCpf: "",
-    paymentMethod: "pix",
-    cardNumber: "",
-    cardName: "",
-    cardExpiry: "",
-    cardCvv: "",
-    cardHolderCpf: "",
-    cardHolderPhone: "",
-    cardHolderPostalCode: "",
-    cardHolderAddressNumber: "",
-    installmentCount: 1,
-  });
-
-  const [result, setResult] = useState<{
-    success: boolean;
-    message: string;
-    pixQrCode?: string;
-    pixCopyPaste?: string;
-    bankSlipUrl?: string;
-    invoiceUrl?: string;
-  } | null>(null);
+  const [state, setState] = useState<CheckoutState>({ ...INITIAL_STATE });
+  const [result, setResult] = useState<PaymentResultData | null>(null);
   const [isOpen, setIsOpen] = useState(false);
 
   const selectGift = (gift: { id: number; name: string; price: number }) => {
@@ -113,45 +117,41 @@ export default function Checkout() {
     setState(prev => ({ ...prev, step: "payment" }));
 
     try {
-      const orderData: Record<string, unknown> = {
+      const [expMonth, expYear] = state.cardExpiry.split("/");
+
+      const orderData: GiftOrderInput = {
         giftId: state.giftId ?? 0,
         guestName: state.guestName,
-        guestEmail: state.guestEmail || undefined,
+        guestEmail: state.guestEmail || null,
+        guestCpf: state.guestCpf || null,
         amount: state.amount,
         paymentMethod: state.paymentMethod,
+        creditCardNumber: state.paymentMethod === "credit_card" ? state.cardNumber.replace(/\s/g, "") : null,
+        creditCardHolderName: state.paymentMethod === "credit_card" ? state.cardName : null,
+        creditCardExpiryMonth: state.paymentMethod === "credit_card" ? (expMonth || null) : null,
+        creditCardExpiryYear: state.paymentMethod === "credit_card" ? (expYear || null) : null,
+        creditCardCcv: state.paymentMethod === "credit_card" ? state.cardCvv : null,
+        creditCardHolderCpf: state.paymentMethod === "credit_card" ? state.cardHolderCpf : null,
+        creditCardHolderEmail: state.paymentMethod === "credit_card" ? (state.guestEmail || null) : null,
+        creditCardHolderPhone: state.paymentMethod === "credit_card" ? (state.cardHolderPhone || null) : null,
+        creditCardHolderPostalCode: state.paymentMethod === "credit_card" ? (state.cardHolderPostalCode || null) : null,
+        creditCardHolderAddressNumber: state.paymentMethod === "credit_card" ? (state.cardHolderAddressNumber || null) : null,
+        installmentCount: state.paymentMethod === "credit_card" && state.installmentCount > 1 ? state.installmentCount : null,
       };
-
-      if (state.paymentMethod === "credit_card") {
-        const [expMonth, expYear] = state.cardExpiry.split("/");
-        orderData.creditCardNumber = state.cardNumber.replace(/\s/g, "");
-        orderData.creditCardHolderName = state.cardName;
-        orderData.creditCardExpiryMonth = expMonth;
-        orderData.creditCardExpiryYear = expYear;
-        orderData.creditCardCcv = state.cardCvv;
-        orderData.creditCardHolderCpf = state.cardHolderCpf;
-        orderData.creditCardHolderEmail = state.guestEmail;
-        orderData.creditCardHolderPhone = state.cardHolderPhone;
-        orderData.creditCardHolderPostalCode = state.cardHolderPostalCode;
-        orderData.creditCardHolderAddressNumber = state.cardHolderAddressNumber;
-        if (state.installmentCount > 1) {
-          orderData.installmentCount = state.installmentCount;
-        }
-      }
 
       const orderResult = await createOrderMutation.mutateAsync({
         weddingId: wid,
-        data: orderData as unknown as Parameters<typeof createOrderMutation.mutateAsync>[0]["data"],
+        data: orderData,
       });
-      const r = orderResult as unknown as Record<string, unknown>;
       setResult({
         success: true,
         message: state.paymentMethod === "credit_card"
           ? "Pagamento com cartão processado com sucesso!"
           : "Pagamento criado com sucesso! Complete o pagamento abaixo.",
-        pixQrCode: r.pixQrCode as string | undefined,
-        pixCopyPaste: r.pixCopyPaste as string | undefined,
-        bankSlipUrl: r.bankSlipUrl as string | undefined,
-        invoiceUrl: r.invoiceUrl as string | undefined,
+        pixQrCode: orderResult.pixQrCode || undefined,
+        pixCopyPaste: orderResult.pixCopyPaste || undefined,
+        bankSlipUrl: orderResult.bankSlipUrl || undefined,
+        invoiceUrl: orderResult.invoiceUrl || undefined,
       });
       setState(prev => ({ ...prev, step: "result" }));
     } catch (e: unknown) {
@@ -164,25 +164,7 @@ export default function Checkout() {
   };
 
   const resetCheckout = () => {
-    setState({
-      giftId: null,
-      giftName: "",
-      amount: 0,
-      step: "select",
-      guestName: "",
-      guestEmail: "",
-      guestCpf: "",
-      paymentMethod: "pix",
-      cardNumber: "",
-      cardName: "",
-      cardExpiry: "",
-      cardCvv: "",
-      cardHolderCpf: "",
-      cardHolderPhone: "",
-      cardHolderPostalCode: "",
-      cardHolderAddressNumber: "",
-      installmentCount: 1,
-    });
+    setState({ ...INITIAL_STATE });
     setResult(null);
     setIsOpen(false);
   };

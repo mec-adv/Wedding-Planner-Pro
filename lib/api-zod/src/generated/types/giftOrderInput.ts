@@ -12,6 +12,30 @@ export interface GiftOrderInput {
   guestName: string;
   /** @nullable */
   guestEmail?: string | null;
+  /** @nullable */
+  guestCpf?: string | null;
   amount: number;
   paymentMethod: GiftOrderInputPaymentMethod;
+  /** @nullable */
+  creditCardNumber?: string | null;
+  /** @nullable */
+  creditCardHolderName?: string | null;
+  /** @nullable */
+  creditCardExpiryMonth?: string | null;
+  /** @nullable */
+  creditCardExpiryYear?: string | null;
+  /** @nullable */
+  creditCardCcv?: string | null;
+  /** @nullable */
+  creditCardHolderCpf?: string | null;
+  /** @nullable */
+  creditCardHolderEmail?: string | null;
+  /** @nullable */
+  creditCardHolderPhone?: string | null;
+  /** @nullable */
+  creditCardHolderPostalCode?: string | null;
+  /** @nullable */
+  creditCardHolderAddressNumber?: string | null;
+  /** @nullable */
+  installmentCount?: number | null;
 }

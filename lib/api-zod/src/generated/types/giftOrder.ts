@@ -22,5 +22,13 @@ export interface GiftOrder {
   asaasPaymentId?: string | null;
   /** @nullable */
   giftName?: string | null;
+  /** @nullable */
+  invoiceUrl?: string | null;
+  /** @nullable */
+  bankSlipUrl?: string | null;
+  /** @nullable */
+  pixQrCode?: string | null;
+  /** @nullable */
+  pixCopyPaste?: string | null;
   createdAt: Date;
 }

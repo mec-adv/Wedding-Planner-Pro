@@ -7,10 +7,13 @@ interface CreatePaymentParams {
   customerName: string;
   customerEmail?: string;
   customerCpf?: string;
-  creditCardToken?: string;
+  creditCardNumber?: string;
   creditCardHolderName?: string;
-  creditCardHolderEmail?: string;
+  creditCardExpiryMonth?: string;
+  creditCardExpiryYear?: string;
+  creditCardCcv?: string;
   creditCardHolderCpf?: string;
+  creditCardHolderEmail?: string;
   creditCardHolderPhone?: string;
   creditCardHolderPostalCode?: string;
   creditCardHolderAddressNumber?: string;
@@ -54,8 +57,8 @@ export async function createAsaasPayment(weddingId: number, params: CreatePaymen
     : params.paymentMethod === "boleto" ? "BOLETO"
     : "CREDIT_CARD";
 
-  if (billingType === "CREDIT_CARD" && !params.creditCardToken) {
-    throw new Error("Token do cartão é obrigatório para pagamento com cartão de crédito. Tokenize o cartão no frontend usando o SDK Asaas.");
+  if (billingType === "CREDIT_CARD" && !params.creditCardNumber) {
+    throw new Error("Dados do cartão de crédito são obrigatórios para pagamento com cartão.");
   }
 
   const dueDate = new Date();
@@ -89,11 +92,17 @@ export async function createAsaasPayment(weddingId: number, params: CreatePaymen
     description: `Presente de casamento - ${params.customerName}`,
   };
 
-  if (billingType === "CREDIT_CARD" && params.creditCardToken) {
-    paymentBody.creditCardToken = params.creditCardToken;
+  if (billingType === "CREDIT_CARD") {
+    paymentBody.creditCard = {
+      holderName: params.creditCardHolderName || params.customerName,
+      number: params.creditCardNumber,
+      expiryMonth: params.creditCardExpiryMonth,
+      expiryYear: params.creditCardExpiryYear,
+      ccv: params.creditCardCcv,
+    };
     paymentBody.creditCardHolderInfo = {
       name: params.creditCardHolderName || params.customerName,
-      email: params.creditCardHolderEmail || params.customerEmail,
+      email: params.creditCardHolderEmail || params.customerEmail || "",
       cpfCnpj: params.creditCardHolderCpf || params.customerCpf || "00000000000",
       phone: params.creditCardHolderPhone || "",
       postalCode: params.creditCardHolderPostalCode || "",
@@ -141,7 +150,7 @@ export async function createAsaasPayment(weddingId: number, params: CreatePaymen
         pixCopyPaste = pixData.payload;
       }
     } catch {
-      // PIX QR fetch failed but payment was created successfully
+      // PIX QR fetch failed but payment was created
     }
   }
 

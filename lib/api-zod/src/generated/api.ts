@@ -435,6 +435,10 @@ export const ListGiftOrdersResponseItem = zod.object({
   paymentStatus: zod.enum(["pending", "confirmed", "failed", "refunded"]),
   asaasPaymentId: zod.string().nullish(),
   giftName: zod.string().nullish(),
+  invoiceUrl: zod.string().nullish(),
+  bankSlipUrl: zod.string().nullish(),
+  pixQrCode: zod.string().nullish(),
+  pixCopyPaste: zod.string().nullish(),
   createdAt: zod.date(),
 });
 export const ListGiftOrdersResponse = zod.array(ListGiftOrdersResponseItem);
@@ -450,8 +454,20 @@ export const CreateGiftOrderBody = zod.object({
   giftId: zod.number(),
   guestName: zod.string(),
   guestEmail: zod.string().nullish(),
+  guestCpf: zod.string().nullish(),
   amount: zod.number(),
   paymentMethod: zod.enum(["pix", "boleto", "credit_card"]),
+  creditCardNumber: zod.string().nullish(),
+  creditCardHolderName: zod.string().nullish(),
+  creditCardExpiryMonth: zod.string().nullish(),
+  creditCardExpiryYear: zod.string().nullish(),
+  creditCardCcv: zod.string().nullish(),
+  creditCardHolderCpf: zod.string().nullish(),
+  creditCardHolderEmail: zod.string().nullish(),
+  creditCardHolderPhone: zod.string().nullish(),
+  creditCardHolderPostalCode: zod.string().nullish(),
+  creditCardHolderAddressNumber: zod.string().nullish(),
+  installmentCount: zod.number().nullish(),
 });
 
 /**

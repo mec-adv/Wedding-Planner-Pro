@@ -142,20 +142,23 @@ router.post("/weddings/:weddingId/gift-orders", async (req, res): Promise<void> 
   let paymentArtifacts: Record<string, unknown> = {};
   try {
     const { createAsaasPayment } = await import("../lib/asaas");
-    const bodyRaw = req.body as Record<string, unknown>;
     const payment = await createAsaasPayment(params.data.weddingId, {
       amount: parsed.data.amount,
       paymentMethod: parsed.data.paymentMethod,
       customerName: parsed.data.guestName,
       customerEmail: parsed.data.guestEmail || undefined,
-      creditCardToken: bodyRaw.creditCardToken as string | undefined,
-      creditCardHolderName: bodyRaw.creditCardHolderName as string | undefined,
-      creditCardHolderEmail: bodyRaw.creditCardHolderEmail as string | undefined,
-      creditCardHolderCpf: bodyRaw.creditCardHolderCpf as string | undefined,
-      creditCardHolderPhone: bodyRaw.creditCardHolderPhone as string | undefined,
-      creditCardHolderPostalCode: bodyRaw.creditCardHolderPostalCode as string | undefined,
-      creditCardHolderAddressNumber: bodyRaw.creditCardHolderAddressNumber as string | undefined,
-      installmentCount: bodyRaw.installmentCount as number | undefined,
+      customerCpf: parsed.data.guestCpf || undefined,
+      creditCardNumber: parsed.data.creditCardNumber || undefined,
+      creditCardHolderName: parsed.data.creditCardHolderName || undefined,
+      creditCardExpiryMonth: parsed.data.creditCardExpiryMonth || undefined,
+      creditCardExpiryYear: parsed.data.creditCardExpiryYear || undefined,
+      creditCardCcv: parsed.data.creditCardCcv || undefined,
+      creditCardHolderCpf: parsed.data.creditCardHolderCpf || undefined,
+      creditCardHolderEmail: parsed.data.creditCardHolderEmail || undefined,
+      creditCardHolderPhone: parsed.data.creditCardHolderPhone || undefined,
+      creditCardHolderPostalCode: parsed.data.creditCardHolderPostalCode || undefined,
+      creditCardHolderAddressNumber: parsed.data.creditCardHolderAddressNumber || undefined,
+      installmentCount: parsed.data.installmentCount || undefined,
     });
     asaasPaymentId = payment.id;
     paymentArtifacts = {

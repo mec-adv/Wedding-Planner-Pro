@@ -1905,6 +1905,14 @@ components:
           type: ["string", "null"]
         giftName:
           type: ["string", "null"]
+        invoiceUrl:
+          type: ["string", "null"]
+        bankSlipUrl:
+          type: ["string", "null"]
+        pixQrCode:
+          type: ["string", "null"]
+        pixCopyPaste:
+          type: ["string", "null"]
         createdAt:
           type: string
           format: date-time
@@ -1927,11 +1935,35 @@ components:
           type: string
         guestEmail:
           type: ["string", "null"]
+        guestCpf:
+          type: ["string", "null"]
         amount:
           type: number
         paymentMethod:
           type: string
           enum: [pix, boleto, credit_card]
+        creditCardNumber:
+          type: ["string", "null"]
+        creditCardHolderName:
+          type: ["string", "null"]
+        creditCardExpiryMonth:
+          type: ["string", "null"]
+        creditCardExpiryYear:
+          type: ["string", "null"]
+        creditCardCcv:
+          type: ["string", "null"]
+        creditCardHolderCpf:
+          type: ["string", "null"]
+        creditCardHolderEmail:
+          type: ["string", "null"]
+        creditCardHolderPhone:
+          type: ["string", "null"]
+        creditCardHolderPostalCode:
+          type: ["string", "null"]
+        creditCardHolderAddressNumber:
+          type: ["string", "null"]
+        installmentCount:
+          type: ["integer", "null"]
       required:
         - giftId
         - guestName

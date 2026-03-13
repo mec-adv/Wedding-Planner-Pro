@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
-import { eq, and, isNull, sql } from "drizzle-orm";
-import { db, guestsTable, weddingsTable, messageTemplatesTable, integrationSettingsTable } from "@workspace/db";
+import { eq, and, sql } from "drizzle-orm";
+import { db, guestsTable, integrationSettingsTable } from "@workspace/db";
 import { authMiddleware, requireWeddingRole } from "../lib/auth";
 
 const router: IRouter = Router();
@@ -55,6 +55,7 @@ router.post("/weddings/:weddingId/reminders/start", authMiddleware, requireWeddi
         const timeout = activeReminders.get(weddingId);
         if (timeout) clearInterval(timeout);
         activeReminders.delete(weddingId);
+        console.log(`[reminders] Wedding ${weddingId}: no pending guests, auto-stopped`);
         return;
       }
 
@@ -63,9 +64,11 @@ router.post("/weddings/:weddingId/reminders/start", authMiddleware, requireWeddi
       const settingsRow = settings[0];
 
       if (!settingsRow?.evolutionApiUrl || !settingsRow?.evolutionApiKey || !settingsRow?.evolutionInstance) {
+        console.warn(`[reminders] Wedding ${weddingId}: WhatsApp not configured, skipping`);
         return;
       }
 
+      let sentCount = 0;
       for (const guest of pendingGuests) {
         if (!guest.phone) continue;
 
@@ -79,13 +82,17 @@ router.post("/weddings/:weddingId/reminders/start", authMiddleware, requireWeddi
             },
             body: JSON.stringify({
               number: phone,
-              text: `Olá ${guest.name}! 🎉 Ainda não recebemos sua confirmação de presença. Por favor, confirme sua participação no casamento. Obrigado!`,
+              text: `Olá ${guest.name}! Ainda não recebemos sua confirmação de presença. Por favor, confirme sua participação no casamento. Obrigado!`,
             }),
           });
-        } catch {
+          sentCount++;
+        } catch (e: unknown) {
+          console.error(`[reminders] Wedding ${weddingId}: failed to send to ${guest.name}:`, e instanceof Error ? e.message : String(e));
         }
       }
-    } catch {
+      console.log(`[reminders] Wedding ${weddingId}: sent ${sentCount}/${pendingGuests.length} reminders`);
+    } catch (e: unknown) {
+      console.error(`[reminders] Wedding ${weddingId}: batch send failed:`, e instanceof Error ? e.message : String(e));
     }
   };
 
@@ -112,6 +119,7 @@ router.post("/weddings/:weddingId/reminders/stop", authMiddleware, requireWeddin
   if (timeout) {
     clearInterval(timeout);
     activeReminders.delete(weddingId);
+    console.log(`[reminders] Wedding ${weddingId}: reminders stopped`);
   }
 
   res.json({ active: false, message: "Lembretes automáticos desativados" });
@@ -131,7 +139,7 @@ router.post("/weddings/:weddingId/reminders/send-now", authMiddleware, requireWe
     ));
 
   if (pendingGuests.length === 0) {
-    res.json({ sent: 0, message: "Nenhum convidado pendente" });
+    res.json({ sent: 0, total: 0, message: "Nenhum convidado pendente" });
     return;
   }
 
@@ -145,6 +153,7 @@ router.post("/weddings/:weddingId/reminders/send-now", authMiddleware, requireWe
   }
 
   let sent = 0;
+  const errors: string[] = [];
   for (const guest of pendingGuests) {
     if (!guest.phone) continue;
     try {
@@ -157,11 +166,14 @@ router.post("/weddings/:weddingId/reminders/send-now", authMiddleware, requireWe
         },
         body: JSON.stringify({
           number: phone,
-          text: `Olá ${guest.name}! 🎉 Ainda não recebemos sua confirmação de presença. Por favor, confirme sua participação no casamento. Obrigado!`,
+          text: `Olá ${guest.name}! Ainda não recebemos sua confirmação de presença. Por favor, confirme sua participação no casamento. Obrigado!`,
         }),
       });
       sent++;
-    } catch {
+    } catch (e: unknown) {
+      const errMsg = e instanceof Error ? e.message : String(e);
+      errors.push(`${guest.name}: ${errMsg}`);
+      console.error(`[reminders] Wedding ${weddingId}: failed to send to ${guest.name}:`, errMsg);
     }
   }
 

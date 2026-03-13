@@ -37,6 +37,7 @@ router.post("/weddings/:weddingId/messages", async (req, res): Promise<void> => 
     senderName: parsed.data.senderName || "Anônimo",
     content: parsed.data.content || "",
     messageType: parsed.data.messageType,
+    mediaUrl: parsed.data.mediaUrl ?? null,
     weddingId: params.data.weddingId,
   }).returning();
   res.status(201).json({ ...message, createdAt: message.createdAt.toISOString() });

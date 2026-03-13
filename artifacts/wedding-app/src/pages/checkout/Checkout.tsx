@@ -38,7 +38,14 @@ export default function Checkout() {
     paymentMethod: "pix",
   });
 
-  const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [result, setResult] = useState<{
+    success: boolean;
+    message: string;
+    pixQrCode?: string;
+    pixCopyPaste?: string;
+    bankSlipUrl?: string;
+    invoiceUrl?: string;
+  } | null>(null);
   const [isOpen, setIsOpen] = useState(false);
 
   const selectGift = (gift: { id: number; name: string; price: number }) => {
@@ -65,7 +72,7 @@ export default function Checkout() {
     setState({ ...state, step: "payment" });
 
     try {
-      await createOrderMutation.mutateAsync({
+      const orderResult = await createOrderMutation.mutateAsync({
         weddingId: wid,
         data: {
           giftId: state.giftId ?? 0,
@@ -75,7 +82,15 @@ export default function Checkout() {
           paymentMethod: state.paymentMethod,
         },
       });
-      setResult({ success: true, message: "Pagamento processado com sucesso! Obrigado pelo presente." });
+      const r = orderResult as unknown as Record<string, unknown>;
+      setResult({
+        success: true,
+        message: "Pagamento criado com sucesso! Complete o pagamento abaixo.",
+        pixQrCode: r.pixQrCode as string | undefined,
+        pixCopyPaste: r.pixCopyPaste as string | undefined,
+        bankSlipUrl: r.bankSlipUrl as string | undefined,
+        invoiceUrl: r.invoiceUrl as string | undefined,
+      });
       setState({ ...state, step: "result" });
     } catch (e: unknown) {
       setResult({
@@ -233,16 +248,66 @@ export default function Checkout() {
           )}
 
           {state.step === "result" && result && (
-            <div className="py-6 text-center space-y-4">
-              {result.success ? (
-                <CheckCircle className="w-16 h-16 text-green-500 mx-auto" />
-              ) : (
-                <AlertCircle className="w-16 h-16 text-destructive mx-auto" />
+            <div className="py-4 space-y-4">
+              <div className="text-center">
+                {result.success ? (
+                  <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-2" />
+                ) : (
+                  <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-2" />
+                )}
+                <p className={result.success ? "text-foreground font-medium" : "text-destructive"}>
+                  {result.message}
+                </p>
+              </div>
+
+              {result.pixQrCode && (
+                <div className="text-center space-y-3 bg-muted/30 rounded-lg p-4">
+                  <p className="text-sm font-medium">Escaneie o QR Code PIX:</p>
+                  <img
+                    src={`data:image/png;base64,${result.pixQrCode}`}
+                    alt="QR Code PIX"
+                    className="w-48 h-48 mx-auto border rounded-lg"
+                  />
+                  {result.pixCopyPaste && (
+                    <div className="space-y-1">
+                      <p className="text-xs text-muted-foreground">Ou copie o código:</p>
+                      <div className="flex gap-2">
+                        <Input value={result.pixCopyPaste} readOnly className="text-xs" />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => { navigator.clipboard.writeText(result.pixCopyPaste || ""); toast({ title: "Código copiado!" }); }}
+                        >
+                          Copiar
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               )}
-              <p className={result.success ? "text-foreground" : "text-destructive"}>
-                {result.message}
-              </p>
-              <Button onClick={resetCheckout} variant={result.success ? "default" : "outline"}>
+
+              {result.bankSlipUrl && (
+                <div className="text-center bg-muted/30 rounded-lg p-4">
+                  <p className="text-sm font-medium mb-2">Boleto gerado:</p>
+                  <Button asChild variant="outline">
+                    <a href={result.bankSlipUrl} target="_blank" rel="noopener noreferrer">
+                      <FileText className="w-4 h-4 mr-2" /> Visualizar Boleto
+                    </a>
+                  </Button>
+                </div>
+              )}
+
+              {result.invoiceUrl && !result.bankSlipUrl && !result.pixQrCode && (
+                <div className="text-center bg-muted/30 rounded-lg p-4">
+                  <Button asChild variant="outline">
+                    <a href={result.invoiceUrl} target="_blank" rel="noopener noreferrer">
+                      Ver Fatura
+                    </a>
+                  </Button>
+                </div>
+              )}
+
+              <Button onClick={resetCheckout} variant={result.success ? "default" : "outline"} className="w-full">
                 {result.success ? "Voltar à Lista" : "Tentar Novamente"}
               </Button>
             </div>

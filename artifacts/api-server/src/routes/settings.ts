@@ -12,6 +12,11 @@ import { authMiddleware, requireWeddingRole } from "../lib/auth";
 
 const router: IRouter = Router();
 
+function maskSecret(value: string | null): string | null {
+  if (!value || value.length < 8) return value ? "••••" : null;
+  return value.substring(0, 4) + "•".repeat(Math.min(value.length - 4, 20));
+}
+
 router.get("/weddings/:weddingId/settings", authMiddleware, requireWeddingRole("planner", "admin"), async (req, res): Promise<void> => {
   const params = GetIntegrationSettingsParams.safeParse(req.params);
   if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
@@ -25,7 +30,12 @@ router.get("/weddings/:weddingId/settings", authMiddleware, requireWeddingRole("
     }).returning();
   }
 
-  res.json(settings);
+  res.json({
+    ...settings,
+    asaasApiKey: maskSecret(settings.asaasApiKey),
+    evolutionApiKey: maskSecret(settings.evolutionApiKey),
+    asaasWebhookToken: maskSecret(settings.asaasWebhookToken),
+  });
 });
 
 router.put("/weddings/:weddingId/settings", authMiddleware, requireWeddingRole("planner", "admin"), async (req, res): Promise<void> => {
@@ -37,18 +47,32 @@ router.put("/weddings/:weddingId/settings", authMiddleware, requireWeddingRole("
   const existing = await db.select().from(integrationSettingsTable)
     .where(eq(integrationSettingsTable.weddingId, params.data.weddingId));
 
+  const updateData: Record<string, unknown> = { ...parsed.data };
+  const secretFields = ["asaasApiKey", "evolutionApiKey", "asaasWebhookToken"] as const;
+  for (const field of secretFields) {
+    const val = updateData[field];
+    if (typeof val === "string" && val.includes("••")) {
+      delete updateData[field];
+    }
+  }
+
   let settings;
   if (existing.length === 0) {
     [settings] = await db.insert(integrationSettingsTable).values({
-      ...parsed.data,
+      ...updateData,
       weddingId: params.data.weddingId,
-    }).returning();
+    } as typeof integrationSettingsTable.$inferInsert).returning();
   } else {
-    [settings] = await db.update(integrationSettingsTable).set(parsed.data)
+    [settings] = await db.update(integrationSettingsTable).set(updateData)
       .where(eq(integrationSettingsTable.weddingId, params.data.weddingId)).returning();
   }
 
-  res.json(settings);
+  res.json({
+    ...settings,
+    asaasApiKey: maskSecret(settings.asaasApiKey),
+    evolutionApiKey: maskSecret(settings.evolutionApiKey),
+    asaasWebhookToken: maskSecret(settings.asaasWebhookToken),
+  });
 });
 
 router.post("/weddings/:weddingId/settings/test-whatsapp", authMiddleware, requireWeddingRole("planner", "admin"), async (req, res): Promise<void> => {

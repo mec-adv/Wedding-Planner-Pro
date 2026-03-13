@@ -139,6 +139,7 @@ router.post("/weddings/:weddingId/gift-orders", async (req, res): Promise<void> 
 
   let asaasPaymentId: string | null = null;
   let paymentStatus = "pending";
+  let paymentArtifacts: Record<string, unknown> = {};
   try {
     const { createAsaasPayment } = await import("../lib/asaas");
     const payment = await createAsaasPayment(params.data.weddingId, {
@@ -148,6 +149,13 @@ router.post("/weddings/:weddingId/gift-orders", async (req, res): Promise<void> 
       customerEmail: parsed.data.guestEmail || undefined,
     });
     asaasPaymentId = payment.id;
+    paymentArtifacts = {
+      invoiceUrl: payment.invoiceUrl,
+      bankSlipUrl: payment.bankSlipUrl,
+      pixQrCode: payment.pixQrCode,
+      pixCopyPaste: payment.pixCopyPaste,
+      paymentStatus: payment.status,
+    };
   } catch (e: unknown) {
     const { getAsaasConfig } = await import("../lib/asaas");
     const config = await getAsaasConfig(params.data.weddingId);
@@ -171,6 +179,7 @@ router.post("/weddings/:weddingId/gift-orders", async (req, res): Promise<void> 
     amount: Number(order.amount),
     giftName: null,
     createdAt: order.createdAt.toISOString(),
+    ...paymentArtifacts,
   });
 });
 

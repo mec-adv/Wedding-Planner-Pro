@@ -6,6 +6,17 @@ interface CreatePaymentParams {
   paymentMethod: string;
   customerName: string;
   customerEmail?: string;
+  customerCpf?: string;
+}
+
+interface PaymentResult {
+  id: string;
+  status: string;
+  billingType: string;
+  invoiceUrl: string | null;
+  bankSlipUrl: string | null;
+  pixQrCode: string | null;
+  pixCopyPaste: string | null;
 }
 
 export async function getAsaasConfig(weddingId: number) {
@@ -15,7 +26,13 @@ export async function getAsaasConfig(weddingId: number) {
   return settings;
 }
 
-export async function createAsaasPayment(weddingId: number, params: CreatePaymentParams): Promise<{ id: string }> {
+function getAsaasBaseUrl(environment: string | null): string {
+  return environment === "production"
+    ? "https://api.asaas.com/v3"
+    : "https://sandbox.asaas.com/api/v3";
+}
+
+export async function createAsaasPayment(weddingId: number, params: CreatePaymentParams): Promise<PaymentResult> {
   const [settings] = await db.select().from(integrationSettingsTable)
     .where(eq(integrationSettingsTable.weddingId, weddingId));
 
@@ -23,13 +40,15 @@ export async function createAsaasPayment(weddingId: number, params: CreatePaymen
     throw new Error("Asaas não configurado para este casamento");
   }
 
-  const baseUrl = settings.asaasEnvironment === "production"
-    ? "https://api.asaas.com/v3"
-    : "https://sandbox.asaas.com/api/v3";
+  const baseUrl = getAsaasBaseUrl(settings.asaasEnvironment);
 
   const billingType = params.paymentMethod === "pix" ? "PIX"
     : params.paymentMethod === "boleto" ? "BOLETO"
     : "CREDIT_CARD";
+
+  if (billingType === "CREDIT_CARD") {
+    throw new Error("Pagamento por cartão de crédito requer integração frontend com tokenização Asaas. Use PIX ou Boleto.");
+  }
 
   const dueDate = new Date();
   dueDate.setDate(dueDate.getDate() + 3);
@@ -43,17 +62,16 @@ export async function createAsaasPayment(weddingId: number, params: CreatePaymen
     body: JSON.stringify({
       name: params.customerName,
       email: params.customerEmail,
-      cpfCnpj: "00000000000",
+      cpfCnpj: params.customerCpf || "00000000000",
     }),
   });
 
-  let customerId: string;
-  if (customerResponse.ok) {
-    const customerData = await customerResponse.json() as { id: string };
-    customerId = customerData.id;
-  } else {
-    throw new Error("Falha ao criar cliente no Asaas");
+  if (!customerResponse.ok) {
+    const errText = await customerResponse.text();
+    throw new Error(`Falha ao criar cliente no Asaas: ${errText}`);
   }
+
+  const customerData = await customerResponse.json() as { id: string };
 
   const paymentResponse = await fetch(`${baseUrl}/payments`, {
     method: "POST",
@@ -62,7 +80,7 @@ export async function createAsaasPayment(weddingId: number, params: CreatePaymen
       access_token: settings.asaasApiKey,
     },
     body: JSON.stringify({
-      customer: customerId,
+      customer: customerData.id,
       billingType,
       value: params.amount,
       dueDate: dueDate.toISOString().split("T")[0],
@@ -75,6 +93,39 @@ export async function createAsaasPayment(weddingId: number, params: CreatePaymen
     throw new Error(`Falha ao criar cobrança: ${error}`);
   }
 
-  const paymentData = await paymentResponse.json() as { id: string };
-  return { id: paymentData.id };
+  const paymentData = await paymentResponse.json() as {
+    id: string;
+    status: string;
+    billingType: string;
+    invoiceUrl: string | null;
+    bankSlipUrl: string | null;
+  };
+
+  let pixQrCode: string | null = null;
+  let pixCopyPaste: string | null = null;
+
+  if (billingType === "PIX") {
+    try {
+      const pixResponse = await fetch(`${baseUrl}/payments/${paymentData.id}/pixQrCode`, {
+        headers: { access_token: settings.asaasApiKey },
+      });
+      if (pixResponse.ok) {
+        const pixData = await pixResponse.json() as { encodedImage: string; payload: string };
+        pixQrCode = pixData.encodedImage;
+        pixCopyPaste = pixData.payload;
+      }
+    } catch {
+      // PIX QR fetch failed but payment was created successfully
+    }
+  }
+
+  return {
+    id: paymentData.id,
+    status: paymentData.status,
+    billingType: paymentData.billingType,
+    invoiceUrl: paymentData.invoiceUrl,
+    bankSlipUrl: paymentData.bankSlipUrl,
+    pixQrCode,
+    pixCopyPaste,
+  };
 }

@@ -95,6 +95,14 @@ router.post("/invitations/accept", authMiddleware, async (req, res): Promise<voi
 
 router.delete("/weddings/:weddingId/invitations/:id", authMiddleware, verifyWeddingAccess, requireWeddingRole("planner", "admin"), async (req, res): Promise<void> => {
   const id = Number(req.params.id);
+  const weddingId = Number(req.params.weddingId);
+  const [invitation] = await db.select().from(invitationsTable).where(
+    and(eq(invitationsTable.id, id), eq(invitationsTable.weddingId, weddingId))
+  );
+  if (!invitation) {
+    res.status(404).json({ error: "Convite não encontrado" });
+    return;
+  }
   await db.delete(invitationsTable).where(eq(invitationsTable.id, id));
   res.sendStatus(204);
 });
@@ -123,6 +131,14 @@ router.get("/weddings/:weddingId/profiles", authMiddleware, verifyWeddingAccess,
 
 router.delete("/weddings/:weddingId/profiles/:id", authMiddleware, verifyWeddingAccess, requireWeddingRole("planner", "admin"), async (req, res): Promise<void> => {
   const id = Number(req.params.id);
+  const weddingId = Number(req.params.weddingId);
+  const [profile] = await db.select().from(profilesTable).where(
+    and(eq(profilesTable.id, id), eq(profilesTable.weddingId, weddingId))
+  );
+  if (!profile) {
+    res.status(404).json({ error: "Perfil não encontrado" });
+    return;
+  }
   await db.delete(profilesTable).where(eq(profilesTable.id, id));
   res.sendStatus(204);
 });

@@ -240,9 +240,22 @@ router.post("/weddings/:weddingId/guests/:id/send-invite", authMiddleware, async
     } catch (e: unknown) {
       res.json({ success: false, message: `Erro ao enviar WhatsApp: ${e instanceof Error ? e.message : String(e)}` });
     }
+  } else if (parsed.data.channel === "email") {
+    if (!guest.email) {
+      res.json({ success: false, message: "Convidado não tem email cadastrado" });
+      return;
+    }
+
+    try {
+      const { sendEmailInvite } = await import("../lib/email");
+      await sendEmailInvite(params.data.weddingId, guest.email, guest.name);
+      await db.update(guestsTable).set({ inviteSentAt: new Date() }).where(eq(guestsTable.id, guest.id));
+      res.json({ success: true, message: "Convite enviado por email" });
+    } catch (e: unknown) {
+      res.json({ success: false, message: `Erro ao enviar email: ${e instanceof Error ? e.message : String(e)}` });
+    }
   } else {
-    await db.update(guestsTable).set({ inviteSentAt: new Date() }).where(eq(guestsTable.id, guest.id));
-    res.json({ success: true, message: "Convite marcado como enviado por email" });
+    res.status(400).json({ error: "Canal de envio inválido. Use 'whatsapp' ou 'email'" });
   }
 });
 

@@ -71,6 +71,12 @@ router.post("/invitations/accept", authMiddleware, async (req, res): Promise<voi
     return;
   }
 
+  const [currentUser] = await db.select().from(usersTable).where(eq(usersTable.id, authReq.userId));
+  if (!currentUser || currentUser.email.toLowerCase() !== invitation.email.toLowerCase()) {
+    res.status(403).json({ error: "Este convite foi enviado para outro email. Faça login com o email correto." });
+    return;
+  }
+
   const [existingProfile] = await db.select().from(profilesTable).where(
     and(
       eq(profilesTable.userId, authReq.userId),

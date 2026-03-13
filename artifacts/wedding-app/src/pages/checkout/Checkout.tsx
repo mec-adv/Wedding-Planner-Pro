@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Gift, CreditCard, QrCode, FileText, CheckCircle, AlertCircle } from "lucide-react";
+import { Gift, QrCode, FileText, CheckCircle, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 type PaymentMethod = "pix" | "boleto" | "credit_card";
@@ -118,7 +118,6 @@ export default function Checkout() {
   const paymentMethods: { id: PaymentMethod; label: string; icon: React.ReactNode; description: string }[] = [
     { id: "pix", label: "PIX", icon: <QrCode className="w-5 h-5" />, description: "Pagamento instantâneo" },
     { id: "boleto", label: "Boleto", icon: <FileText className="w-5 h-5" />, description: "Vencimento em 3 dias" },
-    { id: "credit_card", label: "Cartão de Crédito", icon: <CreditCard className="w-5 h-5" />, description: "Até 12x" },
   ];
 
   return (

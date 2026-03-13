@@ -180,7 +180,10 @@ router.post("/weddings/:weddingId/gift-orders", async (req, res): Promise<void> 
   }
 
   const [order] = await db.insert(giftOrdersTable).values({
-    ...parsed.data,
+    giftId: parsed.data.giftId,
+    guestName: parsed.data.guestName,
+    guestEmail: parsed.data.guestEmail ?? null,
+    paymentMethod: parsed.data.paymentMethod,
     amount: String(parsed.data.amount),
     weddingId: params.data.weddingId,
     asaasPaymentId,

@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { useParams } from "wouter";
-import { useListGuests, useCreateGuest, useUpdateGuestRsvp, useDeleteGuest } from "@workspace/api-client-react";
+import { useListGuests, useCreateGuest, useUpdateGuestRsvp, useDeleteGuest, useSendGuestInvite } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Search, Plus, Mail, MessageCircle, Trash2, CheckCircle2, XCircle, HelpCircle } from "lucide-react";
+import { Search, Plus, Mail, MessageCircle, Trash2, CheckCircle2, XCircle, Send } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 
@@ -36,6 +36,7 @@ export default function Guests() {
   const createMutation = useCreateGuest();
   const updateRsvpMutation = useUpdateGuestRsvp();
   const deleteMutation = useDeleteGuest();
+  const sendInviteMutation = useSendGuestInvite();
 
   const handleCreate = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -55,7 +56,7 @@ export default function Guests() {
       queryClient.invalidateQueries({ queryKey: [`/api/weddings/${wid}/guests`] });
       setIsOpen(false);
       toast({ title: "Convidado adicionado" });
-    } catch (err) {
+    } catch {
       toast({ variant: "destructive", title: "Erro ao adicionar" });
     }
   };
@@ -68,7 +69,7 @@ export default function Guests() {
         data: { rsvpStatus: status }
       });
       queryClient.invalidateQueries({ queryKey: [`/api/weddings/${wid}/guests`] });
-    } catch (err) {
+    } catch {
       toast({ variant: "destructive", title: "Erro ao atualizar RSVP" });
     }
   };
@@ -78,10 +79,33 @@ export default function Guests() {
     try {
       await deleteMutation.mutateAsync({ weddingId: wid, id });
       queryClient.invalidateQueries({ queryKey: [`/api/weddings/${wid}/guests`] });
-    } catch (err) {
+    } catch {
       toast({ variant: "destructive", title: "Erro ao remover" });
     }
   };
+
+  const handleSendInvite = async (guestId: number, channel: "email" | "whatsapp") => {
+    try {
+      const result = await sendInviteMutation.mutateAsync({
+        weddingId: wid,
+        id: guestId,
+        data: { channel },
+      });
+      const r = result as { success: boolean; message: string };
+      if (r.success) {
+        toast({ title: r.message });
+        queryClient.invalidateQueries({ queryKey: [`/api/weddings/${wid}/guests`] });
+      } else {
+        toast({ variant: "destructive", title: r.message });
+      }
+    } catch {
+      toast({ variant: "destructive", title: "Erro ao enviar convite" });
+    }
+  };
+
+  const confirmed = guests?.filter(g => g.rsvpStatus === "confirmed").length || 0;
+  const pending = guests?.filter(g => g.rsvpStatus === "pending").length || 0;
+  const total = guests?.length || 0;
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -129,6 +153,29 @@ export default function Guests() {
         </Dialog>
       </div>
 
+      {total > 0 && (
+        <div className="grid grid-cols-3 gap-4">
+          <Card>
+            <CardContent className="p-4 text-center">
+              <p className="text-2xl font-bold text-foreground">{total}</p>
+              <p className="text-xs text-muted-foreground">Total</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4 text-center">
+              <p className="text-2xl font-bold text-green-600">{confirmed}</p>
+              <p className="text-xs text-muted-foreground">Confirmados</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4 text-center">
+              <p className="text-2xl font-bold text-amber-600">{pending}</p>
+              <p className="text-xs text-muted-foreground">Pendentes</p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       <Card>
         <CardHeader className="pb-3 flex flex-row items-center justify-between border-b border-border/50">
           <div className="relative w-full max-w-sm">
@@ -173,7 +220,31 @@ export default function Guests() {
                     <Badge variant={RSVP_COLORS[guest.rsvpStatus]}>{RSVP_LABELS[guest.rsvpStatus]}</Badge>
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end gap-2">
+                    <div className="flex items-center justify-end gap-1">
+                      {guest.email && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleSendInvite(guest.id, "email")}
+                          title="Enviar convite por email"
+                          disabled={sendInviteMutation.isPending}
+                          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                        >
+                          <Mail className="w-4 h-4" />
+                        </Button>
+                      )}
+                      {guest.phone && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleSendInvite(guest.id, "whatsapp")}
+                          title="Enviar convite por WhatsApp"
+                          disabled={sendInviteMutation.isPending}
+                          className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                        >
+                          <Send className="w-4 h-4" />
+                        </Button>
+                      )}
                       <Button variant="ghost" size="icon" onClick={() => handleRsvp(guest.id, 'confirmed')} title="Confirmar" className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50">
                         <CheckCircle2 className="w-4 h-4" />
                       </Button>

@@ -13,7 +13,7 @@ import {
   CreateGiftOrderBody,
   GetGiftOrdersSummaryParams,
 } from "@workspace/api-zod";
-import { authMiddleware } from "../lib/auth";
+import { authMiddleware, requireWeddingRole } from "../lib/auth";
 
 const router: IRouter = Router();
 
@@ -32,7 +32,7 @@ router.get("/weddings/:weddingId/gifts", async (req, res): Promise<void> => {
   })));
 });
 
-router.post("/weddings/:weddingId/gifts", authMiddleware, async (req, res): Promise<void> => {
+router.post("/weddings/:weddingId/gifts", authMiddleware, requireWeddingRole("planner", "coordinator"), async (req, res): Promise<void> => {
   const params = CreateGiftParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
@@ -61,7 +61,7 @@ router.post("/weddings/:weddingId/gifts", authMiddleware, async (req, res): Prom
   });
 });
 
-router.patch("/weddings/:weddingId/gifts/:id", authMiddleware, async (req, res): Promise<void> => {
+router.patch("/weddings/:weddingId/gifts/:id", authMiddleware, requireWeddingRole("planner", "coordinator"), async (req, res): Promise<void> => {
   const params = UpdateGiftParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
@@ -91,7 +91,7 @@ router.patch("/weddings/:weddingId/gifts/:id", authMiddleware, async (req, res):
   });
 });
 
-router.delete("/weddings/:weddingId/gifts/:id", authMiddleware, async (req, res): Promise<void> => {
+router.delete("/weddings/:weddingId/gifts/:id", authMiddleware, requireWeddingRole("planner"), async (req, res): Promise<void> => {
   const params = DeleteGiftParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });

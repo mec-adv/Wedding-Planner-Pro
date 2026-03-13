@@ -8,11 +8,11 @@ import {
   TestWhatsappConnectionParams,
   TestAsaasConnectionParams,
 } from "@workspace/api-zod";
-import { authMiddleware } from "../lib/auth";
+import { authMiddleware, requireRole } from "../lib/auth";
 
 const router: IRouter = Router();
 
-router.get("/weddings/:weddingId/settings", authMiddleware, async (req, res): Promise<void> => {
+router.get("/weddings/:weddingId/settings", authMiddleware, requireRole("admin", "planner"), async (req, res): Promise<void> => {
   const params = GetIntegrationSettingsParams.safeParse(req.params);
   if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
 
@@ -28,7 +28,7 @@ router.get("/weddings/:weddingId/settings", authMiddleware, async (req, res): Pr
   res.json(settings);
 });
 
-router.put("/weddings/:weddingId/settings", authMiddleware, async (req, res): Promise<void> => {
+router.put("/weddings/:weddingId/settings", authMiddleware, requireRole("admin", "planner"), async (req, res): Promise<void> => {
   const params = UpdateIntegrationSettingsParams.safeParse(req.params);
   if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
   const parsed = UpdateIntegrationSettingsBody.safeParse(req.body);
@@ -51,7 +51,7 @@ router.put("/weddings/:weddingId/settings", authMiddleware, async (req, res): Pr
   res.json(settings);
 });
 
-router.post("/weddings/:weddingId/settings/test-whatsapp", authMiddleware, async (req, res): Promise<void> => {
+router.post("/weddings/:weddingId/settings/test-whatsapp", authMiddleware, requireRole("admin", "planner"), async (req, res): Promise<void> => {
   const params = TestWhatsappConnectionParams.safeParse(req.params);
   if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
 
@@ -74,12 +74,12 @@ router.post("/weddings/:weddingId/settings/test-whatsapp", authMiddleware, async
     } else {
       res.json({ success: false, message: `Erro na conexão: ${response.statusText}` });
     }
-  } catch (e: any) {
-    res.json({ success: false, message: `Erro: ${e.message}` });
+  } catch (e: unknown) {
+    res.json({ success: false, message: `Erro: ${e instanceof Error ? e.message : String(e)}` });
   }
 });
 
-router.post("/weddings/:weddingId/settings/test-asaas", authMiddleware, async (req, res): Promise<void> => {
+router.post("/weddings/:weddingId/settings/test-asaas", authMiddleware, requireRole("admin", "planner"), async (req, res): Promise<void> => {
   const params = TestAsaasConnectionParams.safeParse(req.params);
   if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
 
@@ -102,12 +102,12 @@ router.post("/weddings/:weddingId/settings/test-asaas", authMiddleware, async (r
 
     if (response.ok) {
       const data = await response.json() as Record<string, unknown>;
-      res.json({ success: true, message: `Conectado! Saldo: R$ ${(data as any).balance || 0}` });
+      res.json({ success: true, message: `Conectado! Saldo: R$ ${data.balance ?? 0}` });
     } else {
       res.json({ success: false, message: `Erro na conexão: ${response.statusText}` });
     }
-  } catch (e: any) {
-    res.json({ success: false, message: `Erro: ${e.message}` });
+  } catch (e: unknown) {
+    res.json({ success: false, message: `Erro: ${e instanceof Error ? e.message : String(e)}` });
   }
 });
 

@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { db, giftsTable, giftOrdersTable } from "@workspace/db";
 import {
   ListGiftsParams,
@@ -74,7 +74,7 @@ router.patch("/weddings/:weddingId/gifts/:id", authMiddleware, async (req, res):
     return;
   }
 
-  const updateData: any = { ...parsed.data };
+  const updateData: Record<string, unknown> = { ...parsed.data };
   if (updateData.price !== undefined) updateData.price = String(updateData.price);
 
   const [gift] = await db.update(giftsTable).set(updateData)
@@ -148,7 +148,7 @@ router.post("/weddings/:weddingId/gift-orders", async (req, res): Promise<void> 
     });
     asaasPaymentId = payment.id;
   } catch {
-    // Continue without Asaas if not configured
+    // Asaas not configured or payment creation failed
   }
 
   const [order] = await db.insert(giftOrdersTable).values({

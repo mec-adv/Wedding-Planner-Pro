@@ -4,6 +4,13 @@ import { eq } from "drizzle-orm";
 import { db, weddingsTable } from "@workspace/db";
 import type { Request, Response, NextFunction } from "express";
 
+export type UserRole = "admin" | "planner" | "coordinator" | "couple" | "guest";
+
+export interface AuthRequest extends Request {
+  userId: number;
+  userRole: UserRole;
+}
+
 function getJwtSecret(): string {
   const secret = process.env.JWT_SECRET;
   if (!secret && process.env.NODE_ENV === "production") {
@@ -38,18 +45,19 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction):
   try {
     const token = authHeader.split(" ")[1];
     const decoded = verifyToken(token);
-    (req as any).userId = decoded.userId;
-    (req as any).userRole = decoded.role;
+    const authReq = req as AuthRequest;
+    authReq.userId = decoded.userId;
+    authReq.userRole = decoded.role as UserRole;
     next();
   } catch {
     res.status(401).json({ error: "Token inválido ou expirado" });
   }
 }
 
-export function requireRole(...roles: string[]) {
+export function requireRole(...roles: UserRole[]) {
   return (req: Request, res: Response, next: NextFunction): void => {
-    const userRole = (req as any).userRole;
-    if (!roles.includes(userRole)) {
+    const authReq = req as AuthRequest;
+    if (!roles.includes(authReq.userRole)) {
       res.status(403).json({ error: "Acesso não autorizado para este perfil" });
       return;
     }
@@ -59,15 +67,14 @@ export function requireRole(...roles: string[]) {
 
 export async function verifyWeddingAccess(req: Request, res: Response, next: NextFunction): Promise<void> {
   const weddingId = Number(req.params.weddingId || req.params.id);
-  const userId = (req as any).userId;
-  const userRole = (req as any).userRole;
+  const authReq = req as AuthRequest;
 
   if (!weddingId || isNaN(weddingId)) {
     next();
     return;
   }
 
-  if (userRole === "admin") {
+  if (authReq.userRole === "admin") {
     next();
     return;
   }
@@ -78,7 +85,7 @@ export async function verifyWeddingAccess(req: Request, res: Response, next: Nex
     return;
   }
 
-  if (wedding.createdById !== userId) {
+  if (wedding.createdById !== authReq.userId) {
     res.status(403).json({ error: "Você não tem acesso a este casamento" });
     return;
   }

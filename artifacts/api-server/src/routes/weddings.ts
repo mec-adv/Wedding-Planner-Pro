@@ -8,12 +8,12 @@ import {
   UpdateWeddingBody,
   DeleteWeddingParams,
 } from "@workspace/api-zod";
-import { authMiddleware, verifyWeddingAccess } from "../lib/auth";
+import { authMiddleware, verifyWeddingAccess, type AuthRequest } from "../lib/auth";
 
 const router: IRouter = Router();
 
 router.get("/weddings", authMiddleware, async (req, res): Promise<void> => {
-  const userId = (req as any).userId;
+  const userId = (req as AuthRequest).userId;
   const weddings = await db.select().from(weddingsTable).where(eq(weddingsTable.createdById, userId));
   res.json(weddings.map(w => ({
     ...w,
@@ -32,7 +32,7 @@ router.post("/weddings", authMiddleware, async (req, res): Promise<void> => {
     return;
   }
 
-  const userId = (req as any).userId;
+  const userId = (req as AuthRequest).userId;
   const [wedding] = await db.insert(weddingsTable).values({
     title: parsed.data.title || "Novo Casamento",
     groomName: parsed.data.groomName || "",
@@ -87,7 +87,7 @@ router.patch("/weddings/:id", authMiddleware, verifyWeddingAccess, async (req, r
     return;
   }
 
-  const updateData: any = { ...parsed.data };
+  const updateData: Record<string, unknown> = { ...parsed.data };
 
   const [wedding] = await db.update(weddingsTable).set(updateData).where(eq(weddingsTable.id, params.data.id)).returning();
   if (!wedding) {

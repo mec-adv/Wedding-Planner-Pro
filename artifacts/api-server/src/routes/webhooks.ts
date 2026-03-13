@@ -49,8 +49,8 @@ router.post("/webhooks/asaas", async (req, res): Promise<void> => {
         .set({ paymentStatus: "refunded" })
         .where(eq(giftOrdersTable.asaasPaymentId, paymentId));
     }
-  } catch (e: any) {
-    console.error("Webhook processing error:", e.message);
+  } catch (e: unknown) {
+    console.error("Webhook processing error:", e instanceof Error ? e.message : String(e));
   }
 
   res.json({ received: true });

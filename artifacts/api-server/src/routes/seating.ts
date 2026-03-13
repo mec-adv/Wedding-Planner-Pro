@@ -59,7 +59,7 @@ router.patch("/weddings/:weddingId/tables/:id", authMiddleware, async (req, res)
   const parsed = UpdateTableBody.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
 
-  const updateData: any = { ...parsed.data };
+  const updateData: Record<string, unknown> = { ...parsed.data };
   if (updateData.positionX !== undefined) updateData.positionX = String(updateData.positionX);
   if (updateData.positionY !== undefined) updateData.positionY = String(updateData.positionY);
 

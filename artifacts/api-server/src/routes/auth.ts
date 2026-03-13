@@ -73,7 +73,7 @@ router.post("/auth/login", async (req, res): Promise<void> => {
 });
 
 router.get("/auth/me", authMiddleware, async (req, res): Promise<void> => {
-  const userId = (req as any).userId;
+  const userId = (req as import("../lib/auth").AuthRequest).userId;
   const [user] = await db.select().from(usersTable).where(eq(usersTable.id, userId));
   if (!user) {
     res.status(404).json({ error: "Usuário não encontrado" });

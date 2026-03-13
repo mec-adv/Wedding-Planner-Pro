@@ -51,9 +51,9 @@ router.post("/weddings/:weddingId/tasks", authMiddleware, async (req, res): Prom
     return;
   }
 
-  const insertData: any = { ...parsed.data, weddingId: params.data.weddingId };
+  const insertData = { ...parsed.data, weddingId: params.data.weddingId };
 
-  const [task] = await db.insert(tasksTable).values(insertData).returning();
+  const [task] = await db.insert(tasksTable).values(insertData as typeof tasksTable.$inferInsert).returning();
   res.status(201).json({
     ...task,
     dueDate: task.dueDate?.toISOString() || null,
@@ -77,9 +77,7 @@ router.patch("/weddings/:weddingId/tasks/:id", authMiddleware, async (req, res):
     return;
   }
 
-  const updateData: any = { ...parsed.data };
-
-  const [task] = await db.update(tasksTable).set(updateData)
+  const [task] = await db.update(tasksTable).set(parsed.data)
     .where(and(eq(tasksTable.id, params.data.id), eq(tasksTable.weddingId, params.data.weddingId))).returning();
   if (!task) {
     res.status(404).json({ error: "Tarefa não encontrada" });

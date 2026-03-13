@@ -107,9 +107,9 @@ router.post("/weddings/:weddingId/guests/import", authMiddleware, async (req, re
         weddingId: params.data.weddingId,
       });
       imported++;
-    } catch (e: any) {
+    } catch (e: unknown) {
       errors++;
-      messages.push(`Erro ao importar ${guestData.name}: ${e.message}`);
+      messages.push(`Erro ao importar ${guestData.name}: ${e instanceof Error ? e.message : String(e)}`);
     }
   }
 
@@ -188,7 +188,7 @@ router.patch("/weddings/:weddingId/guests/:id/rsvp", async (req, res): Promise<v
     return;
   }
 
-  const updateData: any = { rsvpStatus: parsed.data.rsvpStatus };
+  const updateData: Record<string, unknown> = { rsvpStatus: parsed.data.rsvpStatus };
   if (parsed.data.dietaryRestrictions !== undefined) updateData.dietaryRestrictions = parsed.data.dietaryRestrictions;
   if (parsed.data.plusOneName !== undefined) updateData.plusOneName = parsed.data.plusOneName;
 
@@ -237,8 +237,8 @@ router.post("/weddings/:weddingId/guests/:id/send-invite", authMiddleware, async
       await sendWhatsAppMessage(params.data.weddingId, guest.phone, `Olá ${guest.name}! Você está convidado(a) para o nosso casamento! 💒`);
       await db.update(guestsTable).set({ inviteSentAt: new Date() }).where(eq(guestsTable.id, guest.id));
       res.json({ success: true, message: "Convite enviado via WhatsApp" });
-    } catch (e: any) {
-      res.json({ success: false, message: `Erro ao enviar WhatsApp: ${e.message}` });
+    } catch (e: unknown) {
+      res.json({ success: false, message: `Erro ao enviar WhatsApp: ${e instanceof Error ? e.message : String(e)}` });
     }
   } else {
     await db.update(guestsTable).set({ inviteSentAt: new Date() }).where(eq(guestsTable.id, guest.id));

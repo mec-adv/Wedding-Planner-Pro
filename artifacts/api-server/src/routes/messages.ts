@@ -114,9 +114,9 @@ router.post("/weddings/:weddingId/send-bulk-whatsapp", authMiddleware, async (re
       const message = parsed.data.message || `Olá ${guest.name}! Você recebeu uma mensagem sobre o casamento.`;
       await sendWhatsAppMessage(params.data.weddingId, guest.phone, message);
       sent++;
-    } catch (e: any) {
+    } catch (e: unknown) {
       failed++;
-      errors.push(`Erro ao enviar para ${guest.name}: ${e.message}`);
+      errors.push(`Erro ao enviar para ${guest.name}: ${e instanceof Error ? e.message : String(e)}`);
     }
   }
 

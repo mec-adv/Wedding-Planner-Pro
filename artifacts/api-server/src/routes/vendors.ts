@@ -47,7 +47,7 @@ router.patch("/weddings/:weddingId/vendors/:id", authMiddleware, async (req, res
   const parsed = UpdateVendorBody.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
 
-  const updateData: any = { ...parsed.data };
+  const updateData: Record<string, unknown> = { ...parsed.data };
   if (updateData.price !== undefined && updateData.price !== null) updateData.price = String(updateData.price);
 
   const [vendor] = await db.update(vendorsTable).set(updateData)

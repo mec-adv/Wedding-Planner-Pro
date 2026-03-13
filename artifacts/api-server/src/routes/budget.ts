@@ -49,7 +49,7 @@ router.patch("/weddings/:weddingId/budget-categories/:id", authMiddleware, async
   const parsed = UpdateBudgetCategoryBody.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
 
-  const updateData: any = { ...parsed.data };
+  const updateData: Record<string, unknown> = { ...parsed.data };
   if (updateData.estimatedTotal !== undefined) updateData.estimatedTotal = String(updateData.estimatedTotal);
 
   const [cat] = await db.update(budgetCategoriesTable).set(updateData)
@@ -90,11 +90,11 @@ router.post("/weddings/:weddingId/budget-items", authMiddleware, async (req, res
   const parsed = CreateBudgetItemBody.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
 
-  const insertData: any = { ...parsed.data, weddingId: params.data.weddingId };
+  const insertData: Record<string, unknown> = { ...parsed.data, weddingId: params.data.weddingId };
   insertData.estimatedCost = String(insertData.estimatedCost);
   if (insertData.actualCost !== undefined && insertData.actualCost !== null) insertData.actualCost = String(insertData.actualCost);
 
-  const [item] = await db.insert(budgetItemsTable).values(insertData).returning();
+  const [item] = await db.insert(budgetItemsTable).values(insertData as typeof budgetItemsTable.$inferInsert).returning();
   res.status(201).json({
     ...item,
     estimatedCost: Number(item.estimatedCost),
@@ -109,7 +109,7 @@ router.patch("/weddings/:weddingId/budget-items/:id", authMiddleware, async (req
   const parsed = UpdateBudgetItemBody.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
 
-  const updateData: any = { ...parsed.data };
+  const updateData: Record<string, unknown> = { ...parsed.data };
   if (updateData.estimatedCost !== undefined) updateData.estimatedCost = String(updateData.estimatedCost);
   if (updateData.actualCost !== undefined && updateData.actualCost !== null) updateData.actualCost = String(updateData.actualCost);
 

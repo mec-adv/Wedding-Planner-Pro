@@ -17,7 +17,7 @@ import {
   ImportGuestsParams,
   ImportGuestsBody,
 } from "@workspace/api-zod";
-import { authMiddleware } from "../lib/auth";
+import { authMiddleware, requireWeddingRole } from "../lib/auth";
 
 const router: IRouter = Router();
 
@@ -46,7 +46,7 @@ router.get("/weddings/:weddingId/guests", authMiddleware, async (req, res): Prom
   })));
 });
 
-router.post("/weddings/:weddingId/guests", authMiddleware, async (req, res): Promise<void> => {
+router.post("/weddings/:weddingId/guests", authMiddleware, requireWeddingRole("planner", "coordinator"), async (req, res): Promise<void> => {
   const params = CreateGuestParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
@@ -78,7 +78,7 @@ router.post("/weddings/:weddingId/guests", authMiddleware, async (req, res): Pro
   });
 });
 
-router.post("/weddings/:weddingId/guests/import", authMiddleware, async (req, res): Promise<void> => {
+router.post("/weddings/:weddingId/guests/import", authMiddleware, requireWeddingRole("planner", "coordinator"), async (req, res): Promise<void> => {
   const params = ImportGuestsParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
@@ -137,7 +137,7 @@ router.get("/weddings/:weddingId/guests/:id", authMiddleware, async (req, res): 
   });
 });
 
-router.patch("/weddings/:weddingId/guests/:id", authMiddleware, async (req, res): Promise<void> => {
+router.patch("/weddings/:weddingId/guests/:id", authMiddleware, requireWeddingRole("planner", "coordinator"), async (req, res): Promise<void> => {
   const params = UpdateGuestParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
@@ -164,7 +164,7 @@ router.patch("/weddings/:weddingId/guests/:id", authMiddleware, async (req, res)
   });
 });
 
-router.delete("/weddings/:weddingId/guests/:id", authMiddleware, async (req, res): Promise<void> => {
+router.delete("/weddings/:weddingId/guests/:id", authMiddleware, requireWeddingRole("planner", "coordinator"), async (req, res): Promise<void> => {
   const params = DeleteGuestParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
@@ -175,7 +175,7 @@ router.delete("/weddings/:weddingId/guests/:id", authMiddleware, async (req, res
   res.sendStatus(204);
 });
 
-router.patch("/weddings/:weddingId/guests/:id/rsvp", async (req, res): Promise<void> => {
+router.patch("/weddings/:weddingId/guests/:id/rsvp", authMiddleware, async (req, res): Promise<void> => {
   const params = UpdateGuestRsvpParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
@@ -206,7 +206,7 @@ router.patch("/weddings/:weddingId/guests/:id/rsvp", async (req, res): Promise<v
   });
 });
 
-router.post("/weddings/:weddingId/guests/:id/send-invite", authMiddleware, async (req, res): Promise<void> => {
+router.post("/weddings/:weddingId/guests/:id/send-invite", authMiddleware, requireWeddingRole("planner", "coordinator"), async (req, res): Promise<void> => {
   const params = SendGuestInviteParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });

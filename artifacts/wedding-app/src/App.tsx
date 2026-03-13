@@ -21,6 +21,7 @@ import Coordinators from "@/pages/coordinators/Coordinators";
 import Messages from "@/pages/messages/Messages";
 import Settings from "@/pages/settings/Settings";
 import Seating from "@/pages/seating/Seating";
+import Checkout from "@/pages/checkout/Checkout";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
@@ -70,6 +71,7 @@ function Router() {
       <Route path="/weddings/:weddingId/messages" component={() => <ProtectedRoute component={Messages} />} />
       <Route path="/weddings/:weddingId/settings" component={() => <ProtectedRoute component={Settings} />} />
       <Route path="/weddings/:weddingId/seating" component={() => <ProtectedRoute component={Seating} />} />
+      <Route path="/weddings/:weddingId/checkout" component={() => <ProtectedRoute component={Checkout} />} />
 
       <Route component={NotFound} />
     </Switch>

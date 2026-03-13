@@ -8,11 +8,11 @@ import {
   TestWhatsappConnectionParams,
   TestAsaasConnectionParams,
 } from "@workspace/api-zod";
-import { authMiddleware, requireRole } from "../lib/auth";
+import { authMiddleware, requireWeddingRole } from "../lib/auth";
 
 const router: IRouter = Router();
 
-router.get("/weddings/:weddingId/settings", authMiddleware, requireRole("admin", "planner"), async (req, res): Promise<void> => {
+router.get("/weddings/:weddingId/settings", authMiddleware, requireWeddingRole("planner", "admin"), async (req, res): Promise<void> => {
   const params = GetIntegrationSettingsParams.safeParse(req.params);
   if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
 
@@ -28,7 +28,7 @@ router.get("/weddings/:weddingId/settings", authMiddleware, requireRole("admin",
   res.json(settings);
 });
 
-router.put("/weddings/:weddingId/settings", authMiddleware, requireRole("admin", "planner"), async (req, res): Promise<void> => {
+router.put("/weddings/:weddingId/settings", authMiddleware, requireWeddingRole("planner", "admin"), async (req, res): Promise<void> => {
   const params = UpdateIntegrationSettingsParams.safeParse(req.params);
   if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
   const parsed = UpdateIntegrationSettingsBody.safeParse(req.body);
@@ -51,7 +51,7 @@ router.put("/weddings/:weddingId/settings", authMiddleware, requireRole("admin",
   res.json(settings);
 });
 
-router.post("/weddings/:weddingId/settings/test-whatsapp", authMiddleware, requireRole("admin", "planner"), async (req, res): Promise<void> => {
+router.post("/weddings/:weddingId/settings/test-whatsapp", authMiddleware, requireWeddingRole("planner", "admin"), async (req, res): Promise<void> => {
   const params = TestWhatsappConnectionParams.safeParse(req.params);
   if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
 
@@ -79,7 +79,7 @@ router.post("/weddings/:weddingId/settings/test-whatsapp", authMiddleware, requi
   }
 });
 
-router.post("/weddings/:weddingId/settings/test-asaas", authMiddleware, requireRole("admin", "planner"), async (req, res): Promise<void> => {
+router.post("/weddings/:weddingId/settings/test-asaas", authMiddleware, requireWeddingRole("planner", "admin"), async (req, res): Promise<void> => {
   const params = TestAsaasConnectionParams.safeParse(req.params);
   if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
 

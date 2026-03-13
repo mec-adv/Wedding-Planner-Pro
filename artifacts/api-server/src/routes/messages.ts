@@ -15,7 +15,7 @@ import {
   SendBulkWhatsappParams,
   SendBulkWhatsappBody,
 } from "@workspace/api-zod";
-import { authMiddleware } from "../lib/auth";
+import { authMiddleware, requireWeddingRole } from "../lib/auth";
 
 const router: IRouter = Router();
 
@@ -42,7 +42,7 @@ router.post("/weddings/:weddingId/messages", async (req, res): Promise<void> => 
   res.status(201).json({ ...message, createdAt: message.createdAt.toISOString() });
 });
 
-router.delete("/weddings/:weddingId/messages/:id", authMiddleware, async (req, res): Promise<void> => {
+router.delete("/weddings/:weddingId/messages/:id", authMiddleware, requireWeddingRole("planner", "coordinator"), async (req, res): Promise<void> => {
   const params = DeleteMessageParams.safeParse(req.params);
   if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
   await db.delete(messagesTable).where(and(eq(messagesTable.id, params.data.id), eq(messagesTable.weddingId, params.data.weddingId)));
@@ -57,7 +57,7 @@ router.get("/weddings/:weddingId/message-templates", authMiddleware, async (req,
   res.json(templates.map(t => ({ ...t, createdAt: t.createdAt.toISOString() })));
 });
 
-router.post("/weddings/:weddingId/message-templates", authMiddleware, async (req, res): Promise<void> => {
+router.post("/weddings/:weddingId/message-templates", authMiddleware, requireWeddingRole("planner", "coordinator"), async (req, res): Promise<void> => {
   const params = CreateMessageTemplateParams.safeParse(req.params);
   if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
   const parsed = CreateMessageTemplateBody.safeParse(req.body);
@@ -73,7 +73,7 @@ router.post("/weddings/:weddingId/message-templates", authMiddleware, async (req
   res.status(201).json({ ...template, createdAt: template.createdAt.toISOString() });
 });
 
-router.patch("/weddings/:weddingId/message-templates/:id", authMiddleware, async (req, res): Promise<void> => {
+router.patch("/weddings/:weddingId/message-templates/:id", authMiddleware, requireWeddingRole("planner", "coordinator"), async (req, res): Promise<void> => {
   const params = UpdateMessageTemplateParams.safeParse(req.params);
   if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
   const parsed = UpdateMessageTemplateBody.safeParse(req.body);
@@ -85,14 +85,14 @@ router.patch("/weddings/:weddingId/message-templates/:id", authMiddleware, async
   res.json({ ...template, createdAt: template.createdAt.toISOString() });
 });
 
-router.delete("/weddings/:weddingId/message-templates/:id", authMiddleware, async (req, res): Promise<void> => {
+router.delete("/weddings/:weddingId/message-templates/:id", authMiddleware, requireWeddingRole("planner", "coordinator"), async (req, res): Promise<void> => {
   const params = DeleteMessageTemplateParams.safeParse(req.params);
   if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
   await db.delete(messageTemplatesTable).where(and(eq(messageTemplatesTable.id, params.data.id), eq(messageTemplatesTable.weddingId, params.data.weddingId)));
   res.sendStatus(204);
 });
 
-router.post("/weddings/:weddingId/send-bulk-whatsapp", authMiddleware, async (req, res): Promise<void> => {
+router.post("/weddings/:weddingId/send-bulk-whatsapp", authMiddleware, requireWeddingRole("planner", "coordinator"), async (req, res): Promise<void> => {
   const params = SendBulkWhatsappParams.safeParse(req.params);
   if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
   const parsed = SendBulkWhatsappBody.safeParse(req.body);

@@ -17,7 +17,7 @@ import {
   DeleteBudgetItemParams,
   GetBudgetSummaryParams,
 } from "@workspace/api-zod";
-import { authMiddleware } from "../lib/auth";
+import { authMiddleware, requireWeddingRole } from "../lib/auth";
 
 const router: IRouter = Router();
 
@@ -29,7 +29,7 @@ router.get("/weddings/:weddingId/budget-categories", authMiddleware, async (req,
   res.json(categories.map(c => ({ ...c, estimatedTotal: Number(c.estimatedTotal), createdAt: c.createdAt.toISOString() })));
 });
 
-router.post("/weddings/:weddingId/budget-categories", authMiddleware, async (req, res): Promise<void> => {
+router.post("/weddings/:weddingId/budget-categories", authMiddleware, requireWeddingRole("planner"), async (req, res): Promise<void> => {
   const params = CreateBudgetCategoryParams.safeParse(req.params);
   if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
   const parsed = CreateBudgetCategoryBody.safeParse(req.body);
@@ -43,7 +43,7 @@ router.post("/weddings/:weddingId/budget-categories", authMiddleware, async (req
   res.status(201).json({ ...cat, estimatedTotal: Number(cat.estimatedTotal), createdAt: cat.createdAt.toISOString() });
 });
 
-router.patch("/weddings/:weddingId/budget-categories/:id", authMiddleware, async (req, res): Promise<void> => {
+router.patch("/weddings/:weddingId/budget-categories/:id", authMiddleware, requireWeddingRole("planner"), async (req, res): Promise<void> => {
   const params = UpdateBudgetCategoryParams.safeParse(req.params);
   if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
   const parsed = UpdateBudgetCategoryBody.safeParse(req.body);
@@ -58,7 +58,7 @@ router.patch("/weddings/:weddingId/budget-categories/:id", authMiddleware, async
   res.json({ ...cat, estimatedTotal: Number(cat.estimatedTotal), createdAt: cat.createdAt.toISOString() });
 });
 
-router.delete("/weddings/:weddingId/budget-categories/:id", authMiddleware, async (req, res): Promise<void> => {
+router.delete("/weddings/:weddingId/budget-categories/:id", authMiddleware, requireWeddingRole("planner"), async (req, res): Promise<void> => {
   const params = DeleteBudgetCategoryParams.safeParse(req.params);
   if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
   await db.delete(budgetCategoriesTable).where(and(eq(budgetCategoriesTable.id, params.data.id), eq(budgetCategoriesTable.weddingId, params.data.weddingId)));
@@ -84,7 +84,7 @@ router.get("/weddings/:weddingId/budget-items", authMiddleware, async (req, res)
   })));
 });
 
-router.post("/weddings/:weddingId/budget-items", authMiddleware, async (req, res): Promise<void> => {
+router.post("/weddings/:weddingId/budget-items", authMiddleware, requireWeddingRole("planner"), async (req, res): Promise<void> => {
   const params = CreateBudgetItemParams.safeParse(req.params);
   if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
   const parsed = CreateBudgetItemBody.safeParse(req.body);
@@ -103,7 +103,7 @@ router.post("/weddings/:weddingId/budget-items", authMiddleware, async (req, res
   });
 });
 
-router.patch("/weddings/:weddingId/budget-items/:id", authMiddleware, async (req, res): Promise<void> => {
+router.patch("/weddings/:weddingId/budget-items/:id", authMiddleware, requireWeddingRole("planner"), async (req, res): Promise<void> => {
   const params = UpdateBudgetItemParams.safeParse(req.params);
   if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
   const parsed = UpdateBudgetItemBody.safeParse(req.body);
@@ -124,7 +124,7 @@ router.patch("/weddings/:weddingId/budget-items/:id", authMiddleware, async (req
   });
 });
 
-router.delete("/weddings/:weddingId/budget-items/:id", authMiddleware, async (req, res): Promise<void> => {
+router.delete("/weddings/:weddingId/budget-items/:id", authMiddleware, requireWeddingRole("planner"), async (req, res): Promise<void> => {
   const params = DeleteBudgetItemParams.safeParse(req.params);
   if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
   await db.delete(budgetItemsTable).where(and(eq(budgetItemsTable.id, params.data.id), eq(budgetItemsTable.weddingId, params.data.weddingId)));

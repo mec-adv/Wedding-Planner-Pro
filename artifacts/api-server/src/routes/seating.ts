@@ -13,7 +13,7 @@ import {
   AssignSeatBody,
   RemoveSeatAssignmentParams,
 } from "@workspace/api-zod";
-import { authMiddleware } from "../lib/auth";
+import { authMiddleware, requireWeddingRole } from "../lib/auth";
 
 const router: IRouter = Router();
 
@@ -30,7 +30,7 @@ router.get("/weddings/:weddingId/tables", authMiddleware, async (req, res): Prom
   })));
 });
 
-router.post("/weddings/:weddingId/tables", authMiddleware, async (req, res): Promise<void> => {
+router.post("/weddings/:weddingId/tables", authMiddleware, requireWeddingRole("planner", "coordinator"), async (req, res): Promise<void> => {
   const params = CreateTableParams.safeParse(req.params);
   if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
   const parsed = CreateTableBody.safeParse(req.body);
@@ -53,7 +53,7 @@ router.post("/weddings/:weddingId/tables", authMiddleware, async (req, res): Pro
   });
 });
 
-router.patch("/weddings/:weddingId/tables/:id", authMiddleware, async (req, res): Promise<void> => {
+router.patch("/weddings/:weddingId/tables/:id", authMiddleware, requireWeddingRole("planner", "coordinator"), async (req, res): Promise<void> => {
   const params = UpdateTableParams.safeParse(req.params);
   if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
   const parsed = UpdateTableBody.safeParse(req.body);
@@ -75,7 +75,7 @@ router.patch("/weddings/:weddingId/tables/:id", authMiddleware, async (req, res)
   });
 });
 
-router.delete("/weddings/:weddingId/tables/:id", authMiddleware, async (req, res): Promise<void> => {
+router.delete("/weddings/:weddingId/tables/:id", authMiddleware, requireWeddingRole("planner", "coordinator"), async (req, res): Promise<void> => {
   const params = DeleteTableParams.safeParse(req.params);
   if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
   await db.delete(seatingTablesTable).where(and(eq(seatingTablesTable.id, params.data.id), eq(seatingTablesTable.weddingId, params.data.weddingId)));
@@ -103,7 +103,7 @@ router.get("/weddings/:weddingId/seat-assignments", authMiddleware, async (req, 
   })));
 });
 
-router.post("/weddings/:weddingId/seat-assignments", authMiddleware, async (req, res): Promise<void> => {
+router.post("/weddings/:weddingId/seat-assignments", authMiddleware, requireWeddingRole("planner", "coordinator"), async (req, res): Promise<void> => {
   const params = AssignSeatParams.safeParse(req.params);
   if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
   const parsed = AssignSeatBody.safeParse(req.body);
@@ -128,7 +128,7 @@ router.post("/weddings/:weddingId/seat-assignments", authMiddleware, async (req,
   });
 });
 
-router.delete("/weddings/:weddingId/seat-assignments/:id", authMiddleware, async (req, res): Promise<void> => {
+router.delete("/weddings/:weddingId/seat-assignments/:id", authMiddleware, requireWeddingRole("planner", "coordinator"), async (req, res): Promise<void> => {
   const params = RemoveSeatAssignmentParams.safeParse(req.params);
   if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
   await db.delete(seatAssignmentsTable).where(and(eq(seatAssignmentsTable.id, params.data.id), eq(seatAssignmentsTable.weddingId, params.data.weddingId)));

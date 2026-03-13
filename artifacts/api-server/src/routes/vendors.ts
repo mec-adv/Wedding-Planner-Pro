@@ -9,7 +9,7 @@ import {
   UpdateVendorBody,
   DeleteVendorParams,
 } from "@workspace/api-zod";
-import { authMiddleware } from "../lib/auth";
+import { authMiddleware, requireWeddingRole } from "../lib/auth";
 
 const router: IRouter = Router();
 
@@ -21,7 +21,7 @@ router.get("/weddings/:weddingId/vendors", authMiddleware, async (req, res): Pro
   res.json(vendors.map(v => ({ ...v, price: v.price ? Number(v.price) : null, createdAt: v.createdAt.toISOString() })));
 });
 
-router.post("/weddings/:weddingId/vendors", authMiddleware, async (req, res): Promise<void> => {
+router.post("/weddings/:weddingId/vendors", authMiddleware, requireWeddingRole("planner", "coordinator"), async (req, res): Promise<void> => {
   const params = CreateVendorParams.safeParse(req.params);
   if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
   const parsed = CreateVendorBody.safeParse(req.body);
@@ -41,7 +41,7 @@ router.post("/weddings/:weddingId/vendors", authMiddleware, async (req, res): Pr
   res.status(201).json({ ...vendor, price: vendor.price ? Number(vendor.price) : null, createdAt: vendor.createdAt.toISOString() });
 });
 
-router.patch("/weddings/:weddingId/vendors/:id", authMiddleware, async (req, res): Promise<void> => {
+router.patch("/weddings/:weddingId/vendors/:id", authMiddleware, requireWeddingRole("planner", "coordinator"), async (req, res): Promise<void> => {
   const params = UpdateVendorParams.safeParse(req.params);
   if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
   const parsed = UpdateVendorBody.safeParse(req.body);
@@ -57,7 +57,7 @@ router.patch("/weddings/:weddingId/vendors/:id", authMiddleware, async (req, res
   res.json({ ...vendor, price: vendor.price ? Number(vendor.price) : null, createdAt: vendor.createdAt.toISOString() });
 });
 
-router.delete("/weddings/:weddingId/vendors/:id", authMiddleware, async (req, res): Promise<void> => {
+router.delete("/weddings/:weddingId/vendors/:id", authMiddleware, requireWeddingRole("planner"), async (req, res): Promise<void> => {
   const params = DeleteVendorParams.safeParse(req.params);
   if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
 

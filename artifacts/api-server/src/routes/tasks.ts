@@ -10,7 +10,7 @@ import {
   UpdateTaskBody,
   DeleteTaskParams,
 } from "@workspace/api-zod";
-import { authMiddleware } from "../lib/auth";
+import { authMiddleware, requireWeddingRole } from "../lib/auth";
 
 const router: IRouter = Router();
 
@@ -35,7 +35,7 @@ router.get("/weddings/:weddingId/tasks", authMiddleware, async (req, res): Promi
   })));
 });
 
-router.post("/weddings/:weddingId/tasks", authMiddleware, async (req, res): Promise<void> => {
+router.post("/weddings/:weddingId/tasks", authMiddleware, requireWeddingRole("planner", "coordinator"), async (req, res): Promise<void> => {
   const params = CreateTaskParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
@@ -61,7 +61,7 @@ router.post("/weddings/:weddingId/tasks", authMiddleware, async (req, res): Prom
   });
 });
 
-router.patch("/weddings/:weddingId/tasks/:id", authMiddleware, async (req, res): Promise<void> => {
+router.patch("/weddings/:weddingId/tasks/:id", authMiddleware, requireWeddingRole("planner", "coordinator"), async (req, res): Promise<void> => {
   const params = UpdateTaskParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
@@ -91,7 +91,7 @@ router.patch("/weddings/:weddingId/tasks/:id", authMiddleware, async (req, res):
   });
 });
 
-router.delete("/weddings/:weddingId/tasks/:id", authMiddleware, async (req, res): Promise<void> => {
+router.delete("/weddings/:weddingId/tasks/:id", authMiddleware, requireWeddingRole("planner"), async (req, res): Promise<void> => {
   const params = DeleteTaskParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });

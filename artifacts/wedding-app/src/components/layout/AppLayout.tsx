@@ -5,7 +5,7 @@ import {
   Heart, LayoutDashboard, Users, Gift, Receipt, 
   CheckSquare, Store, UserCircle, Calendar, 
   DollarSign, Map, MessageSquare, Settings,
-  LogOut, Menu, X, FileText, Send
+  LogOut, Menu, X
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "../ui/button";
@@ -40,8 +40,7 @@ export function AppLayout({ children }: AppLayoutProps) {
     { href: `/weddings/${wId}/vendors`, label: "Fornecedores", icon: Store },
     { href: `/weddings/${wId}/coordinators`, label: "Equipe", icon: UserCircle },
     { href: `/weddings/${wId}/messages`, label: "Mensagens", icon: MessageSquare },
-    { href: `/weddings/${wId}/templates`, label: "Modelos", icon: FileText },
-    { href: `/weddings/${wId}/bulk-message`, label: "Disparos", icon: Send },
+    { href: `/weddings/${wId}/checkout`, label: "Checkout", icon: Gift },
     { href: `/weddings/${wId}/settings`, label: "Configurações", icon: Settings },
   ];
 

@@ -9,7 +9,7 @@ import {
   UpdateCoordinatorBody,
   DeleteCoordinatorParams,
 } from "@workspace/api-zod";
-import { authMiddleware } from "../lib/auth";
+import { authMiddleware, requireWeddingRole } from "../lib/auth";
 
 const router: IRouter = Router();
 
@@ -21,7 +21,7 @@ router.get("/weddings/:weddingId/coordinators", authMiddleware, async (req, res)
   res.json(coordinators.map(c => ({ ...c, createdAt: c.createdAt.toISOString() })));
 });
 
-router.post("/weddings/:weddingId/coordinators", authMiddleware, async (req, res): Promise<void> => {
+router.post("/weddings/:weddingId/coordinators", authMiddleware, requireWeddingRole("planner"), async (req, res): Promise<void> => {
   const params = CreateCoordinatorParams.safeParse(req.params);
   if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
   const parsed = CreateCoordinatorBody.safeParse(req.body);
@@ -37,7 +37,7 @@ router.post("/weddings/:weddingId/coordinators", authMiddleware, async (req, res
   res.status(201).json({ ...coordinator, createdAt: coordinator.createdAt.toISOString() });
 });
 
-router.patch("/weddings/:weddingId/coordinators/:id", authMiddleware, async (req, res): Promise<void> => {
+router.patch("/weddings/:weddingId/coordinators/:id", authMiddleware, requireWeddingRole("planner"), async (req, res): Promise<void> => {
   const params = UpdateCoordinatorParams.safeParse(req.params);
   if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
   const parsed = UpdateCoordinatorBody.safeParse(req.body);
@@ -50,7 +50,7 @@ router.patch("/weddings/:weddingId/coordinators/:id", authMiddleware, async (req
   res.json({ ...coordinator, createdAt: coordinator.createdAt.toISOString() });
 });
 
-router.delete("/weddings/:weddingId/coordinators/:id", authMiddleware, async (req, res): Promise<void> => {
+router.delete("/weddings/:weddingId/coordinators/:id", authMiddleware, requireWeddingRole("planner"), async (req, res): Promise<void> => {
   const params = DeleteCoordinatorParams.safeParse(req.params);
   if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
 

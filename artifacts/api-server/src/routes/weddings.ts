@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
-import { eq } from "drizzle-orm";
-import { db, weddingsTable } from "@workspace/db";
+import { eq, or, inArray } from "drizzle-orm";
+import { db, weddingsTable, profilesTable } from "@workspace/db";
 import {
   CreateWeddingBody,
   GetWeddingParams,
@@ -14,7 +14,29 @@ const router: IRouter = Router();
 
 router.get("/weddings", authMiddleware, async (req, res): Promise<void> => {
   const userId = (req as AuthRequest).userId;
-  const weddings = await db.select().from(weddingsTable).where(eq(weddingsTable.createdById, userId));
+  const authReq = req as AuthRequest;
+
+  if (authReq.userRole === "admin") {
+    const weddings = await db.select().from(weddingsTable);
+    res.json(weddings.map(w => ({
+      ...w,
+      date: w.date.toISOString(),
+      createdAt: w.createdAt.toISOString(),
+    })));
+    return;
+  }
+
+  const profiles = await db.select({ weddingId: profilesTable.weddingId })
+    .from(profilesTable)
+    .where(eq(profilesTable.userId, userId));
+  const profileWeddingIds = profiles.map(p => p.weddingId);
+
+  const conditions = [eq(weddingsTable.createdById, userId)];
+  if (profileWeddingIds.length > 0) {
+    conditions.push(inArray(weddingsTable.id, profileWeddingIds));
+  }
+
+  const weddings = await db.select().from(weddingsTable).where(or(...conditions));
   res.json(weddings.map(w => ({
     ...w,
     date: w.date.toISOString(),
@@ -43,6 +65,12 @@ router.post("/weddings", authMiddleware, async (req, res): Promise<void> => {
     coverImageUrl: parsed.data.coverImageUrl,
     createdById: userId,
   }).returning();
+
+  await db.insert(profilesTable).values({
+    userId,
+    weddingId: wedding.id,
+    role: "planner",
+  });
 
   res.status(201).json({
     ...wedding,

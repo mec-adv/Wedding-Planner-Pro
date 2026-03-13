@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
-import { eq } from "drizzle-orm";
-import { db, weddingsTable } from "@workspace/db";
+import { eq, and } from "drizzle-orm";
+import { db, weddingsTable, profilesTable } from "@workspace/db";
 import type { Request, Response, NextFunction } from "express";
 
 export type UserRole = "admin" | "planner" | "coordinator" | "couple" | "guest";
@@ -9,6 +9,7 @@ export type UserRole = "admin" | "planner" | "coordinator" | "couple" | "guest";
 export interface AuthRequest extends Request {
   userId: number;
   userRole: UserRole;
+  weddingRole?: UserRole;
 }
 
 function getJwtSecret(): string {
@@ -65,6 +66,21 @@ export function requireRole(...roles: UserRole[]) {
   };
 }
 
+export function requireWeddingRole(...roles: UserRole[]) {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    const authReq = req as AuthRequest;
+    if (authReq.userRole === "admin") {
+      next();
+      return;
+    }
+    if (authReq.weddingRole && roles.includes(authReq.weddingRole)) {
+      next();
+      return;
+    }
+    res.status(403).json({ error: "Acesso não autorizado para este casamento" });
+  };
+}
+
 export async function verifyWeddingAccess(req: Request, res: Response, next: NextFunction): Promise<void> {
   const weddingId = Number(req.params.weddingId || req.params.id);
   const authReq = req as AuthRequest;
@@ -75,6 +91,7 @@ export async function verifyWeddingAccess(req: Request, res: Response, next: Nex
   }
 
   if (authReq.userRole === "admin") {
+    authReq.weddingRole = "admin";
     next();
     return;
   }
@@ -85,10 +102,24 @@ export async function verifyWeddingAccess(req: Request, res: Response, next: Nex
     return;
   }
 
-  if (wedding.createdById !== authReq.userId) {
-    res.status(403).json({ error: "Você não tem acesso a este casamento" });
+  if (wedding.createdById === authReq.userId) {
+    authReq.weddingRole = "planner";
+    next();
     return;
   }
 
-  next();
+  const [profile] = await db.select().from(profilesTable).where(
+    and(
+      eq(profilesTable.userId, authReq.userId),
+      eq(profilesTable.weddingId, weddingId),
+    )
+  );
+
+  if (profile) {
+    authReq.weddingRole = profile.role as UserRole;
+    next();
+    return;
+  }
+
+  res.status(403).json({ error: "Você não tem acesso a este casamento" });
 }

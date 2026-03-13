@@ -1,5 +1,7 @@
 export * from "./users";
 export * from "./weddings";
+export * from "./profiles";
+export * from "./invitations";
 export * from "./guests";
 export * from "./gifts";
 export * from "./tasks";

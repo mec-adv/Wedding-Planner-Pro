@@ -19,12 +19,18 @@ router.post("/auth/register", async (req, res): Promise<void> => {
     return;
   }
 
+  const requestedRole = parsed.data.role;
+  const allowedSelfRegisterRoles = ["planner", "coordinator", "couple", "guest"];
+  const assignedRole = requestedRole && allowedSelfRegisterRoles.includes(requestedRole)
+    ? requestedRole
+    : "planner";
+
   const passwordHash = await hashPassword(parsed.data.password);
   const [user] = await db.insert(usersTable).values({
     name: parsed.data.name,
     email: parsed.data.email,
     passwordHash,
-    role: "planner",
+    role: assignedRole,
   }).returning();
 
   const token = generateToken(user.id, user.role);

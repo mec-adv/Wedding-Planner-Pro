@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Gift, QrCode, FileText, CheckCircle, AlertCircle } from "lucide-react";
+import { Gift, QrCode, FileText, CreditCard, CheckCircle, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 type PaymentMethod = "pix" | "boleto" | "credit_card";
@@ -15,10 +15,20 @@ interface CheckoutState {
   giftId: number | null;
   giftName: string;
   amount: number;
-  step: "select" | "details" | "payment" | "result";
+  step: "select" | "details" | "card_details" | "payment" | "result";
   guestName: string;
   guestEmail: string;
+  guestCpf: string;
   paymentMethod: PaymentMethod;
+  cardNumber: string;
+  cardName: string;
+  cardExpiry: string;
+  cardCvv: string;
+  cardHolderCpf: string;
+  cardHolderPhone: string;
+  cardHolderPostalCode: string;
+  cardHolderAddressNumber: string;
+  installmentCount: number;
 }
 
 export default function Checkout() {
@@ -35,7 +45,17 @@ export default function Checkout() {
     step: "select",
     guestName: "",
     guestEmail: "",
+    guestCpf: "",
     paymentMethod: "pix",
+    cardNumber: "",
+    cardName: "",
+    cardExpiry: "",
+    cardCvv: "",
+    cardHolderCpf: "",
+    cardHolderPhone: "",
+    cardHolderPostalCode: "",
+    cardHolderAddressNumber: "",
+    installmentCount: 1,
   });
 
   const [result, setResult] = useState<{
@@ -69,35 +89,77 @@ export default function Checkout() {
       return;
     }
 
-    setState({ ...state, step: "payment" });
+    if (state.paymentMethod === "credit_card") {
+      setState({ ...state, step: "card_details" });
+      return;
+    }
+
+    await processPayment();
+  };
+
+  const handleCardPayment = async () => {
+    if (!state.cardNumber || !state.cardName || !state.cardExpiry || !state.cardCvv) {
+      toast({ variant: "destructive", title: "Preencha todos os dados do cartão" });
+      return;
+    }
+    if (!state.cardHolderCpf) {
+      toast({ variant: "destructive", title: "CPF do titular é obrigatório" });
+      return;
+    }
+    await processPayment();
+  };
+
+  const processPayment = async () => {
+    setState(prev => ({ ...prev, step: "payment" }));
 
     try {
+      const orderData: Record<string, unknown> = {
+        giftId: state.giftId ?? 0,
+        guestName: state.guestName,
+        guestEmail: state.guestEmail || undefined,
+        amount: state.amount,
+        paymentMethod: state.paymentMethod,
+      };
+
+      if (state.paymentMethod === "credit_card") {
+        const [expMonth, expYear] = state.cardExpiry.split("/");
+        orderData.creditCardNumber = state.cardNumber.replace(/\s/g, "");
+        orderData.creditCardHolderName = state.cardName;
+        orderData.creditCardExpiryMonth = expMonth;
+        orderData.creditCardExpiryYear = expYear;
+        orderData.creditCardCcv = state.cardCvv;
+        orderData.creditCardHolderCpf = state.cardHolderCpf;
+        orderData.creditCardHolderEmail = state.guestEmail;
+        orderData.creditCardHolderPhone = state.cardHolderPhone;
+        orderData.creditCardHolderPostalCode = state.cardHolderPostalCode;
+        orderData.creditCardHolderAddressNumber = state.cardHolderAddressNumber;
+        if (state.installmentCount > 1) {
+          orderData.installmentCount = state.installmentCount;
+        }
+      }
+
       const orderResult = await createOrderMutation.mutateAsync({
         weddingId: wid,
-        data: {
-          giftId: state.giftId ?? 0,
-          guestName: state.guestName,
-          guestEmail: state.guestEmail || undefined,
-          amount: state.amount,
-          paymentMethod: state.paymentMethod,
-        },
+        data: orderData as unknown as Parameters<typeof createOrderMutation.mutateAsync>[0]["data"],
       });
       const r = orderResult as unknown as Record<string, unknown>;
       setResult({
         success: true,
-        message: "Pagamento criado com sucesso! Complete o pagamento abaixo.",
+        message: state.paymentMethod === "credit_card"
+          ? "Pagamento com cartão processado com sucesso!"
+          : "Pagamento criado com sucesso! Complete o pagamento abaixo.",
         pixQrCode: r.pixQrCode as string | undefined,
         pixCopyPaste: r.pixCopyPaste as string | undefined,
         bankSlipUrl: r.bankSlipUrl as string | undefined,
         invoiceUrl: r.invoiceUrl as string | undefined,
       });
-      setState({ ...state, step: "result" });
+      setState(prev => ({ ...prev, step: "result" }));
     } catch (e: unknown) {
       setResult({
         success: false,
         message: e instanceof Error ? e.message : "Erro ao processar pagamento. Tente novamente.",
       });
-      setState({ ...state, step: "result" });
+      setState(prev => ({ ...prev, step: "result" }));
     }
   };
 
@@ -109,7 +171,17 @@ export default function Checkout() {
       step: "select",
       guestName: "",
       guestEmail: "",
+      guestCpf: "",
       paymentMethod: "pix",
+      cardNumber: "",
+      cardName: "",
+      cardExpiry: "",
+      cardCvv: "",
+      cardHolderCpf: "",
+      cardHolderPhone: "",
+      cardHolderPostalCode: "",
+      cardHolderAddressNumber: "",
+      installmentCount: 1,
     });
     setResult(null);
     setIsOpen(false);
@@ -118,6 +190,7 @@ export default function Checkout() {
   const paymentMethods: { id: PaymentMethod; label: string; icon: React.ReactNode; description: string }[] = [
     { id: "pix", label: "PIX", icon: <QrCode className="w-5 h-5" />, description: "Pagamento instantâneo" },
     { id: "boleto", label: "Boleto", icon: <FileText className="w-5 h-5" />, description: "Vencimento em 3 dias" },
+    { id: "credit_card", label: "Cartão de Crédito", icon: <CreditCard className="w-5 h-5" />, description: "Até 12x" },
   ];
 
   return (
@@ -173,10 +246,12 @@ export default function Checkout() {
       )}
 
       <Dialog open={isOpen} onOpenChange={(open) => { if (!open) resetCheckout(); }}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="font-serif text-xl">
-              {state.step === "result" ? (result?.success ? "Obrigado!" : "Erro") : `Presentear: ${state.giftName}`}
+              {state.step === "result" ? (result?.success ? "Obrigado!" : "Erro") :
+               state.step === "card_details" ? "Dados do Cartão" :
+               `Presentear: ${state.giftName}`}
             </DialogTitle>
           </DialogHeader>
 
@@ -234,8 +309,108 @@ export default function Checkout() {
                 </div>
               </div>
               <Button onClick={handlePayment} className="w-full" size="lg">
-                Confirmar - R$ {state.amount.toFixed(2)}
+                {state.paymentMethod === "credit_card" ? "Continuar" : `Confirmar - R$ ${state.amount.toFixed(2)}`}
               </Button>
+            </div>
+          )}
+
+          {state.step === "card_details" && (
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium">Número do Cartão *</label>
+                <Input
+                  value={state.cardNumber}
+                  onChange={e => setState({ ...state, cardNumber: e.target.value })}
+                  placeholder="0000 0000 0000 0000"
+                  maxLength={19}
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Nome no Cartão *</label>
+                <Input
+                  value={state.cardName}
+                  onChange={e => setState({ ...state, cardName: e.target.value })}
+                  placeholder="MARIA DA SILVA"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium">Validade *</label>
+                  <Input
+                    value={state.cardExpiry}
+                    onChange={e => setState({ ...state, cardExpiry: e.target.value })}
+                    placeholder="MM/AAAA"
+                    maxLength={7}
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">CVV *</label>
+                  <Input
+                    value={state.cardCvv}
+                    onChange={e => setState({ ...state, cardCvv: e.target.value })}
+                    placeholder="123"
+                    maxLength={4}
+                    type="password"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-medium">CPF do Titular *</label>
+                <Input
+                  value={state.cardHolderCpf}
+                  onChange={e => setState({ ...state, cardHolderCpf: e.target.value })}
+                  placeholder="000.000.000-00"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Telefone do Titular</label>
+                <Input
+                  value={state.cardHolderPhone}
+                  onChange={e => setState({ ...state, cardHolderPhone: e.target.value })}
+                  placeholder="(11) 99999-9999"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium">CEP</label>
+                  <Input
+                    value={state.cardHolderPostalCode}
+                    onChange={e => setState({ ...state, cardHolderPostalCode: e.target.value })}
+                    placeholder="00000-000"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Número</label>
+                  <Input
+                    value={state.cardHolderAddressNumber}
+                    onChange={e => setState({ ...state, cardHolderAddressNumber: e.target.value })}
+                    placeholder="123"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-medium">Parcelas</label>
+                <select
+                  className="w-full border rounded-md p-2 text-sm"
+                  value={state.installmentCount}
+                  onChange={e => setState({ ...state, installmentCount: Number(e.target.value) })}
+                >
+                  {Array.from({ length: 12 }, (_, i) => i + 1).map(n => (
+                    <option key={n} value={n}>
+                      {n}x de R$ {(state.amount / n).toFixed(2)}
+                      {n === 1 ? " (à vista)" : ""}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setState({ ...state, step: "details" })} className="flex-1">
+                  Voltar
+                </Button>
+                <Button onClick={handleCardPayment} className="flex-1" size="lg">
+                  Pagar R$ {state.amount.toFixed(2)}
+                </Button>
+              </div>
             </div>
           )}
 

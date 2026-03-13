@@ -5,7 +5,7 @@ import {
   Heart, LayoutDashboard, Users, Gift, Receipt, 
   CheckSquare, Store, UserCircle, Calendar, 
   DollarSign, Map, MessageSquare, Settings,
-  LogOut, Menu, X
+  LogOut, Menu, X, ShoppingCart
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "../ui/button";
@@ -16,39 +16,63 @@ interface AppLayoutProps {
   children: ReactNode;
 }
 
+type UserRole = "admin" | "planner" | "coordinator" | "couple" | "guest";
+
+interface NavItem {
+  href: string;
+  label: string;
+  icon: typeof LayoutDashboard;
+  allowedRoles: UserRole[];
+}
+
+function getNavItems(wId: number, createdById: number | null, userId: number | null): NavItem[] {
+  const isOwner = createdById !== null && userId !== null && createdById === userId;
+
+  const allItems: NavItem[] = [
+    { href: `/weddings/${wId}/dashboard`, label: "Dashboard", icon: LayoutDashboard, allowedRoles: ["admin", "planner", "coordinator", "couple", "guest"] },
+    { href: `/weddings/${wId}/guests`, label: "Convidados", icon: Users, allowedRoles: ["admin", "planner", "coordinator"] },
+    { href: `/weddings/${wId}/gifts`, label: "Presentes", icon: Gift, allowedRoles: ["admin", "planner", "coordinator", "couple"] },
+    { href: `/weddings/${wId}/extract`, label: "Extrato", icon: Receipt, allowedRoles: ["admin", "planner"] },
+    { href: `/weddings/${wId}/tasks`, label: "Tarefas", icon: CheckSquare, allowedRoles: ["admin", "planner", "coordinator"] },
+    { href: `/weddings/${wId}/budget`, label: "Orçamento", icon: DollarSign, allowedRoles: ["admin", "planner"] },
+    { href: `/weddings/${wId}/schedule`, label: "Programação", icon: Calendar, allowedRoles: ["admin", "planner", "coordinator", "couple"] },
+    { href: `/weddings/${wId}/seating`, label: "Assentos", icon: Map, allowedRoles: ["admin", "planner", "coordinator"] },
+    { href: `/weddings/${wId}/vendors`, label: "Fornecedores", icon: Store, allowedRoles: ["admin", "planner", "coordinator"] },
+    { href: `/weddings/${wId}/coordinators`, label: "Equipe", icon: UserCircle, allowedRoles: ["admin", "planner"] },
+    { href: `/weddings/${wId}/messages`, label: "Mensagens", icon: MessageSquare, allowedRoles: ["admin", "planner", "coordinator", "couple", "guest"] },
+    { href: `/weddings/${wId}/checkout`, label: "Checkout", icon: ShoppingCart, allowedRoles: ["admin", "planner", "coordinator", "couple", "guest"] },
+    { href: `/weddings/${wId}/settings`, label: "Configurações", icon: Settings, allowedRoles: ["admin", "planner"] },
+  ];
+
+  if (isOwner) return allItems;
+  return allItems;
+}
+
 export function AppLayout({ children }: AppLayoutProps) {
   const { user, logout } = useAuth();
   const [location] = useLocation();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   
-  // For MVP, we'll just pick the first wedding if available
   const { data: weddings } = useListWeddings({
     query: { queryKey: ['/api/weddings'], enabled: !!user }
   });
   const currentWedding = weddings?.[0];
   const wId = currentWedding?.id || 1;
 
-  const navItems = [
-    { href: `/weddings/${wId}/dashboard`, label: "Dashboard", icon: LayoutDashboard },
-    { href: `/weddings/${wId}/guests`, label: "Convidados", icon: Users },
-    { href: `/weddings/${wId}/gifts`, label: "Presentes", icon: Gift },
-    { href: `/weddings/${wId}/extract`, label: "Extrato", icon: Receipt },
-    { href: `/weddings/${wId}/tasks`, label: "Tarefas", icon: CheckSquare },
-    { href: `/weddings/${wId}/budget`, label: "Orçamento", icon: DollarSign },
-    { href: `/weddings/${wId}/schedule`, label: "Programação", icon: Calendar },
-    { href: `/weddings/${wId}/seating`, label: "Assentos", icon: Map },
-    { href: `/weddings/${wId}/vendors`, label: "Fornecedores", icon: Store },
-    { href: `/weddings/${wId}/coordinators`, label: "Equipe", icon: UserCircle },
-    { href: `/weddings/${wId}/messages`, label: "Mensagens", icon: MessageSquare },
-    { href: `/weddings/${wId}/checkout`, label: "Checkout", icon: Gift },
-    { href: `/weddings/${wId}/settings`, label: "Configurações", icon: Settings },
-  ];
+  const userRole = (user?.role || "guest") as UserRole;
+  const isOwner = currentWedding && user ? Number(currentWedding.createdById) === user.id : false;
+
+  const allNavItems = getNavItems(wId, currentWedding?.createdById ?? null, user?.id ?? null);
+  const navItems = allNavItems.filter(item => {
+    if (userRole === "admin") return true;
+    if (isOwner) return true;
+    return item.allowedRoles.includes(userRole);
+  });
 
   if (!user) return <>{children}</>;
 
   return (
     <div className="min-h-screen bg-background flex flex-col md:flex-row">
-      {/* Mobile Header */}
       <div className="md:hidden flex items-center justify-between p-4 border-b bg-card">
         <div className="flex items-center gap-2 text-primary">
           <Heart className="w-6 h-6 fill-current" />
@@ -59,7 +83,6 @@ export function AppLayout({ children }: AppLayoutProps) {
         </button>
       </div>
 
-      {/* Sidebar */}
       <div className={cn(
         "fixed inset-y-0 left-0 z-50 w-64 bg-card border-r flex flex-col transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0",
         isMobileOpen ? "translate-x-0" : "-translate-x-full"
@@ -70,7 +93,12 @@ export function AppLayout({ children }: AppLayoutProps) {
           </div>
           <div>
             <h1 className="font-serif font-bold text-xl tracking-tight leading-none text-foreground">Casamento360</h1>
-            <p className="text-xs text-muted-foreground mt-1 font-medium">Painel da Cerimonialista</p>
+            <p className="text-xs text-muted-foreground mt-1 font-medium">
+              {userRole === "admin" ? "Administrador" :
+               userRole === "planner" || isOwner ? "Painel da Cerimonialista" :
+               userRole === "coordinator" ? "Coordenação" :
+               userRole === "couple" ? "Noivos" : "Convidado"}
+            </p>
           </div>
         </div>
         
@@ -122,7 +150,6 @@ export function AppLayout({ children }: AppLayoutProps) {
         </div>
       </div>
 
-      {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden bg-background">
         <main className="flex-1 overflow-y-auto p-4 md:p-8">
           <div className="max-w-6xl mx-auto">
@@ -131,7 +158,6 @@ export function AppLayout({ children }: AppLayoutProps) {
         </main>
       </div>
       
-      {/* Mobile overlay */}
       {isMobileOpen && (
         <div 
           className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 md:hidden"

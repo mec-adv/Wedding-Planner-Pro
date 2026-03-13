@@ -7,6 +7,14 @@ interface CreatePaymentParams {
   customerName: string;
   customerEmail?: string;
   customerCpf?: string;
+  creditCardToken?: string;
+  creditCardHolderName?: string;
+  creditCardHolderEmail?: string;
+  creditCardHolderCpf?: string;
+  creditCardHolderPhone?: string;
+  creditCardHolderPostalCode?: string;
+  creditCardHolderAddressNumber?: string;
+  installmentCount?: number;
 }
 
 interface PaymentResult {
@@ -46,8 +54,8 @@ export async function createAsaasPayment(weddingId: number, params: CreatePaymen
     : params.paymentMethod === "boleto" ? "BOLETO"
     : "CREDIT_CARD";
 
-  if (billingType === "CREDIT_CARD") {
-    throw new Error("Pagamento por cartão de crédito requer integração frontend com tokenização Asaas. Use PIX ou Boleto.");
+  if (billingType === "CREDIT_CARD" && !params.creditCardToken) {
+    throw new Error("Token do cartão é obrigatório para pagamento com cartão de crédito. Tokenize o cartão no frontend usando o SDK Asaas.");
   }
 
   const dueDate = new Date();
@@ -73,19 +81,37 @@ export async function createAsaasPayment(weddingId: number, params: CreatePaymen
 
   const customerData = await customerResponse.json() as { id: string };
 
+  const paymentBody: Record<string, unknown> = {
+    customer: customerData.id,
+    billingType,
+    value: params.amount,
+    dueDate: dueDate.toISOString().split("T")[0],
+    description: `Presente de casamento - ${params.customerName}`,
+  };
+
+  if (billingType === "CREDIT_CARD" && params.creditCardToken) {
+    paymentBody.creditCardToken = params.creditCardToken;
+    paymentBody.creditCardHolderInfo = {
+      name: params.creditCardHolderName || params.customerName,
+      email: params.creditCardHolderEmail || params.customerEmail,
+      cpfCnpj: params.creditCardHolderCpf || params.customerCpf || "00000000000",
+      phone: params.creditCardHolderPhone || "",
+      postalCode: params.creditCardHolderPostalCode || "",
+      addressNumber: params.creditCardHolderAddressNumber || "",
+    };
+    if (params.installmentCount && params.installmentCount > 1) {
+      paymentBody.installmentCount = params.installmentCount;
+      paymentBody.installmentValue = Math.ceil((params.amount / params.installmentCount) * 100) / 100;
+    }
+  }
+
   const paymentResponse = await fetch(`${baseUrl}/payments`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       access_token: settings.asaasApiKey,
     },
-    body: JSON.stringify({
-      customer: customerData.id,
-      billingType,
-      value: params.amount,
-      dueDate: dueDate.toISOString().split("T")[0],
-      description: `Presente de casamento - ${params.customerName}`,
-    }),
+    body: JSON.stringify(paymentBody),
   });
 
   if (!paymentResponse.ok) {

@@ -32,6 +32,7 @@ router.post("/weddings/:weddingId/coordinators", authMiddleware, requireWeddingR
     role: parsed.data.role || "coordenador",
     phone: parsed.data.phone,
     email: parsed.data.email,
+    permissions: parsed.data.permissions || [],
     weddingId: params.data.weddingId,
   }).returning();
   res.status(201).json({ ...coordinator, createdAt: coordinator.createdAt.toISOString() });

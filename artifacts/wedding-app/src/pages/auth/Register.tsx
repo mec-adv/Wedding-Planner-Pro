@@ -30,11 +30,11 @@ export default function Register() {
     try {
       await registerUser({ data });
       window.location.href = "/";
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         variant: "destructive",
         title: "Erro ao registrar",
-        description: error.message || "Ocorreu um erro ao criar sua conta."
+        description: error instanceof Error ? error.message : "Ocorreu um erro ao criar sua conta."
       });
     }
   };

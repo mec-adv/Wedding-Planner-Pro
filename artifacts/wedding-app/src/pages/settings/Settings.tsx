@@ -51,11 +51,11 @@ export default function Settings() {
 
   const handleTestWhatsapp = async () => {
     try {
-      const result = await testWhatsapp.mutateAsync({ weddingId: wid });
+      const result = await testWhatsapp.mutateAsync({ weddingId: wid }) as unknown as { success: boolean; message: string };
       toast({
-        title: (result as any).success ? "WhatsApp conectado!" : "Falha na conexão",
-        description: (result as any).message,
-        variant: (result as any).success ? "default" : "destructive",
+        title: result.success ? "WhatsApp conectado!" : "Falha na conexão",
+        description: result.message,
+        variant: result.success ? "default" : "destructive",
       });
     } catch {
       toast({ variant: "destructive", title: "Erro ao testar conexão" });
@@ -64,11 +64,11 @@ export default function Settings() {
 
   const handleTestAsaas = async () => {
     try {
-      const result = await testAsaas.mutateAsync({ weddingId: wid });
+      const result = await testAsaas.mutateAsync({ weddingId: wid }) as unknown as { success: boolean; message: string };
       toast({
-        title: (result as any).success ? "Asaas conectado!" : "Falha na conexão",
-        description: (result as any).message,
-        variant: (result as any).success ? "default" : "destructive",
+        title: result.success ? "Asaas conectado!" : "Falha na conexão",
+        description: result.message,
+        variant: result.success ? "default" : "destructive",
       });
     } catch {
       toast({ variant: "destructive", title: "Erro ao testar conexão" });

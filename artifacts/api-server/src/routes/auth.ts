@@ -24,7 +24,7 @@ router.post("/auth/register", async (req, res): Promise<void> => {
     name: parsed.data.name,
     email: parsed.data.email,
     passwordHash,
-    role: parsed.data.role,
+    role: "planner",
   }).returning();
 
   const token = generateToken(user.id, user.role);

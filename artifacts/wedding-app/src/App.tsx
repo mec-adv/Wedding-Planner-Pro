@@ -38,7 +38,7 @@ window.fetch = async (...args) => {
   return originalFetch(...args);
 };
 
-function ProtectedRoute({ component: Component, ...rest }: any) {
+function ProtectedRoute({ component: Component, ...rest }: { component: React.ComponentType<Record<string, unknown>>; [key: string]: unknown }) {
   const { isAuthenticated, isLoading } = useAuth();
   
   if (isLoading) return <div className="h-screen w-full flex items-center justify-center bg-background"><div className="animate-pulse font-serif text-2xl text-primary">Carregando...</div></div>;

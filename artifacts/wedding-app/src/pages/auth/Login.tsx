@@ -28,11 +28,11 @@ export default function Login() {
     try {
       await login({ data });
       window.location.href = "/";
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         variant: "destructive",
         title: "Erro ao entrar",
-        description: error.message || "Verifique suas credenciais e tente novamente."
+        description: error instanceof Error ? error.message : "Verifique suas credenciais e tente novamente."
       });
     }
   };

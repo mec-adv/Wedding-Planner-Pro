@@ -138,6 +138,7 @@ router.post("/weddings/:weddingId/gift-orders", async (req, res): Promise<void> 
   }
 
   let asaasPaymentId: string | null = null;
+  let paymentStatus = "pending";
   try {
     const { createAsaasPayment } = await import("../lib/asaas");
     const payment = await createAsaasPayment(params.data.weddingId, {
@@ -147,8 +148,14 @@ router.post("/weddings/:weddingId/gift-orders", async (req, res): Promise<void> 
       customerEmail: parsed.data.guestEmail || undefined,
     });
     asaasPaymentId = payment.id;
-  } catch {
-    // Asaas not configured or payment creation failed
+  } catch (e: unknown) {
+    const { getAsaasConfig } = await import("../lib/asaas");
+    const config = await getAsaasConfig(params.data.weddingId);
+    if (config) {
+      res.status(502).json({ error: `Erro ao processar pagamento: ${e instanceof Error ? e.message : String(e)}` });
+      return;
+    }
+    paymentStatus = "manual";
   }
 
   const [order] = await db.insert(giftOrdersTable).values({
@@ -156,6 +163,7 @@ router.post("/weddings/:weddingId/gift-orders", async (req, res): Promise<void> 
     amount: String(parsed.data.amount),
     weddingId: params.data.weddingId,
     asaasPaymentId,
+    paymentStatus,
   }).returning();
 
   res.status(201).json({

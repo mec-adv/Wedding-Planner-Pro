@@ -44,7 +44,7 @@ export default function Seating() {
         data: {
           name: fd.get("name") as string,
           capacity: Number(fd.get("capacity") || 8),
-          shape: (fd.get("shape") as any) || "round",
+          shape: (fd.get("shape") as "round" | "rectangular" | "square") || "round",
           positionX: 0,
           positionY: 0,
         },

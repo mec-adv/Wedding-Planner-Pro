@@ -60,7 +60,7 @@ export default function Guests() {
     }
   };
 
-  const handleRsvp = async (id: number, status: any) => {
+  const handleRsvp = async (id: number, status: "confirmed" | "declined" | "pending") => {
     try {
       await updateRsvpMutation.mutateAsync({
         weddingId: wid,

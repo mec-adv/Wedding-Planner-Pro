@@ -44,7 +44,7 @@ export default function Tasks() {
         data: {
           title: fd.get("title") as string,
           description: fd.get("description") as string,
-          priority: fd.get("priority") as any,
+          priority: fd.get("priority") as "low" | "medium" | "high",
           dueDate: fd.get("dueDate") as string || null,
           assignee: fd.get("assignee") as string || null,
           status: "pending",
@@ -69,7 +69,7 @@ export default function Tasks() {
       await updateMutation.mutateAsync({
         weddingId: wid,
         id: Number(draggableId),
-        data: { status: destination.droppableId as any }
+        data: { status: destination.droppableId as "pending" | "in_progress" | "completed" | "cancelled" }
       });
       queryClient.invalidateQueries({ queryKey: [`/api/weddings/${wid}/tasks`] });
     } catch (error) {

@@ -8,6 +8,13 @@ interface CreatePaymentParams {
   customerEmail?: string;
 }
 
+export async function getAsaasConfig(weddingId: number) {
+  const [settings] = await db.select().from(integrationSettingsTable)
+    .where(eq(integrationSettingsTable.weddingId, weddingId));
+  if (!settings || !settings.asaasApiKey) return null;
+  return settings;
+}
+
 export async function createAsaasPayment(weddingId: number, params: CreatePaymentParams): Promise<{ id: string }> {
   const [settings] = await db.select().from(integrationSettingsTable)
     .where(eq(integrationSettingsTable.weddingId, weddingId));

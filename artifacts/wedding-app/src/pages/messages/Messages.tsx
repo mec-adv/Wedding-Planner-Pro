@@ -42,7 +42,7 @@ export default function Messages() {
         data: {
           name: fd.get("name") as string,
           content: fd.get("content") as string,
-          category: "custom" as any,
+          category: "custom" as "custom" | "invite" | "reminder" | "thank_you" | "rsvp",
         },
       });
       queryClient.invalidateQueries({ queryKey: [`/api/weddings/${wid}/message-templates`] });

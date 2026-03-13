@@ -13,7 +13,7 @@ import { authMiddleware, requireWeddingRole } from "../lib/auth";
 
 const router: IRouter = Router();
 
-router.get("/weddings/:weddingId/coordinators", authMiddleware, async (req, res): Promise<void> => {
+router.get("/weddings/:weddingId/coordinators", authMiddleware, requireWeddingRole("planner", "coordinator"), async (req, res): Promise<void> => {
   const params = ListCoordinatorsParams.safeParse(req.params);
   if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
 

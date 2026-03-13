@@ -21,7 +21,7 @@ import { authMiddleware, requireWeddingRole } from "../lib/auth";
 
 const router: IRouter = Router();
 
-router.get("/weddings/:weddingId/guests", authMiddleware, async (req, res): Promise<void> => {
+router.get("/weddings/:weddingId/guests", authMiddleware, requireWeddingRole("planner", "coordinator"), async (req, res): Promise<void> => {
   const params = ListGuestsParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
@@ -116,7 +116,7 @@ router.post("/weddings/:weddingId/guests/import", authMiddleware, requireWedding
   res.json({ imported, errors, messages });
 });
 
-router.get("/weddings/:weddingId/guests/:id", authMiddleware, async (req, res): Promise<void> => {
+router.get("/weddings/:weddingId/guests/:id", authMiddleware, requireWeddingRole("planner", "coordinator"), async (req, res): Promise<void> => {
   const params = GetGuestParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });

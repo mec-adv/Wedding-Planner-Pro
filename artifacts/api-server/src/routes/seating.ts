@@ -17,7 +17,7 @@ import { authMiddleware, requireWeddingRole } from "../lib/auth";
 
 const router: IRouter = Router();
 
-router.get("/weddings/:weddingId/tables", authMiddleware, async (req, res): Promise<void> => {
+router.get("/weddings/:weddingId/tables", authMiddleware, requireWeddingRole("planner", "coordinator"), async (req, res): Promise<void> => {
   const params = ListTablesParams.safeParse(req.params);
   if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
 
@@ -82,7 +82,7 @@ router.delete("/weddings/:weddingId/tables/:id", authMiddleware, requireWeddingR
   res.sendStatus(204);
 });
 
-router.get("/weddings/:weddingId/seat-assignments", authMiddleware, async (req, res): Promise<void> => {
+router.get("/weddings/:weddingId/seat-assignments", authMiddleware, requireWeddingRole("planner", "coordinator"), async (req, res): Promise<void> => {
   const params = ListSeatAssignmentsParams.safeParse(req.params);
   if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
 

@@ -49,7 +49,7 @@ router.delete("/weddings/:weddingId/messages/:id", authMiddleware, requireWeddin
   res.sendStatus(204);
 });
 
-router.get("/weddings/:weddingId/message-templates", authMiddleware, async (req, res): Promise<void> => {
+router.get("/weddings/:weddingId/message-templates", authMiddleware, requireWeddingRole("planner", "coordinator"), async (req, res): Promise<void> => {
   const params = ListMessageTemplatesParams.safeParse(req.params);
   if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
 

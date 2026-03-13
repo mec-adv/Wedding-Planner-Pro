@@ -102,7 +102,7 @@ router.delete("/weddings/:weddingId/gifts/:id", authMiddleware, requireWeddingRo
   res.sendStatus(204);
 });
 
-router.get("/weddings/:weddingId/gift-orders", authMiddleware, async (req, res): Promise<void> => {
+router.get("/weddings/:weddingId/gift-orders", authMiddleware, requireWeddingRole("planner"), async (req, res): Promise<void> => {
   const params = ListGiftOrdersParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
@@ -195,7 +195,7 @@ router.post("/weddings/:weddingId/gift-orders", async (req, res): Promise<void> 
   });
 });
 
-router.get("/weddings/:weddingId/gift-orders/summary", authMiddleware, async (req, res): Promise<void> => {
+router.get("/weddings/:weddingId/gift-orders/summary", authMiddleware, requireWeddingRole("planner"), async (req, res): Promise<void> => {
   const params = GetGiftOrdersSummaryParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });

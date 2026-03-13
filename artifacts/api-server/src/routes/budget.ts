@@ -21,7 +21,7 @@ import { authMiddleware, requireWeddingRole } from "../lib/auth";
 
 const router: IRouter = Router();
 
-router.get("/weddings/:weddingId/budget-categories", authMiddleware, async (req, res): Promise<void> => {
+router.get("/weddings/:weddingId/budget-categories", authMiddleware, requireWeddingRole("planner"), async (req, res): Promise<void> => {
   const params = ListBudgetCategoriesParams.safeParse(req.params);
   if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
 
@@ -65,7 +65,7 @@ router.delete("/weddings/:weddingId/budget-categories/:id", authMiddleware, requ
   res.sendStatus(204);
 });
 
-router.get("/weddings/:weddingId/budget-items", authMiddleware, async (req, res): Promise<void> => {
+router.get("/weddings/:weddingId/budget-items", authMiddleware, requireWeddingRole("planner"), async (req, res): Promise<void> => {
   const params = ListBudgetItemsParams.safeParse(req.params);
   if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
   const query = ListBudgetItemsQueryParams.safeParse(req.query);
@@ -131,7 +131,7 @@ router.delete("/weddings/:weddingId/budget-items/:id", authMiddleware, requireWe
   res.sendStatus(204);
 });
 
-router.get("/weddings/:weddingId/budget-summary", authMiddleware, async (req, res): Promise<void> => {
+router.get("/weddings/:weddingId/budget-summary", authMiddleware, requireWeddingRole("planner"), async (req, res): Promise<void> => {
   const params = GetBudgetSummaryParams.safeParse(req.params);
   if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
 

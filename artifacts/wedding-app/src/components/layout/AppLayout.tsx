@@ -25,10 +25,8 @@ interface NavItem {
   allowedRoles: UserRole[];
 }
 
-function getNavItems(wId: number, createdById: number | null, userId: number | null): NavItem[] {
-  const isOwner = createdById !== null && userId !== null && createdById === userId;
-
-  const allItems: NavItem[] = [
+function getNavItems(wId: number): NavItem[] {
+  return [
     { href: `/weddings/${wId}/dashboard`, label: "Dashboard", icon: LayoutDashboard, allowedRoles: ["admin", "planner", "coordinator", "couple", "guest"] },
     { href: `/weddings/${wId}/guests`, label: "Convidados", icon: Users, allowedRoles: ["admin", "planner", "coordinator"] },
     { href: `/weddings/${wId}/gifts`, label: "Presentes", icon: Gift, allowedRoles: ["admin", "planner", "coordinator", "couple"] },
@@ -43,9 +41,6 @@ function getNavItems(wId: number, createdById: number | null, userId: number | n
     { href: `/weddings/${wId}/checkout`, label: "Checkout", icon: ShoppingCart, allowedRoles: ["admin", "planner", "coordinator", "couple", "guest"] },
     { href: `/weddings/${wId}/settings`, label: "Configurações", icon: Settings, allowedRoles: ["admin", "planner"] },
   ];
-
-  if (isOwner) return allItems;
-  return allItems;
 }
 
 export function AppLayout({ children }: AppLayoutProps) {
@@ -62,7 +57,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   const userRole = (user?.role || "guest") as UserRole;
   const isOwner = currentWedding && user ? Number(currentWedding.createdById) === user.id : false;
 
-  const allNavItems = getNavItems(wId, currentWedding?.createdById ?? null, user?.id ?? null);
+  const allNavItems = getNavItems(wId);
   const navItems = allNavItems.filter(item => {
     if (userRole === "admin") return true;
     if (isOwner) return true;

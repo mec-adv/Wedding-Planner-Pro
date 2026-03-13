@@ -18,6 +18,14 @@ interface AppLayoutProps {
 
 type UserRole = "admin" | "planner" | "coordinator" | "couple" | "guest";
 
+const ROLE_LABELS: Record<UserRole, string> = {
+  admin: "Administrador",
+  planner: "Cerimonialista",
+  coordinator: "Coordenador(a)",
+  couple: "Casal",
+  guest: "Convidado(a)",
+};
+
 interface NavItem {
   href: string;
   label: string;
@@ -89,10 +97,7 @@ export function AppLayout({ children }: AppLayoutProps) {
           <div>
             <h1 className="font-serif font-bold text-xl tracking-tight leading-none text-foreground">Casamento360</h1>
             <p className="text-xs text-muted-foreground mt-1 font-medium">
-              {userRole === "admin" ? "Administrador" :
-               userRole === "planner" || isOwner ? "Painel da Cerimonialista" :
-               userRole === "coordinator" ? "Coordenação" :
-               userRole === "couple" ? "Noivos" : "Convidado"}
+              {isOwner ? "Painel da Cerimonialista" : ROLE_LABELS[userRole]}
             </p>
           </div>
         </div>

@@ -549,6 +549,126 @@ paths:
               schema:
                 $ref: "#/components/schemas/FinancialSummary"
 
+  /weddings/{weddingId}/gift-orders/{orderId}/withdrawal:
+    patch:
+      operationId: updateWithdrawalStatus
+      tags: [gifts]
+      summary: Update withdrawal status of a gift order
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: [pending, available, withdrawn]
+              required: [status]
+      responses:
+        "200":
+          description: Updated gift order
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GiftOrder"
+
+  /weddings/{weddingId}/reminders/status:
+    get:
+      operationId: getRemindersStatus
+      tags: [messages]
+      summary: Get automatic reminders status
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Reminders status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RemindersStatus"
+
+  /weddings/{weddingId}/reminders/start:
+    post:
+      operationId: startReminders
+      tags: [messages]
+      summary: Start automatic RSVP reminders
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                intervalHours:
+                  type: integer
+                  default: 24
+      responses:
+        "200":
+          description: Reminders started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RemindersResponse"
+
+  /weddings/{weddingId}/reminders/stop:
+    post:
+      operationId: stopReminders
+      tags: [messages]
+      summary: Stop automatic RSVP reminders
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Reminders stopped
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RemindersResponse"
+
+  /weddings/{weddingId}/reminders/send-now:
+    post:
+      operationId: sendRemindersNow
+      tags: [messages]
+      summary: Send reminders immediately to all pending guests
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Reminders sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RemindersSendResult"
+
   /weddings/{weddingId}/tasks:
     get:
       operationId: listTasks
@@ -1901,6 +2021,12 @@ components:
         paymentStatus:
           type: string
           enum: [pending, confirmed, failed, refunded]
+        withdrawalStatus:
+          type: string
+          enum: [pending, available, withdrawn]
+        withdrawnAt:
+          type: ["string", "null"]
+          format: date-time
         asaasPaymentId:
           type: ["string", "null"]
         giftName:
@@ -1924,6 +2050,7 @@ components:
         - amount
         - paymentMethod
         - paymentStatus
+        - withdrawalStatus
         - createdAt
 
     GiftOrderInput:
@@ -1977,6 +2104,10 @@ components:
           type: number
         totalPending:
           type: number
+        totalWithdrawn:
+          type: number
+        totalAvailable:
+          type: number
         totalOrders:
           type: integer
         ordersByGuest:
@@ -1986,6 +2117,8 @@ components:
       required:
         - totalReceived
         - totalPending
+        - totalWithdrawn
+        - totalAvailable
         - totalOrders
         - ordersByGuest
 
@@ -2644,3 +2777,41 @@ components:
         - daysUntilWedding
         - recentMessages
         - upcomingTasks
+
+    RemindersStatus:
+      type: object
+      properties:
+        active:
+          type: boolean
+        pendingGuestsCount:
+          type: integer
+      required:
+        - active
+        - pendingGuestsCount
+
+    RemindersResponse:
+      type: object
+      properties:
+        active:
+          type: boolean
+        intervalHours:
+          type: integer
+        message:
+          type: string
+      required:
+        - active
+        - message
+
+    RemindersSendResult:
+      type: object
+      properties:
+        sent:
+          type: integer
+        total:
+          type: integer
+        message:
+          type: string
+      required:
+        - sent
+        - total
+        - message

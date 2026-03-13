@@ -433,6 +433,8 @@ export const ListGiftOrdersResponseItem = zod.object({
   amount: zod.number(),
   paymentMethod: zod.enum(["pix", "boleto", "credit_card"]),
   paymentStatus: zod.enum(["pending", "confirmed", "failed", "refunded"]),
+  withdrawalStatus: zod.enum(["pending", "available", "withdrawn"]),
+  withdrawnAt: zod.date().nullish(),
   asaasPaymentId: zod.string().nullish(),
   giftName: zod.string().nullish(),
   invoiceUrl: zod.string().nullish(),
@@ -480,6 +482,8 @@ export const GetGiftOrdersSummaryParams = zod.object({
 export const GetGiftOrdersSummaryResponse = zod.object({
   totalReceived: zod.number(),
   totalPending: zod.number(),
+  totalWithdrawn: zod.number(),
+  totalAvailable: zod.number(),
   totalOrders: zod.number(),
   ordersByGuest: zod.array(
     zod.object({
@@ -488,6 +492,95 @@ export const GetGiftOrdersSummaryResponse = zod.object({
       status: zod.string(),
     }),
   ),
+});
+
+/**
+ * @summary Update withdrawal status of a gift order
+ */
+export const UpdateWithdrawalStatusParams = zod.object({
+  weddingId: zod.coerce.number(),
+  orderId: zod.coerce.number(),
+});
+
+export const UpdateWithdrawalStatusBody = zod.object({
+  status: zod.enum(["pending", "available", "withdrawn"]),
+});
+
+export const UpdateWithdrawalStatusResponse = zod.object({
+  id: zod.number(),
+  weddingId: zod.number(),
+  giftId: zod.number(),
+  guestName: zod.string(),
+  guestEmail: zod.string().nullish(),
+  amount: zod.number(),
+  paymentMethod: zod.enum(["pix", "boleto", "credit_card"]),
+  paymentStatus: zod.enum(["pending", "confirmed", "failed", "refunded"]),
+  withdrawalStatus: zod.enum(["pending", "available", "withdrawn"]),
+  withdrawnAt: zod.date().nullish(),
+  asaasPaymentId: zod.string().nullish(),
+  giftName: zod.string().nullish(),
+  invoiceUrl: zod.string().nullish(),
+  bankSlipUrl: zod.string().nullish(),
+  pixQrCode: zod.string().nullish(),
+  pixCopyPaste: zod.string().nullish(),
+  createdAt: zod.date(),
+});
+
+/**
+ * @summary Get automatic reminders status
+ */
+export const GetRemindersStatusParams = zod.object({
+  weddingId: zod.coerce.number(),
+});
+
+export const GetRemindersStatusResponse = zod.object({
+  active: zod.boolean(),
+  pendingGuestsCount: zod.number(),
+});
+
+/**
+ * @summary Start automatic RSVP reminders
+ */
+export const StartRemindersParams = zod.object({
+  weddingId: zod.coerce.number(),
+});
+
+export const startRemindersBodyIntervalHoursDefault = 24;
+
+export const StartRemindersBody = zod.object({
+  intervalHours: zod.number().default(startRemindersBodyIntervalHoursDefault),
+});
+
+export const StartRemindersResponse = zod.object({
+  active: zod.boolean(),
+  intervalHours: zod.number().optional(),
+  message: zod.string(),
+});
+
+/**
+ * @summary Stop automatic RSVP reminders
+ */
+export const StopRemindersParams = zod.object({
+  weddingId: zod.coerce.number(),
+});
+
+export const StopRemindersResponse = zod.object({
+  active: zod.boolean(),
+  intervalHours: zod.number().optional(),
+  message: zod.string(),
+});
+
+/**
+ * @summary Send reminders immediately to all pending guests
+ */
+export const SendRemindersNowParams = zod.object({
+  weddingId: zod.coerce.number(),
+});
+
+export const SendRemindersNowResponse = zod.object({
+  sent: zod.number(),
+  total: zod.number(),
+  message: zod.string(),
 });
 
 /**

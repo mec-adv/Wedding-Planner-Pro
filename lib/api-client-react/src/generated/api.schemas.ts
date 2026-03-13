@@ -240,6 +240,15 @@ export const GiftOrderPaymentStatus = {
   refunded: "refunded",
 } as const;
 
+export type GiftOrderWithdrawalStatus =
+  (typeof GiftOrderWithdrawalStatus)[keyof typeof GiftOrderWithdrawalStatus];
+
+export const GiftOrderWithdrawalStatus = {
+  pending: "pending",
+  available: "available",
+  withdrawn: "withdrawn",
+} as const;
+
 export interface GiftOrder {
   id: number;
   weddingId: number;
@@ -250,6 +259,9 @@ export interface GiftOrder {
   amount: number;
   paymentMethod: GiftOrderPaymentMethod;
   paymentStatus: GiftOrderPaymentStatus;
+  withdrawalStatus: GiftOrderWithdrawalStatus;
+  /** @nullable */
+  withdrawnAt?: string | null;
   /** @nullable */
   asaasPaymentId?: string | null;
   /** @nullable */
@@ -316,6 +328,8 @@ export interface GuestContribution {
 export interface FinancialSummary {
   totalReceived: number;
   totalPending: number;
+  totalWithdrawn: number;
+  totalAvailable: number;
   totalOrders: number;
   ordersByGuest: GuestContribution[];
 }
@@ -775,6 +789,23 @@ export interface DashboardData {
   upcomingTasks: Task[];
 }
 
+export interface RemindersStatus {
+  active: boolean;
+  pendingGuestsCount: number;
+}
+
+export interface RemindersResponse {
+  active: boolean;
+  intervalHours?: number;
+  message: string;
+}
+
+export interface RemindersSendResult {
+  sent: number;
+  total: number;
+  message: string;
+}
+
 export type ListGuestsParams = {
   status?: ListGuestsStatus;
   search?: string;
@@ -789,6 +820,23 @@ export const ListGuestsStatus = {
   declined: "declined",
   maybe: "maybe",
 } as const;
+
+export type UpdateWithdrawalStatusBodyStatus =
+  (typeof UpdateWithdrawalStatusBodyStatus)[keyof typeof UpdateWithdrawalStatusBodyStatus];
+
+export const UpdateWithdrawalStatusBodyStatus = {
+  pending: "pending",
+  available: "available",
+  withdrawn: "withdrawn",
+} as const;
+
+export type UpdateWithdrawalStatusBody = {
+  status: UpdateWithdrawalStatusBodyStatus;
+};
+
+export type StartRemindersBody = {
+  intervalHours?: number;
+};
 
 export type ListTasksParams = {
   status?: ListTasksStatus;

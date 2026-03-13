@@ -30,6 +30,8 @@ export const giftOrdersTable = pgTable("gift_orders", {
   amount: numeric("amount", { precision: 10, scale: 2 }).notNull(),
   paymentMethod: varchar("payment_method", { length: 20 }).notNull(),
   paymentStatus: varchar("payment_status", { length: 20 }).notNull().default("pending"),
+  withdrawalStatus: varchar("withdrawal_status", { length: 20 }).notNull().default("pending"),
+  withdrawnAt: timestamp("withdrawn_at", { withTimezone: true }),
   asaasPaymentId: text("asaas_payment_id"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),

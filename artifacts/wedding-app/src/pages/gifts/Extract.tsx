@@ -1,9 +1,12 @@
 import { useParams } from "wouter";
-import { useListGiftOrders, useGetGiftOrdersSummary } from "@workspace/api-client-react";
+import { useListGiftOrders, useGetGiftOrdersSummary, useUpdateWithdrawalStatus, type UpdateWithdrawalStatusBodyStatus } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/utils";
-import { Receipt, TrendingUp, Clock, AlertCircle } from "lucide-react";
+import { Receipt, TrendingUp, Clock, AlertCircle, Wallet, ArrowDownToLine, CheckCircle2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
 
 const STATUS_COLORS: Record<string, "warning" | "success" | "destructive" | "default"> = {
   pending: "warning",
@@ -19,6 +22,18 @@ const STATUS_LABELS: Record<string, string> = {
   refunded: "Reembolsado"
 };
 
+const WITHDRAWAL_COLORS: Record<string, "warning" | "success" | "default"> = {
+  pending: "warning",
+  available: "success",
+  withdrawn: "default"
+};
+
+const WITHDRAWAL_LABELS: Record<string, string> = {
+  pending: "Aguardando",
+  available: "Disponível p/ Saque",
+  withdrawn: "Sacado"
+};
+
 const METHOD_LABELS: Record<string, string> = {
   pix: "PIX",
   boleto: "Boleto",
@@ -28,18 +43,32 @@ const METHOD_LABELS: Record<string, string> = {
 export default function Extract() {
   const { weddingId } = useParams();
   const wid = Number(weddingId);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   
   const { data: orders, isLoading: loadingOrders } = useListGiftOrders(wid);
   const { data: summary, isLoading: loadingSummary } = useGetGiftOrdersSummary(wid);
+  const withdrawalMutation = useUpdateWithdrawalStatus();
+
+  const handleWithdrawal = async (orderId: number, status: string) => {
+    try {
+      await withdrawalMutation.mutateAsync({ weddingId: wid, orderId, data: { status: status as UpdateWithdrawalStatusBodyStatus } });
+      queryClient.invalidateQueries({ queryKey: [`/api/weddings/${wid}/gift-orders`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/weddings/${wid}/gift-orders/summary`] });
+      toast({ title: status === "withdrawn" ? "Saque registrado" : "Status atualizado" });
+    } catch {
+      toast({ variant: "destructive", title: "Erro ao atualizar status de saque" });
+    }
+  };
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       <div>
         <h1 className="text-3xl font-serif text-foreground">Extrato Financeiro</h1>
-        <p className="text-muted-foreground mt-1">Acompanhe os valores recebidos da lista de presentes (Asaas).</p>
+        <p className="text-muted-foreground mt-1">Acompanhe os valores recebidos e saques da lista de presentes.</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card className="bg-emerald-500/5 border-emerald-500/20">
           <CardContent className="p-6 flex items-center gap-4">
             <div className="p-3 bg-emerald-500/20 text-emerald-600 rounded-2xl">
@@ -66,20 +95,42 @@ export default function Extract() {
             </div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="bg-blue-500/5 border-blue-500/20">
           <CardContent className="p-6 flex items-center gap-4">
-            <div className="p-3 bg-primary/10 text-primary rounded-2xl">
-              <Receipt className="w-6 h-6" />
+            <div className="p-3 bg-blue-500/20 text-blue-600 rounded-2xl">
+              <Wallet className="w-6 h-6" />
             </div>
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Total de Pedidos</p>
-              <p className="text-2xl font-bold text-foreground mt-1">
-                {loadingSummary ? "..." : summary?.totalOrders || 0}
+              <p className="text-sm font-medium text-muted-foreground">Disponível p/ Saque</p>
+              <p className="text-2xl font-bold text-blue-600 mt-1">
+                {loadingSummary ? "..." : formatCurrency(summary?.totalAvailable || 0)}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="bg-violet-500/5 border-violet-500/20">
+          <CardContent className="p-6 flex items-center gap-4">
+            <div className="p-3 bg-violet-500/20 text-violet-600 rounded-2xl">
+              <ArrowDownToLine className="w-6 h-6" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Total Sacado</p>
+              <p className="text-2xl font-bold text-violet-600 mt-1">
+                {loadingSummary ? "..." : formatCurrency(summary?.totalWithdrawn || 0)}
               </p>
             </div>
           </CardContent>
         </Card>
       </div>
+
+      <Card className="mb-6">
+        <CardHeader className="border-b border-border/50">
+          <div className="flex items-center gap-2">
+            <Receipt className="w-5 h-5" />
+            <CardTitle>Total de Pedidos: {loadingSummary ? "..." : summary?.totalOrders || 0}</CardTitle>
+          </div>
+        </CardHeader>
+      </Card>
 
       <Card>
         <CardHeader className="border-b border-border/50">
@@ -94,15 +145,17 @@ export default function Extract() {
                 <th className="px-6 py-4 font-semibold">Presente</th>
                 <th className="px-6 py-4 font-semibold">Método</th>
                 <th className="px-6 py-4 font-semibold">Valor</th>
-                <th className="px-6 py-4 font-semibold">Status</th>
+                <th className="px-6 py-4 font-semibold">Pagamento</th>
+                <th className="px-6 py-4 font-semibold">Saque</th>
+                <th className="px-6 py-4 font-semibold">Ações</th>
               </tr>
             </thead>
             <tbody>
               {loadingOrders ? (
-                <tr><td colSpan={6} className="p-6 text-center text-muted-foreground">Carregando transações...</td></tr>
+                <tr><td colSpan={8} className="p-6 text-center text-muted-foreground">Carregando transações...</td></tr>
               ) : orders?.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="p-12 text-center text-muted-foreground">
+                  <td colSpan={8} className="p-12 text-center text-muted-foreground">
                     <AlertCircle className="w-8 h-8 mx-auto mb-3 opacity-50" />
                     Nenhuma transação encontrada.
                   </td>
@@ -129,6 +182,38 @@ export default function Extract() {
                     <Badge variant={STATUS_COLORS[order.paymentStatus]}>
                       {STATUS_LABELS[order.paymentStatus]}
                     </Badge>
+                  </td>
+                  <td className="px-6 py-4">
+                    <Badge variant={WITHDRAWAL_COLORS[order.withdrawalStatus]}>
+                      {WITHDRAWAL_LABELS[order.withdrawalStatus]}
+                    </Badge>
+                    {order.withdrawnAt && (
+                      <span className="block text-xs text-muted-foreground mt-1">
+                        {new Date(order.withdrawnAt).toLocaleDateString('pt-BR')}
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4">
+                    {order.paymentStatus === "confirmed" && order.withdrawalStatus === "pending" && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleWithdrawal(order.id, "available")}
+                        disabled={withdrawalMutation.isPending}
+                      >
+                        <Wallet className="w-3 h-3 mr-1" /> Liberar
+                      </Button>
+                    )}
+                    {order.paymentStatus === "confirmed" && order.withdrawalStatus === "available" && (
+                      <Button
+                        size="sm"
+                        variant="default"
+                        onClick={() => handleWithdrawal(order.id, "withdrawn")}
+                        disabled={withdrawalMutation.isPending}
+                      >
+                        <CheckCircle2 className="w-3 h-3 mr-1" /> Sacar
+                      </Button>
+                    )}
                   </td>
                 </tr>
               ))}

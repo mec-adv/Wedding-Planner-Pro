@@ -51,6 +51,9 @@ import type {
   MessageTemplate,
   MessageTemplateInput,
   RegisterInput,
+  RemindersResponse,
+  RemindersSendResult,
+  RemindersStatus,
   RsvpInput,
   ScheduleItem,
   ScheduleItemInput,
@@ -60,8 +63,10 @@ import type {
   SeatingTableInput,
   SendInviteInput,
   SendInviteResult,
+  StartRemindersBody,
   Task,
   TaskInput,
+  UpdateWithdrawalStatusBody,
   User,
   Vendor,
   VendorInput,
@@ -2138,6 +2143,465 @@ export function useGetGiftOrdersSummary<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary Update withdrawal status of a gift order
+ */
+export const getUpdateWithdrawalStatusUrl = (
+  weddingId: number,
+  orderId: number,
+) => {
+  return `/api/weddings/${weddingId}/gift-orders/${orderId}/withdrawal`;
+};
+
+export const updateWithdrawalStatus = async (
+  weddingId: number,
+  orderId: number,
+  updateWithdrawalStatusBody: UpdateWithdrawalStatusBody,
+  options?: RequestInit,
+): Promise<GiftOrder> => {
+  return customFetch<GiftOrder>(
+    getUpdateWithdrawalStatusUrl(weddingId, orderId),
+    {
+      ...options,
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(updateWithdrawalStatusBody),
+    },
+  );
+};
+
+export const getUpdateWithdrawalStatusMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateWithdrawalStatus>>,
+    TError,
+    {
+      weddingId: number;
+      orderId: number;
+      data: BodyType<UpdateWithdrawalStatusBody>;
+    },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateWithdrawalStatus>>,
+  TError,
+  {
+    weddingId: number;
+    orderId: number;
+    data: BodyType<UpdateWithdrawalStatusBody>;
+  },
+  TContext
+> => {
+  const mutationKey = ["updateWithdrawalStatus"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateWithdrawalStatus>>,
+    {
+      weddingId: number;
+      orderId: number;
+      data: BodyType<UpdateWithdrawalStatusBody>;
+    }
+  > = (props) => {
+    const { weddingId, orderId, data } = props ?? {};
+
+    return updateWithdrawalStatus(weddingId, orderId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateWithdrawalStatusMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateWithdrawalStatus>>
+>;
+export type UpdateWithdrawalStatusMutationBody =
+  BodyType<UpdateWithdrawalStatusBody>;
+export type UpdateWithdrawalStatusMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Update withdrawal status of a gift order
+ */
+export const useUpdateWithdrawalStatus = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateWithdrawalStatus>>,
+    TError,
+    {
+      weddingId: number;
+      orderId: number;
+      data: BodyType<UpdateWithdrawalStatusBody>;
+    },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateWithdrawalStatus>>,
+  TError,
+  {
+    weddingId: number;
+    orderId: number;
+    data: BodyType<UpdateWithdrawalStatusBody>;
+  },
+  TContext
+> => {
+  return useMutation(getUpdateWithdrawalStatusMutationOptions(options));
+};
+
+/**
+ * @summary Get automatic reminders status
+ */
+export const getGetRemindersStatusUrl = (weddingId: number) => {
+  return `/api/weddings/${weddingId}/reminders/status`;
+};
+
+export const getRemindersStatus = async (
+  weddingId: number,
+  options?: RequestInit,
+): Promise<RemindersStatus> => {
+  return customFetch<RemindersStatus>(getGetRemindersStatusUrl(weddingId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetRemindersStatusQueryKey = (weddingId: number) => {
+  return [`/api/weddings/${weddingId}/reminders/status`] as const;
+};
+
+export const getGetRemindersStatusQueryOptions = <
+  TData = Awaited<ReturnType<typeof getRemindersStatus>>,
+  TError = ErrorType<unknown>,
+>(
+  weddingId: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getRemindersStatus>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetRemindersStatusQueryKey(weddingId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getRemindersStatus>>
+  > = ({ signal }) =>
+    getRemindersStatus(weddingId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!weddingId,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getRemindersStatus>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetRemindersStatusQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getRemindersStatus>>
+>;
+export type GetRemindersStatusQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get automatic reminders status
+ */
+
+export function useGetRemindersStatus<
+  TData = Awaited<ReturnType<typeof getRemindersStatus>>,
+  TError = ErrorType<unknown>,
+>(
+  weddingId: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getRemindersStatus>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetRemindersStatusQueryOptions(weddingId, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Start automatic RSVP reminders
+ */
+export const getStartRemindersUrl = (weddingId: number) => {
+  return `/api/weddings/${weddingId}/reminders/start`;
+};
+
+export const startReminders = async (
+  weddingId: number,
+  startRemindersBody: StartRemindersBody,
+  options?: RequestInit,
+): Promise<RemindersResponse> => {
+  return customFetch<RemindersResponse>(getStartRemindersUrl(weddingId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(startRemindersBody),
+  });
+};
+
+export const getStartRemindersMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof startReminders>>,
+    TError,
+    { weddingId: number; data: BodyType<StartRemindersBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof startReminders>>,
+  TError,
+  { weddingId: number; data: BodyType<StartRemindersBody> },
+  TContext
+> => {
+  const mutationKey = ["startReminders"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof startReminders>>,
+    { weddingId: number; data: BodyType<StartRemindersBody> }
+  > = (props) => {
+    const { weddingId, data } = props ?? {};
+
+    return startReminders(weddingId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type StartRemindersMutationResult = NonNullable<
+  Awaited<ReturnType<typeof startReminders>>
+>;
+export type StartRemindersMutationBody = BodyType<StartRemindersBody>;
+export type StartRemindersMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Start automatic RSVP reminders
+ */
+export const useStartReminders = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof startReminders>>,
+    TError,
+    { weddingId: number; data: BodyType<StartRemindersBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof startReminders>>,
+  TError,
+  { weddingId: number; data: BodyType<StartRemindersBody> },
+  TContext
+> => {
+  return useMutation(getStartRemindersMutationOptions(options));
+};
+
+/**
+ * @summary Stop automatic RSVP reminders
+ */
+export const getStopRemindersUrl = (weddingId: number) => {
+  return `/api/weddings/${weddingId}/reminders/stop`;
+};
+
+export const stopReminders = async (
+  weddingId: number,
+  options?: RequestInit,
+): Promise<RemindersResponse> => {
+  return customFetch<RemindersResponse>(getStopRemindersUrl(weddingId), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getStopRemindersMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof stopReminders>>,
+    TError,
+    { weddingId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof stopReminders>>,
+  TError,
+  { weddingId: number },
+  TContext
+> => {
+  const mutationKey = ["stopReminders"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof stopReminders>>,
+    { weddingId: number }
+  > = (props) => {
+    const { weddingId } = props ?? {};
+
+    return stopReminders(weddingId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type StopRemindersMutationResult = NonNullable<
+  Awaited<ReturnType<typeof stopReminders>>
+>;
+
+export type StopRemindersMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Stop automatic RSVP reminders
+ */
+export const useStopReminders = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof stopReminders>>,
+    TError,
+    { weddingId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof stopReminders>>,
+  TError,
+  { weddingId: number },
+  TContext
+> => {
+  return useMutation(getStopRemindersMutationOptions(options));
+};
+
+/**
+ * @summary Send reminders immediately to all pending guests
+ */
+export const getSendRemindersNowUrl = (weddingId: number) => {
+  return `/api/weddings/${weddingId}/reminders/send-now`;
+};
+
+export const sendRemindersNow = async (
+  weddingId: number,
+  options?: RequestInit,
+): Promise<RemindersSendResult> => {
+  return customFetch<RemindersSendResult>(getSendRemindersNowUrl(weddingId), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getSendRemindersNowMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof sendRemindersNow>>,
+    TError,
+    { weddingId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof sendRemindersNow>>,
+  TError,
+  { weddingId: number },
+  TContext
+> => {
+  const mutationKey = ["sendRemindersNow"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof sendRemindersNow>>,
+    { weddingId: number }
+  > = (props) => {
+    const { weddingId } = props ?? {};
+
+    return sendRemindersNow(weddingId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SendRemindersNowMutationResult = NonNullable<
+  Awaited<ReturnType<typeof sendRemindersNow>>
+>;
+
+export type SendRemindersNowMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Send reminders immediately to all pending guests
+ */
+export const useSendRemindersNow = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof sendRemindersNow>>,
+    TError,
+    { weddingId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof sendRemindersNow>>,
+  TError,
+  { weddingId: number },
+  TContext
+> => {
+  return useMutation(getSendRemindersNowMutationOptions(options));
+};
 
 /**
  * @summary List tasks

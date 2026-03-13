@@ -7,6 +7,7 @@
  */
 import type { GiftOrderPaymentMethod } from "./giftOrderPaymentMethod";
 import type { GiftOrderPaymentStatus } from "./giftOrderPaymentStatus";
+import type { GiftOrderWithdrawalStatus } from "./giftOrderWithdrawalStatus";
 
 export interface GiftOrder {
   id: number;
@@ -18,6 +19,9 @@ export interface GiftOrder {
   amount: number;
   paymentMethod: GiftOrderPaymentMethod;
   paymentStatus: GiftOrderPaymentStatus;
+  withdrawalStatus: GiftOrderWithdrawalStatus;
+  /** @nullable */
+  withdrawnAt?: Date | null;
   /** @nullable */
   asaasPaymentId?: string | null;
   /** @nullable */

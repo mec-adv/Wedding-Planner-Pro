@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import { db, giftsTable, giftOrdersTable } from "@workspace/db";
 import {
   ListGiftsParams,
@@ -120,6 +120,7 @@ router.get("/weddings/:weddingId/gift-orders", authMiddleware, requireWeddingRol
     ...o.order,
     amount: Number(o.order.amount),
     giftName: o.giftName,
+    withdrawnAt: o.order.withdrawnAt?.toISOString() ?? null,
     createdAt: o.order.createdAt.toISOString(),
   })));
 });
@@ -205,8 +206,11 @@ router.get("/weddings/:weddingId/gift-orders/summary", authMiddleware, requireWe
   const orders = await db.select().from(giftOrdersTable)
     .where(eq(giftOrdersTable.weddingId, params.data.weddingId));
 
-  const totalReceived = orders.filter(o => o.paymentStatus === "confirmed").reduce((sum, o) => sum + Number(o.amount), 0);
+  const confirmed = orders.filter(o => o.paymentStatus === "confirmed");
+  const totalReceived = confirmed.reduce((sum, o) => sum + Number(o.amount), 0);
   const totalPending = orders.filter(o => o.paymentStatus === "pending").reduce((sum, o) => sum + Number(o.amount), 0);
+  const totalWithdrawn = confirmed.filter(o => o.withdrawalStatus === "withdrawn").reduce((sum, o) => sum + Number(o.amount), 0);
+  const totalAvailable = confirmed.filter(o => o.withdrawalStatus === "available").reduce((sum, o) => sum + Number(o.amount), 0);
 
   const guestMap = new Map<string, { total: number; status: string }>();
   for (const order of orders) {
@@ -218,12 +222,49 @@ router.get("/weddings/:weddingId/gift-orders/summary", authMiddleware, requireWe
   res.json({
     totalReceived,
     totalPending,
+    totalWithdrawn,
+    totalAvailable,
     totalOrders: orders.length,
     ordersByGuest: Array.from(guestMap.entries()).map(([name, data]) => ({
       guestName: name,
       totalAmount: data.total,
       status: data.status,
     })),
+  });
+});
+
+router.patch("/weddings/:weddingId/gift-orders/:orderId/withdrawal", authMiddleware, requireWeddingRole("planner"), async (req, res): Promise<void> => {
+  const weddingId = Number(req.params.weddingId);
+  const orderId = Number(req.params.orderId);
+  if (isNaN(weddingId) || isNaN(orderId)) {
+    res.status(400).json({ error: "IDs inválidos" });
+    return;
+  }
+
+  const { status } = req.body as { status?: string };
+  if (!status || !["pending", "available", "withdrawn"].includes(status)) {
+    res.status(400).json({ error: "Status inválido. Use: pending, available, withdrawn" });
+    return;
+  }
+
+  const updateData: Record<string, unknown> = { withdrawalStatus: status };
+  if (status === "withdrawn") {
+    updateData.withdrawnAt = new Date();
+  }
+
+  const [order] = await db.update(giftOrdersTable).set(updateData)
+    .where(and(eq(giftOrdersTable.id, orderId), eq(giftOrdersTable.weddingId, weddingId))).returning();
+
+  if (!order) {
+    res.status(404).json({ error: "Pedido não encontrado" });
+    return;
+  }
+
+  res.json({
+    ...order,
+    amount: Number(order.amount),
+    withdrawnAt: order.withdrawnAt?.toISOString() ?? null,
+    createdAt: order.createdAt.toISOString(),
   });
 });
 

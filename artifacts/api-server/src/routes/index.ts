@@ -16,6 +16,7 @@ import settingsRouter from "./settings";
 import dashboardRouter from "./dashboard";
 import webhooksRouter from "./webhooks";
 import invitationsRouter from "./invitations";
+import remindersRouter from "./reminders";
 
 const router: IRouter = Router();
 
@@ -36,5 +37,6 @@ router.use(settingsRouter);
 router.use(dashboardRouter);
 router.use(webhooksRouter);
 router.use(invitationsRouter);
+router.use(remindersRouter);
 
 export default router;

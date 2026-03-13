@@ -10,6 +10,8 @@ import type { GuestContribution } from "./guestContribution";
 export interface FinancialSummary {
   totalReceived: number;
   totalPending: number;
+  totalWithdrawn: number;
+  totalAvailable: number;
   totalOrders: number;
   ordersByGuest: GuestContribution[];
 }

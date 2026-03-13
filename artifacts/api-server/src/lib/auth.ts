@@ -6,6 +6,14 @@ import type { Request, Response, NextFunction } from "express";
 
 export type UserRole = "admin" | "planner" | "coordinator" | "couple" | "guest";
 
+export const ROLE_LABELS: Record<UserRole, string> = {
+  admin: "Administrador",
+  planner: "Cerimonialista",
+  coordinator: "Coordenador(a)",
+  couple: "Casal",
+  guest: "Convidado(a)",
+};
+
 export interface AuthRequest extends Request {
   userId: number;
   userRole: UserRole;

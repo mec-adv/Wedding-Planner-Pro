@@ -42,7 +42,7 @@ export async function createAsaasPayment(weddingId: number, params: CreatePaymen
 
   let customerId: string;
   if (customerResponse.ok) {
-    const customerData = await customerResponse.json();
+    const customerData = await customerResponse.json() as { id: string };
     customerId = customerData.id;
   } else {
     throw new Error("Falha ao criar cliente no Asaas");
@@ -68,6 +68,6 @@ export async function createAsaasPayment(weddingId: number, params: CreatePaymen
     throw new Error(`Falha ao criar cobrança: ${error}`);
   }
 
-  const paymentData = await paymentResponse.json();
+  const paymentData = await paymentResponse.json() as { id: string };
   return { id: paymentData.id };
 }

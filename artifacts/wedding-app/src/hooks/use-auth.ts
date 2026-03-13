@@ -31,6 +31,7 @@ export function useAuth() {
   
   const { data: user, isLoading } = useGetMe({
     query: {
+      queryKey: ['/api/auth/me'],
       enabled: !!token,
       retry: false,
     }

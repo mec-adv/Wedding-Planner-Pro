@@ -23,7 +23,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   
   // For MVP, we'll just pick the first wedding if available
   const { data: weddings } = useListWeddings({
-    query: { enabled: !!user }
+    query: { queryKey: ['/api/weddings'], enabled: !!user }
   });
   const currentWedding = weddings?.[0];
   const wId = currentWedding?.id || 1;

@@ -36,8 +36,8 @@ router.post("/weddings/:weddingId/budget-categories", authMiddleware, async (req
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
 
   const [cat] = await db.insert(budgetCategoriesTable).values({
-    ...parsed.data,
-    estimatedTotal: String(parsed.data.estimatedTotal),
+    name: parsed.data.name || "Nova Categoria",
+    estimatedTotal: String(parsed.data.estimatedTotal ?? 0),
     weddingId: params.data.weddingId,
   }).returning();
   res.status(201).json({ ...cat, estimatedTotal: Number(cat.estimatedTotal), createdAt: cat.createdAt.toISOString() });

@@ -8,7 +8,7 @@ import {
   UpdateWeddingBody,
   DeleteWeddingParams,
 } from "@workspace/api-zod";
-import { authMiddleware } from "../lib/auth";
+import { authMiddleware, verifyWeddingAccess } from "../lib/auth";
 
 const router: IRouter = Router();
 
@@ -34,8 +34,13 @@ router.post("/weddings", authMiddleware, async (req, res): Promise<void> => {
 
   const userId = (req as any).userId;
   const [wedding] = await db.insert(weddingsTable).values({
-    ...parsed.data,
+    title: parsed.data.title || "Novo Casamento",
+    groomName: parsed.data.groomName || "",
+    brideName: parsed.data.brideName || "",
     date: parsed.data.date || new Date(),
+    venue: parsed.data.venue,
+    description: parsed.data.description,
+    coverImageUrl: parsed.data.coverImageUrl,
     createdById: userId,
   }).returning();
 
@@ -46,7 +51,7 @@ router.post("/weddings", authMiddleware, async (req, res): Promise<void> => {
   });
 });
 
-router.get("/weddings/:id", authMiddleware, async (req, res): Promise<void> => {
+router.get("/weddings/:id", authMiddleware, verifyWeddingAccess, async (req, res): Promise<void> => {
   const params = GetWeddingParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
@@ -66,7 +71,7 @@ router.get("/weddings/:id", authMiddleware, async (req, res): Promise<void> => {
   });
 });
 
-router.patch("/weddings/:id", authMiddleware, async (req, res): Promise<void> => {
+router.patch("/weddings/:id", authMiddleware, verifyWeddingAccess, async (req, res): Promise<void> => {
   const params = UpdateWeddingParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
@@ -97,7 +102,7 @@ router.patch("/weddings/:id", authMiddleware, async (req, res): Promise<void> =>
   });
 });
 
-router.delete("/weddings/:id", authMiddleware, async (req, res): Promise<void> => {
+router.delete("/weddings/:id", authMiddleware, verifyWeddingAccess, async (req, res): Promise<void> => {
   const params = DeleteWeddingParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });

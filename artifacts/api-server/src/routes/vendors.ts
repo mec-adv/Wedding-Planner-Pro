@@ -27,10 +27,17 @@ router.post("/weddings/:weddingId/vendors", authMiddleware, async (req, res): Pr
   const parsed = CreateVendorBody.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
 
-  const insertData: any = { ...parsed.data, weddingId: params.data.weddingId };
-  if (insertData.price !== undefined && insertData.price !== null) insertData.price = String(insertData.price);
-
-  const [vendor] = await db.insert(vendorsTable).values(insertData).returning();
+  const [vendor] = await db.insert(vendorsTable).values({
+    name: parsed.data.name || "",
+    category: parsed.data.category || "geral",
+    contactName: parsed.data.contactName,
+    phone: parsed.data.phone,
+    email: parsed.data.email,
+    price: parsed.data.price != null ? String(parsed.data.price) : null,
+    status: parsed.data.status,
+    notes: parsed.data.notes,
+    weddingId: params.data.weddingId,
+  }).returning();
   res.status(201).json({ ...vendor, price: vendor.price ? Number(vendor.price) : null, createdAt: vendor.createdAt.toISOString() });
 });
 

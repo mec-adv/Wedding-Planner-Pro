@@ -4,12 +4,10 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/use-auth";
 
-// Layout & Auth
 import { AppLayout } from "@/components/layout/AppLayout";
 import Login from "@/pages/auth/Login";
 import Register from "@/pages/auth/Register";
 
-// Pages
 import SelectWedding from "@/pages/weddings/SelectWedding";
 import Dashboard from "@/pages/dashboard/Dashboard";
 import Guests from "@/pages/guests/Guests";
@@ -18,11 +16,15 @@ import Extract from "@/pages/gifts/Extract";
 import Tasks from "@/pages/tasks/Tasks";
 import Budget from "@/pages/budget/Budget";
 import Schedule from "@/pages/schedule/Schedule";
+import Vendors from "@/pages/vendors/Vendors";
+import Coordinators from "@/pages/coordinators/Coordinators";
+import Messages from "@/pages/messages/Messages";
+import Settings from "@/pages/settings/Settings";
+import Seating from "@/pages/seating/Seating";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
 
-// Monkey-patch fetch to include auth token for @workspace/api-client-react
 const originalFetch = window.fetch;
 window.fetch = async (...args) => {
   const token = localStorage.getItem('auth_token');
@@ -55,7 +57,6 @@ function Router() {
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
       
-      {/* Protected Routes */}
       <Route path="/" component={() => <ProtectedRoute component={SelectWedding} />} />
       <Route path="/weddings/:weddingId/dashboard" component={() => <ProtectedRoute component={Dashboard} />} />
       <Route path="/weddings/:weddingId/guests" component={() => <ProtectedRoute component={Guests} />} />
@@ -64,14 +65,11 @@ function Router() {
       <Route path="/weddings/:weddingId/tasks" component={() => <ProtectedRoute component={Tasks} />} />
       <Route path="/weddings/:weddingId/budget" component={() => <ProtectedRoute component={Budget} />} />
       <Route path="/weddings/:weddingId/schedule" component={() => <ProtectedRoute component={Schedule} />} />
-      
-      {/* Fallback for not fully implemented pages just to not break routing */}
-      <Route path="/weddings/:weddingId/seating" component={() => <ProtectedRoute component={() => <div className="p-8 text-center text-muted-foreground">Mapa de Assentos em construção</div>} />} />
-      <Route path="/weddings/:weddingId/vendors" component={() => <ProtectedRoute component={() => <div className="p-8 text-center text-muted-foreground">Fornecedores em construção</div>} />} />
-      <Route path="/weddings/:weddingId/coordinators" component={() => <ProtectedRoute component={() => <div className="p-8 text-center text-muted-foreground">Equipe em construção</div>} />} />
-      <Route path="/weddings/:weddingId/messages" component={() => <ProtectedRoute component={() => <div className="p-8 text-center text-muted-foreground">Mensagens em construção</div>} />} />
-      <Route path="/weddings/:weddingId/templates" component={() => <ProtectedRoute component={() => <div className="p-8 text-center text-muted-foreground">Modelos em construção</div>} />} />
-      <Route path="/weddings/:weddingId/settings" component={() => <ProtectedRoute component={() => <div className="p-8 text-center text-muted-foreground">Configurações em construção</div>} />} />
+      <Route path="/weddings/:weddingId/vendors" component={() => <ProtectedRoute component={Vendors} />} />
+      <Route path="/weddings/:weddingId/coordinators" component={() => <ProtectedRoute component={Coordinators} />} />
+      <Route path="/weddings/:weddingId/messages" component={() => <ProtectedRoute component={Messages} />} />
+      <Route path="/weddings/:weddingId/settings" component={() => <ProtectedRoute component={Settings} />} />
+      <Route path="/weddings/:weddingId/seating" component={() => <ProtectedRoute component={Seating} />} />
 
       <Route component={NotFound} />
     </Switch>

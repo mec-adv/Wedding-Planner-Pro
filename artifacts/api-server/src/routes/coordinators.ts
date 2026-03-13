@@ -27,7 +27,13 @@ router.post("/weddings/:weddingId/coordinators", authMiddleware, async (req, res
   const parsed = CreateCoordinatorBody.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
 
-  const [coordinator] = await db.insert(coordinatorsTable).values({ ...parsed.data, weddingId: params.data.weddingId }).returning();
+  const [coordinator] = await db.insert(coordinatorsTable).values({
+    name: parsed.data.name || "",
+    role: parsed.data.role || "coordenador",
+    phone: parsed.data.phone,
+    email: parsed.data.email,
+    weddingId: params.data.weddingId,
+  }).returning();
   res.status(201).json({ ...coordinator, createdAt: coordinator.createdAt.toISOString() });
 });
 

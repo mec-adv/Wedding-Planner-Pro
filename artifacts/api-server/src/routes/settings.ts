@@ -69,7 +69,7 @@ router.post("/weddings/:weddingId/settings/test-whatsapp", authMiddleware, async
     });
 
     if (response.ok) {
-      const data = await response.json();
+      const data = await response.json() as Record<string, unknown>;
       res.json({ success: true, message: `Conectado! Status: ${JSON.stringify(data)}` });
     } else {
       res.json({ success: false, message: `Erro na conexão: ${response.statusText}` });
@@ -101,8 +101,8 @@ router.post("/weddings/:weddingId/settings/test-asaas", authMiddleware, async (r
     });
 
     if (response.ok) {
-      const data = await response.json();
-      res.json({ success: true, message: `Conectado! Saldo: R$ ${data.balance || 0}` });
+      const data = await response.json() as Record<string, unknown>;
+      res.json({ success: true, message: `Conectado! Saldo: R$ ${(data as any).balance || 0}` });
     } else {
       res.json({ success: false, message: `Erro na conexão: ${response.statusText}` });
     }

@@ -37,9 +37,11 @@ router.post("/weddings/:weddingId/tables", authMiddleware, async (req, res): Pro
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
 
   const [table] = await db.insert(seatingTablesTable).values({
-    ...parsed.data,
-    positionX: String(parsed.data.positionX),
-    positionY: String(parsed.data.positionY),
+    name: parsed.data.name || "Nova Mesa",
+    capacity: parsed.data.capacity,
+    shape: parsed.data.shape,
+    positionX: String(parsed.data.positionX ?? 0),
+    positionY: String(parsed.data.positionY ?? 0),
     weddingId: params.data.weddingId,
   }).returning();
 

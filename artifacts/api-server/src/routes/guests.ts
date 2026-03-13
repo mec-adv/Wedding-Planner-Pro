@@ -60,7 +60,14 @@ router.post("/weddings/:weddingId/guests", authMiddleware, async (req, res): Pro
   }
 
   const [guest] = await db.insert(guestsTable).values({
-    ...parsed.data,
+    name: parsed.data.name || "",
+    email: parsed.data.email,
+    phone: parsed.data.phone,
+    group: parsed.data.group,
+    rsvpStatus: parsed.data.rsvpStatus,
+    plusOne: parsed.data.plusOne,
+    dietaryRestrictions: parsed.data.dietaryRestrictions,
+    plusOneName: parsed.data.plusOneName,
     weddingId: params.data.weddingId,
   }).returning();
 
@@ -91,7 +98,12 @@ router.post("/weddings/:weddingId/guests/import", authMiddleware, async (req, re
   for (const guestData of parsed.data.guests) {
     try {
       await db.insert(guestsTable).values({
-        ...guestData,
+        name: guestData.name || "",
+        email: guestData.email,
+        phone: guestData.phone,
+        group: guestData.group,
+        rsvpStatus: guestData.rsvpStatus,
+        plusOne: guestData.plusOne,
         weddingId: params.data.weddingId,
       });
       imported++;

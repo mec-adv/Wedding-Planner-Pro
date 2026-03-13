@@ -29,7 +29,16 @@ router.post("/weddings/:weddingId/schedule", authMiddleware, async (req, res): P
   const parsed = CreateScheduleItemBody.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
 
-  const [item] = await db.insert(scheduleItemsTable).values({ ...parsed.data, weddingId: params.data.weddingId }).returning();
+  const [item] = await db.insert(scheduleItemsTable).values({
+    title: parsed.data.title || "Novo Item",
+    startTime: parsed.data.startTime || "00:00",
+    endTime: parsed.data.endTime,
+    description: parsed.data.description,
+    location: parsed.data.location,
+    responsible: parsed.data.responsible,
+    sortOrder: parsed.data.sortOrder,
+    weddingId: params.data.weddingId,
+  }).returning();
   res.status(201).json({ ...item, createdAt: item.createdAt.toISOString() });
 });
 

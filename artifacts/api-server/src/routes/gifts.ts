@@ -46,8 +46,11 @@ router.post("/weddings/:weddingId/gifts", authMiddleware, async (req, res): Prom
   }
 
   const [gift] = await db.insert(giftsTable).values({
-    ...parsed.data,
-    price: String(parsed.data.price),
+    name: parsed.data.name || "Presente",
+    price: String(parsed.data.price ?? 0),
+    description: parsed.data.description,
+    imageUrl: parsed.data.imageUrl,
+    category: parsed.data.category || "geral",
     weddingId: params.data.weddingId,
   }).returning();
 

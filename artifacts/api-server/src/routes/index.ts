@@ -1,4 +1,5 @@
 import { Router, type IRouter } from "express";
+import { authMiddleware, verifyWeddingAccess } from "../lib/auth";
 import healthRouter from "./health";
 import authRouter from "./auth";
 import weddingsRouter from "./weddings";
@@ -20,6 +21,7 @@ const router: IRouter = Router();
 router.use(healthRouter);
 router.use(authRouter);
 router.use(weddingsRouter);
+router.use("/weddings/:weddingId", authMiddleware, verifyWeddingAccess);
 router.use(guestsRouter);
 router.use(giftsRouter);
 router.use(tasksRouter);

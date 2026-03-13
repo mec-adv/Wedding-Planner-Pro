@@ -33,7 +33,12 @@ router.post("/weddings/:weddingId/messages", async (req, res): Promise<void> => 
   const parsed = CreateMessageBody.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
 
-  const [message] = await db.insert(messagesTable).values({ ...parsed.data, weddingId: params.data.weddingId }).returning();
+  const [message] = await db.insert(messagesTable).values({
+    senderName: parsed.data.senderName || "Anônimo",
+    content: parsed.data.content || "",
+    messageType: parsed.data.messageType,
+    weddingId: params.data.weddingId,
+  }).returning();
   res.status(201).json({ ...message, createdAt: message.createdAt.toISOString() });
 });
 
@@ -58,7 +63,13 @@ router.post("/weddings/:weddingId/message-templates", authMiddleware, async (req
   const parsed = CreateMessageTemplateBody.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
 
-  const [template] = await db.insert(messageTemplatesTable).values({ ...parsed.data, weddingId: params.data.weddingId }).returning();
+  const [template] = await db.insert(messageTemplatesTable).values({
+    name: parsed.data.name || "Novo Modelo",
+    content: parsed.data.content || "",
+    category: parsed.data.category,
+    variables: parsed.data.variables,
+    weddingId: params.data.weddingId,
+  }).returning();
   res.status(201).json({ ...template, createdAt: template.createdAt.toISOString() });
 });
 

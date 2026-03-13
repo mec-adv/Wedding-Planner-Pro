@@ -1,10 +1,25 @@
 import { Router, type IRouter } from "express";
 import { eq } from "drizzle-orm";
-import { db, giftOrdersTable } from "@workspace/db";
+import { db, giftOrdersTable, integrationSettingsTable } from "@workspace/db";
 
 const router: IRouter = Router();
 
 router.post("/webhooks/asaas", async (req, res): Promise<void> => {
+  const webhookToken = req.headers["asaas-access-token"] as string | undefined;
+
+  if (!webhookToken) {
+    console.warn("Asaas webhook: missing access token");
+    res.status(401).json({ error: "Missing webhook token" });
+    return;
+  }
+
+  const [settings] = await db.select().from(integrationSettingsTable).where(eq(integrationSettingsTable.asaasWebhookToken, webhookToken));
+  if (!settings) {
+    console.warn("Asaas webhook: invalid access token");
+    res.status(401).json({ error: "Invalid webhook token" });
+    return;
+  }
+
   const body = req.body;
 
   if (!body || !body.payment) {

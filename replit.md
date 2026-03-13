@@ -19,7 +19,7 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - **API codegen**: Orval (from OpenAPI spec)
 - **Build**: esbuild (CJS bundle)
 - **State**: Zustand (auth store), React Query (server state)
-- **Auth**: JWT (bcryptjs + jsonwebtoken), stored in localStorage
+- **Auth**: JWT (bcryptjs + jsonwebtoken), stored in localStorage, wedding ownership verification middleware
 - **Payments**: Asaas gateway (PIX, boleto, credit card)
 - **Messaging**: Evolution API (WhatsApp integration)
 
@@ -51,7 +51,8 @@ artifacts-monorepo/
 │   │   │                   # settings, dashboard, webhooks
 │   │   └── src/lib/        # auth.ts, asaas.ts, evolution-api.ts
 │   └── wedding-app/        # React + Vite frontend (previewPath /)
-│       ├── src/pages/      # auth, dashboard, guests, gifts, tasks, budget, schedule, weddings
+│       ├── src/pages/      # auth, dashboard, guests, gifts, tasks, budget, schedule, weddings,
+│       │                   # vendors, coordinators, messages, settings, seating
 │       ├── src/components/  # ui/ (shadcn), layout/
 │       └── src/hooks/      # use-auth.ts, use-toast.ts
 ├── lib/

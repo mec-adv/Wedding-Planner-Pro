@@ -1,22 +1,45 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Wedding Management API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication
+  - name: weddings
+    description: Wedding management
+  - name: guests
+    description: Guest management
+  - name: gifts
+    description: Gift registry
+  - name: tasks
+    description: Task management
+  - name: vendors
+    description: Vendor management
+  - name: coordinators
+    description: Coordinator management
+  - name: schedule
+    description: Wedding day schedule
+  - name: budget
+    description: Budget management
+  - name: seating
+    description: Seating chart
+  - name: messages
+    description: Messages and communication
+  - name: settings
+    description: Integration settings
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +47,1539 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /auth/register:
+    post:
+      operationId: register
+      tags: [auth]
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterInput"
+      responses:
+        "201":
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current user
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /weddings:
+    get:
+      operationId: listWeddings
+      tags: [weddings]
+      summary: List weddings
+      responses:
+        "200":
+          description: Wedding list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Wedding"
+    post:
+      operationId: createWedding
+      tags: [weddings]
+      summary: Create wedding
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WeddingInput"
+      responses:
+        "201":
+          description: Wedding created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Wedding"
+
+  /weddings/{id}:
+    get:
+      operationId: getWedding
+      tags: [weddings]
+      summary: Get wedding
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Wedding detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Wedding"
+    patch:
+      operationId: updateWedding
+      tags: [weddings]
+      summary: Update wedding
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WeddingInput"
+      responses:
+        "200":
+          description: Wedding updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Wedding"
+    delete:
+      operationId: deleteWedding
+      tags: [weddings]
+      summary: Delete wedding
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /weddings/{weddingId}/guests:
+    get:
+      operationId: listGuests
+      tags: [guests]
+      summary: List guests
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, confirmed, declined, maybe]
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Guest list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Guest"
+    post:
+      operationId: createGuest
+      tags: [guests]
+      summary: Create guest
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GuestInput"
+      responses:
+        "201":
+          description: Guest created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Guest"
+
+  /weddings/{weddingId}/guests/import:
+    post:
+      operationId: importGuests
+      tags: [guests]
+      summary: Import guests from CSV/JSON
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GuestImportInput"
+      responses:
+        "200":
+          description: Import result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImportResult"
+
+  /weddings/{weddingId}/guests/{id}:
+    get:
+      operationId: getGuest
+      tags: [guests]
+      summary: Get guest
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Guest detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Guest"
+    patch:
+      operationId: updateGuest
+      tags: [guests]
+      summary: Update guest
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GuestInput"
+      responses:
+        "200":
+          description: Guest updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Guest"
+    delete:
+      operationId: deleteGuest
+      tags: [guests]
+      summary: Delete guest
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /weddings/{weddingId}/guests/{id}/rsvp:
+    patch:
+      operationId: updateGuestRsvp
+      tags: [guests]
+      summary: Update RSVP status
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RsvpInput"
+      responses:
+        "200":
+          description: RSVP updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Guest"
+
+  /weddings/{weddingId}/guests/{id}/send-invite:
+    post:
+      operationId: sendGuestInvite
+      tags: [guests]
+      summary: Send invite via email or WhatsApp
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendInviteInput"
+      responses:
+        "200":
+          description: Invite sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SendInviteResult"
+
+  /weddings/{weddingId}/gifts:
+    get:
+      operationId: listGifts
+      tags: [gifts]
+      summary: List gifts
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Gift list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Gift"
+    post:
+      operationId: createGift
+      tags: [gifts]
+      summary: Create gift
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GiftInput"
+      responses:
+        "201":
+          description: Gift created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Gift"
+
+  /weddings/{weddingId}/gifts/{id}:
+    patch:
+      operationId: updateGift
+      tags: [gifts]
+      summary: Update gift
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GiftInput"
+      responses:
+        "200":
+          description: Gift updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Gift"
+    delete:
+      operationId: deleteGift
+      tags: [gifts]
+      summary: Delete gift
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /weddings/{weddingId}/gift-orders:
+    get:
+      operationId: listGiftOrders
+      tags: [gifts]
+      summary: List gift orders / financial extract
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Gift orders list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GiftOrder"
+    post:
+      operationId: createGiftOrder
+      tags: [gifts]
+      summary: Create gift order (checkout)
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GiftOrderInput"
+      responses:
+        "201":
+          description: Gift order created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GiftOrder"
+
+  /weddings/{weddingId}/gift-orders/summary:
+    get:
+      operationId: getGiftOrdersSummary
+      tags: [gifts]
+      summary: Get financial summary
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Financial summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FinancialSummary"
+
+  /weddings/{weddingId}/tasks:
+    get:
+      operationId: listTasks
+      tags: [tasks]
+      summary: List tasks
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, in_progress, completed, cancelled]
+      responses:
+        "200":
+          description: Task list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Task"
+    post:
+      operationId: createTask
+      tags: [tasks]
+      summary: Create task
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskInput"
+      responses:
+        "201":
+          description: Task created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+
+  /weddings/{weddingId}/tasks/{id}:
+    patch:
+      operationId: updateTask
+      tags: [tasks]
+      summary: Update task
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskInput"
+      responses:
+        "200":
+          description: Task updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+    delete:
+      operationId: deleteTask
+      tags: [tasks]
+      summary: Delete task
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /weddings/{weddingId}/vendors:
+    get:
+      operationId: listVendors
+      tags: [vendors]
+      summary: List vendors
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Vendor list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Vendor"
+    post:
+      operationId: createVendor
+      tags: [vendors]
+      summary: Create vendor
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VendorInput"
+      responses:
+        "201":
+          description: Vendor created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Vendor"
+
+  /weddings/{weddingId}/vendors/{id}:
+    patch:
+      operationId: updateVendor
+      tags: [vendors]
+      summary: Update vendor
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VendorInput"
+      responses:
+        "200":
+          description: Vendor updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Vendor"
+    delete:
+      operationId: deleteVendor
+      tags: [vendors]
+      summary: Delete vendor
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /weddings/{weddingId}/coordinators:
+    get:
+      operationId: listCoordinators
+      tags: [coordinators]
+      summary: List coordinators
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Coordinator list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Coordinator"
+    post:
+      operationId: createCoordinator
+      tags: [coordinators]
+      summary: Create coordinator
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CoordinatorInput"
+      responses:
+        "201":
+          description: Coordinator created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Coordinator"
+
+  /weddings/{weddingId}/coordinators/{id}:
+    patch:
+      operationId: updateCoordinator
+      tags: [coordinators]
+      summary: Update coordinator
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CoordinatorInput"
+      responses:
+        "200":
+          description: Coordinator updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Coordinator"
+    delete:
+      operationId: deleteCoordinator
+      tags: [coordinators]
+      summary: Delete coordinator
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /weddings/{weddingId}/schedule:
+    get:
+      operationId: listScheduleItems
+      tags: [schedule]
+      summary: List schedule items
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Schedule list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ScheduleItem"
+    post:
+      operationId: createScheduleItem
+      tags: [schedule]
+      summary: Create schedule item
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ScheduleItemInput"
+      responses:
+        "201":
+          description: Schedule item created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScheduleItem"
+
+  /weddings/{weddingId}/schedule/{id}:
+    patch:
+      operationId: updateScheduleItem
+      tags: [schedule]
+      summary: Update schedule item
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ScheduleItemInput"
+      responses:
+        "200":
+          description: Schedule item updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScheduleItem"
+    delete:
+      operationId: deleteScheduleItem
+      tags: [schedule]
+      summary: Delete schedule item
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /weddings/{weddingId}/budget-categories:
+    get:
+      operationId: listBudgetCategories
+      tags: [budget]
+      summary: List budget categories
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Budget categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BudgetCategory"
+    post:
+      operationId: createBudgetCategory
+      tags: [budget]
+      summary: Create budget category
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BudgetCategoryInput"
+      responses:
+        "201":
+          description: Budget category created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BudgetCategory"
+
+  /weddings/{weddingId}/budget-categories/{id}:
+    patch:
+      operationId: updateBudgetCategory
+      tags: [budget]
+      summary: Update budget category
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BudgetCategoryInput"
+      responses:
+        "200":
+          description: Budget category updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BudgetCategory"
+    delete:
+      operationId: deleteBudgetCategory
+      tags: [budget]
+      summary: Delete budget category
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /weddings/{weddingId}/budget-items:
+    get:
+      operationId: listBudgetItems
+      tags: [budget]
+      summary: List budget items
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: categoryId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Budget items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BudgetItem"
+    post:
+      operationId: createBudgetItem
+      tags: [budget]
+      summary: Create budget item
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BudgetItemInput"
+      responses:
+        "201":
+          description: Budget item created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BudgetItem"
+
+  /weddings/{weddingId}/budget-items/{id}:
+    patch:
+      operationId: updateBudgetItem
+      tags: [budget]
+      summary: Update budget item
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BudgetItemInput"
+      responses:
+        "200":
+          description: Budget item updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BudgetItem"
+    delete:
+      operationId: deleteBudgetItem
+      tags: [budget]
+      summary: Delete budget item
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /weddings/{weddingId}/budget-summary:
+    get:
+      operationId: getBudgetSummary
+      tags: [budget]
+      summary: Get budget summary
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Budget summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BudgetSummary"
+
+  /weddings/{weddingId}/tables:
+    get:
+      operationId: listTables
+      tags: [seating]
+      summary: List tables
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Table list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SeatingTable"
+    post:
+      operationId: createTable
+      tags: [seating]
+      summary: Create table
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SeatingTableInput"
+      responses:
+        "201":
+          description: Table created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SeatingTable"
+
+  /weddings/{weddingId}/tables/{id}:
+    patch:
+      operationId: updateTable
+      tags: [seating]
+      summary: Update table
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SeatingTableInput"
+      responses:
+        "200":
+          description: Table updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SeatingTable"
+    delete:
+      operationId: deleteTable
+      tags: [seating]
+      summary: Delete table
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /weddings/{weddingId}/seat-assignments:
+    get:
+      operationId: listSeatAssignments
+      tags: [seating]
+      summary: List seat assignments
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Seat assignments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SeatAssignment"
+    post:
+      operationId: assignSeat
+      tags: [seating]
+      summary: Assign guest to table
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SeatAssignmentInput"
+      responses:
+        "201":
+          description: Seat assigned
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SeatAssignment"
+
+  /weddings/{weddingId}/seat-assignments/{id}:
+    delete:
+      operationId: removeSeatAssignment
+      tags: [seating]
+      summary: Remove seat assignment
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Removed
+
+  /weddings/{weddingId}/messages:
+    get:
+      operationId: listMessages
+      tags: [messages]
+      summary: List messages from guests
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Messages list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Message"
+    post:
+      operationId: createMessage
+      tags: [messages]
+      summary: Create message
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MessageInput"
+      responses:
+        "201":
+          description: Message created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+
+  /weddings/{weddingId}/messages/{id}:
+    delete:
+      operationId: deleteMessage
+      tags: [messages]
+      summary: Delete message
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /weddings/{weddingId}/message-templates:
+    get:
+      operationId: listMessageTemplates
+      tags: [messages]
+      summary: List message templates
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Template list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MessageTemplate"
+    post:
+      operationId: createMessageTemplate
+      tags: [messages]
+      summary: Create message template
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MessageTemplateInput"
+      responses:
+        "201":
+          description: Template created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageTemplate"
+
+  /weddings/{weddingId}/message-templates/{id}:
+    patch:
+      operationId: updateMessageTemplate
+      tags: [messages]
+      summary: Update message template
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MessageTemplateInput"
+      responses:
+        "200":
+          description: Template updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageTemplate"
+    delete:
+      operationId: deleteMessageTemplate
+      tags: [messages]
+      summary: Delete message template
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /weddings/{weddingId}/send-bulk-whatsapp:
+    post:
+      operationId: sendBulkWhatsapp
+      tags: [messages]
+      summary: Send WhatsApp message to multiple guests
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BulkWhatsappInput"
+      responses:
+        "200":
+          description: Bulk send result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BulkSendResult"
+
+  /weddings/{weddingId}/settings:
+    get:
+      operationId: getIntegrationSettings
+      tags: [settings]
+      summary: Get integration settings
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IntegrationSettings"
+    put:
+      operationId: updateIntegrationSettings
+      tags: [settings]
+      summary: Update integration settings
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IntegrationSettingsInput"
+      responses:
+        "200":
+          description: Settings updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IntegrationSettings"
+
+  /weddings/{weddingId}/settings/test-whatsapp:
+    post:
+      operationId: testWhatsappConnection
+      tags: [settings]
+      summary: Test WhatsApp connection
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Test result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConnectionTestResult"
+
+  /weddings/{weddingId}/settings/test-asaas:
+    post:
+      operationId: testAsaasConnection
+      tags: [settings]
+      summary: Test Asaas connection
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Test result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConnectionTestResult"
+
+  /webhooks/asaas:
+    post:
+      operationId: asaasWebhook
+      tags: [gifts]
+      summary: Asaas payment webhook
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Webhook processed
+
+  /weddings/{weddingId}/dashboard:
+    get:
+      operationId: getDashboard
+      tags: [weddings]
+      summary: Get dashboard data
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Dashboard data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardData"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +1590,1025 @@ components:
       required:
         - status
 
+    RegisterInput:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+        role:
+          type: string
+          enum: [admin, planner, coordinator, couple, guest]
+      required:
+        - name
+        - email
+        - password
+        - role
+
+    LoginInput:
+      type: object
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+      required:
+        - email
+        - password
+
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        user:
+          $ref: "#/components/schemas/User"
+      required:
+        - token
+        - user
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum: [admin, planner, coordinator, couple, guest]
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - email
+        - role
+        - createdAt
+
+    Wedding:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        groomName:
+          type: string
+        brideName:
+          type: string
+        date:
+          type: string
+          format: date-time
+        venue:
+          type: ["string", "null"]
+        description:
+          type: ["string", "null"]
+        coverImageUrl:
+          type: ["string", "null"]
+        createdById:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - title
+        - groomName
+        - brideName
+        - date
+        - createdById
+        - createdAt
+
+    WeddingInput:
+      type: object
+      properties:
+        title:
+          type: string
+        groomName:
+          type: string
+        brideName:
+          type: string
+        date:
+          type: string
+          format: date-time
+        venue:
+          type: ["string", "null"]
+        description:
+          type: ["string", "null"]
+        coverImageUrl:
+          type: ["string", "null"]
+
+    Guest:
+      type: object
+      properties:
+        id:
+          type: integer
+        weddingId:
+          type: integer
+        name:
+          type: string
+        email:
+          type: ["string", "null"]
+        phone:
+          type: ["string", "null"]
+        group:
+          type: ["string", "null"]
+        rsvpStatus:
+          type: string
+          enum: [pending, confirmed, declined, maybe]
+        plusOne:
+          type: boolean
+        plusOneName:
+          type: ["string", "null"]
+        dietaryRestrictions:
+          type: ["string", "null"]
+        notes:
+          type: ["string", "null"]
+        inviteSentAt:
+          type: ["string", "null"]
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - weddingId
+        - name
+        - rsvpStatus
+        - plusOne
+        - createdAt
+
+    GuestInput:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: ["string", "null"]
+        phone:
+          type: ["string", "null"]
+        group:
+          type: ["string", "null"]
+        rsvpStatus:
+          type: string
+          enum: [pending, confirmed, declined, maybe]
+        plusOne:
+          type: boolean
+        plusOneName:
+          type: ["string", "null"]
+        dietaryRestrictions:
+          type: ["string", "null"]
+        notes:
+          type: ["string", "null"]
+
+    GuestImportInput:
+      type: object
+      properties:
+        guests:
+          type: array
+          items:
+            $ref: "#/components/schemas/GuestInput"
+      required:
+        - guests
+
+    ImportResult:
+      type: object
+      properties:
+        imported:
+          type: integer
+        errors:
+          type: integer
+        messages:
+          type: array
+          items:
+            type: string
+      required:
+        - imported
+        - errors
+        - messages
+
+    RsvpInput:
+      type: object
+      properties:
+        rsvpStatus:
+          type: string
+          enum: [pending, confirmed, declined, maybe]
+        dietaryRestrictions:
+          type: ["string", "null"]
+        plusOneName:
+          type: ["string", "null"]
+      required:
+        - rsvpStatus
+
+    SendInviteInput:
+      type: object
+      properties:
+        channel:
+          type: string
+          enum: [email, whatsapp]
+        templateId:
+          type: ["integer", "null"]
+      required:
+        - channel
+
+    SendInviteResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+      required:
+        - success
+        - message
+
+    Gift:
+      type: object
+      properties:
+        id:
+          type: integer
+        weddingId:
+          type: integer
+        name:
+          type: string
+        description:
+          type: ["string", "null"]
+        category:
+          type: string
+        price:
+          type: number
+        imageUrl:
+          type: ["string", "null"]
+        humorTag:
+          type: ["string", "null"]
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - weddingId
+        - name
+        - category
+        - price
+        - isActive
+        - createdAt
+
+    GiftInput:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: ["string", "null"]
+        category:
+          type: string
+        price:
+          type: number
+        imageUrl:
+          type: ["string", "null"]
+        humorTag:
+          type: ["string", "null"]
+        isActive:
+          type: boolean
+
+    GiftOrder:
+      type: object
+      properties:
+        id:
+          type: integer
+        weddingId:
+          type: integer
+        giftId:
+          type: integer
+        guestName:
+          type: string
+        guestEmail:
+          type: ["string", "null"]
+        amount:
+          type: number
+        paymentMethod:
+          type: string
+          enum: [pix, boleto, credit_card]
+        paymentStatus:
+          type: string
+          enum: [pending, confirmed, failed, refunded]
+        asaasPaymentId:
+          type: ["string", "null"]
+        giftName:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - weddingId
+        - giftId
+        - guestName
+        - amount
+        - paymentMethod
+        - paymentStatus
+        - createdAt
+
+    GiftOrderInput:
+      type: object
+      properties:
+        giftId:
+          type: integer
+        guestName:
+          type: string
+        guestEmail:
+          type: ["string", "null"]
+        amount:
+          type: number
+        paymentMethod:
+          type: string
+          enum: [pix, boleto, credit_card]
+      required:
+        - giftId
+        - guestName
+        - amount
+        - paymentMethod
+
+    FinancialSummary:
+      type: object
+      properties:
+        totalReceived:
+          type: number
+        totalPending:
+          type: number
+        totalOrders:
+          type: integer
+        ordersByGuest:
+          type: array
+          items:
+            $ref: "#/components/schemas/GuestContribution"
+      required:
+        - totalReceived
+        - totalPending
+        - totalOrders
+        - ordersByGuest
+
+    GuestContribution:
+      type: object
+      properties:
+        guestName:
+          type: string
+        totalAmount:
+          type: number
+        status:
+          type: string
+      required:
+        - guestName
+        - totalAmount
+        - status
+
+    Task:
+      type: object
+      properties:
+        id:
+          type: integer
+        weddingId:
+          type: integer
+        title:
+          type: string
+        description:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [pending, in_progress, completed, cancelled]
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+        assignee:
+          type: ["string", "null"]
+        dueDate:
+          type: ["string", "null"]
+          format: date-time
+        progress:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - weddingId
+        - title
+        - status
+        - priority
+        - progress
+        - createdAt
+
+    TaskInput:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [pending, in_progress, completed, cancelled]
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+        assignee:
+          type: ["string", "null"]
+        dueDate:
+          type: ["string", "null"]
+          format: date-time
+        progress:
+          type: integer
+
+    Vendor:
+      type: object
+      properties:
+        id:
+          type: integer
+        weddingId:
+          type: integer
+        name:
+          type: string
+        category:
+          type: string
+        contactName:
+          type: ["string", "null"]
+        phone:
+          type: ["string", "null"]
+        email:
+          type: ["string", "null"]
+        website:
+          type: ["string", "null"]
+        price:
+          type: ["number", "null"]
+        notes:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [contacted, negotiating, hired, rejected]
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - weddingId
+        - name
+        - category
+        - status
+        - createdAt
+
+    VendorInput:
+      type: object
+      properties:
+        name:
+          type: string
+        category:
+          type: string
+        contactName:
+          type: ["string", "null"]
+        phone:
+          type: ["string", "null"]
+        email:
+          type: ["string", "null"]
+        website:
+          type: ["string", "null"]
+        price:
+          type: ["number", "null"]
+        notes:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [contacted, negotiating, hired, rejected]
+
+    Coordinator:
+      type: object
+      properties:
+        id:
+          type: integer
+        weddingId:
+          type: integer
+        name:
+          type: string
+        email:
+          type: ["string", "null"]
+        phone:
+          type: ["string", "null"]
+        role:
+          type: string
+        permissions:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - weddingId
+        - name
+        - role
+        - permissions
+        - createdAt
+
+    CoordinatorInput:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: ["string", "null"]
+        phone:
+          type: ["string", "null"]
+        role:
+          type: string
+        permissions:
+          type: array
+          items:
+            type: string
+
+    ScheduleItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        weddingId:
+          type: integer
+        title:
+          type: string
+        description:
+          type: ["string", "null"]
+        startTime:
+          type: string
+        endTime:
+          type: ["string", "null"]
+        location:
+          type: ["string", "null"]
+        responsible:
+          type: ["string", "null"]
+        sortOrder:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - weddingId
+        - title
+        - startTime
+        - sortOrder
+        - createdAt
+
+    ScheduleItemInput:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: ["string", "null"]
+        startTime:
+          type: string
+        endTime:
+          type: ["string", "null"]
+        location:
+          type: ["string", "null"]
+        responsible:
+          type: ["string", "null"]
+        sortOrder:
+          type: integer
+
+    BudgetCategory:
+      type: object
+      properties:
+        id:
+          type: integer
+        weddingId:
+          type: integer
+        name:
+          type: string
+        estimatedTotal:
+          type: number
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - weddingId
+        - name
+        - estimatedTotal
+        - createdAt
+
+    BudgetCategoryInput:
+      type: object
+      properties:
+        name:
+          type: string
+        estimatedTotal:
+          type: number
+
+    BudgetItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        weddingId:
+          type: integer
+        categoryId:
+          type: integer
+        name:
+          type: string
+        estimatedCost:
+          type: number
+        actualCost:
+          type: ["number", "null"]
+        vendor:
+          type: ["string", "null"]
+        notes:
+          type: ["string", "null"]
+        isPaid:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - weddingId
+        - categoryId
+        - name
+        - estimatedCost
+        - isPaid
+        - createdAt
+
+    BudgetItemInput:
+      type: object
+      properties:
+        categoryId:
+          type: integer
+        name:
+          type: string
+        estimatedCost:
+          type: number
+        actualCost:
+          type: ["number", "null"]
+        vendor:
+          type: ["string", "null"]
+        notes:
+          type: ["string", "null"]
+        isPaid:
+          type: boolean
+
+    BudgetSummary:
+      type: object
+      properties:
+        totalEstimated:
+          type: number
+        totalActual:
+          type: number
+        totalPaid:
+          type: number
+        totalRemaining:
+          type: number
+        byCategory:
+          type: array
+          items:
+            $ref: "#/components/schemas/CategoryBudgetSummary"
+      required:
+        - totalEstimated
+        - totalActual
+        - totalPaid
+        - totalRemaining
+        - byCategory
+
+    CategoryBudgetSummary:
+      type: object
+      properties:
+        categoryId:
+          type: integer
+        categoryName:
+          type: string
+        estimated:
+          type: number
+        actual:
+          type: number
+        paid:
+          type: number
+      required:
+        - categoryId
+        - categoryName
+        - estimated
+        - actual
+        - paid
+
+    SeatingTable:
+      type: object
+      properties:
+        id:
+          type: integer
+        weddingId:
+          type: integer
+        name:
+          type: string
+        capacity:
+          type: integer
+        positionX:
+          type: number
+        positionY:
+          type: number
+        shape:
+          type: string
+          enum: [round, rectangular, square]
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - weddingId
+        - name
+        - capacity
+        - positionX
+        - positionY
+        - shape
+        - createdAt
+
+    SeatingTableInput:
+      type: object
+      properties:
+        name:
+          type: string
+        capacity:
+          type: integer
+        positionX:
+          type: number
+        positionY:
+          type: number
+        shape:
+          type: string
+          enum: [round, rectangular, square]
+
+    SeatAssignment:
+      type: object
+      properties:
+        id:
+          type: integer
+        weddingId:
+          type: integer
+        tableId:
+          type: integer
+        guestId:
+          type: integer
+        seatNumber:
+          type: ["integer", "null"]
+        guestName:
+          type: ["string", "null"]
+        tableName:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - weddingId
+        - tableId
+        - guestId
+        - createdAt
+
+    SeatAssignmentInput:
+      type: object
+      properties:
+        tableId:
+          type: integer
+        guestId:
+          type: integer
+        seatNumber:
+          type: ["integer", "null"]
+      required:
+        - tableId
+        - guestId
+
+    Message:
+      type: object
+      properties:
+        id:
+          type: integer
+        weddingId:
+          type: integer
+        senderName:
+          type: string
+        messageType:
+          type: string
+          enum: [text, audio, video]
+        content:
+          type: ["string", "null"]
+        mediaUrl:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - weddingId
+        - senderName
+        - messageType
+        - createdAt
+
+    MessageInput:
+      type: object
+      properties:
+        senderName:
+          type: string
+        messageType:
+          type: string
+          enum: [text, audio, video]
+        content:
+          type: ["string", "null"]
+        mediaUrl:
+          type: ["string", "null"]
+      required:
+        - senderName
+        - messageType
+
+    MessageTemplate:
+      type: object
+      properties:
+        id:
+          type: integer
+        weddingId:
+          type: integer
+        name:
+          type: string
+        category:
+          type: string
+          enum: [invite, reminder, thank_you, rsvp, custom]
+        content:
+          type: string
+        variables:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - weddingId
+        - name
+        - category
+        - content
+        - variables
+        - createdAt
+
+    MessageTemplateInput:
+      type: object
+      properties:
+        name:
+          type: string
+        category:
+          type: string
+          enum: [invite, reminder, thank_you, rsvp, custom]
+        content:
+          type: string
+        variables:
+          type: array
+          items:
+            type: string
+
+    BulkWhatsappInput:
+      type: object
+      properties:
+        guestIds:
+          type: array
+          items:
+            type: integer
+        templateId:
+          type: ["integer", "null"]
+        message:
+          type: ["string", "null"]
+      required:
+        - guestIds
+
+    BulkSendResult:
+      type: object
+      properties:
+        sent:
+          type: integer
+        failed:
+          type: integer
+        errors:
+          type: array
+          items:
+            type: string
+      required:
+        - sent
+        - failed
+        - errors
+
+    IntegrationSettings:
+      type: object
+      properties:
+        id:
+          type: integer
+        weddingId:
+          type: integer
+        evolutionApiUrl:
+          type: ["string", "null"]
+        evolutionApiKey:
+          type: ["string", "null"]
+        evolutionInstance:
+          type: ["string", "null"]
+        asaasApiKey:
+          type: ["string", "null"]
+        asaasEnvironment:
+          type: string
+          enum: [sandbox, production]
+        asaasWebhookToken:
+          type: ["string", "null"]
+      required:
+        - id
+        - weddingId
+        - asaasEnvironment
+
+    IntegrationSettingsInput:
+      type: object
+      properties:
+        evolutionApiUrl:
+          type: ["string", "null"]
+        evolutionApiKey:
+          type: ["string", "null"]
+        evolutionInstance:
+          type: ["string", "null"]
+        asaasApiKey:
+          type: ["string", "null"]
+        asaasEnvironment:
+          type: string
+          enum: [sandbox, production]
+        asaasWebhookToken:
+          type: ["string", "null"]
+
+    ConnectionTestResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+      required:
+        - success
+        - message
+
+    DashboardData:
+      type: object
+      properties:
+        wedding:
+          $ref: "#/components/schemas/Wedding"
+        totalGuests:
+          type: integer
+        confirmedGuests:
+          type: integer
+        pendingGuests:
+          type: integer
+        declinedGuests:
+          type: integer
+        totalTasks:
+          type: integer
+        completedTasks:
+          type: integer
+        overdueTasks:
+          type: integer
+        totalBudgetEstimated:
+          type: number
+        totalBudgetActual:
+          type: number
+        totalGiftReceived:
+          type: number
+        daysUntilWedding:
+          type: integer
+        recentMessages:
+          type: array
+          items:
+            $ref: "#/components/schemas/Message"
+        upcomingTasks:
+          type: array
+          items:
+            $ref: "#/components/schemas/Task"
+      required:
+        - wedding
+        - totalGuests
+        - confirmedGuests
+        - pendingGuests
+        - declinedGuests
+        - totalTasks
+        - completedTasks
+        - overdueTasks
+        - totalBudgetEstimated
+        - totalBudgetActual
+        - totalGiftReceived
+        - daysUntilWedding
+        - recentMessages
+        - upcomingTasks

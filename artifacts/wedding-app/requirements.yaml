@@ -1,0 +1,22 @@
+packages:
+  "framer-motion": "Smooth page transitions and micro-interactions"
+  "date-fns": "Date formatting and manipulation for schedule and tasks"
+  "recharts": "Beautiful budget and dashboard charts"
+  "react-hook-form": "Form state management"
+  "@hookform/resolvers": "Zod validation integration for forms"
+  "@hello-pangea/dnd": "Drag and drop for kanban board and seating chart"
+  "clsx": "Utility for conditionally joining classNames"
+  "tailwind-merge": "Utility for merging tailwind classes safely"
+
+images:
+  - path: "artifacts/wedding-app/public/images/auth-bg.png"
+    description: "Elegant romantic wedding reception setting with soft warm string lighting, blush pink and rose gold floral arrangements, bokeh background, high-end editorial photography style"
+    aspect_ratio: "16:9"
+  - path: "artifacts/wedding-app/public/images/empty-state.png"
+    description: "Minimalist elegant continuous line art illustration of two intertwined wedding rings with a soft dusty rose watercolor splash in the background, sophisticated and clean"
+    aspect_ratio: "1:1"
+
+notes:
+  - Uses @workspace/api-client-react for TanStack query hooks based on OpenAPI
+  - JWT Auth token is stored in localStorage as 'auth_token' and injected into window.fetch
+  - API base path is /api

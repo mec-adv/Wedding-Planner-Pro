@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Casamento360"
+version = "1.0.0"
+id = "artifacts/wedding-app"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+localPort = 25898
+name = "web"
+paths = ["/"]
+
+[services.development]
+run = "pnpm --filter @workspace/wedding-app run dev"
+
+[services.env]
+PORT = "25898"
+BASE_PATH = "/"
+
+[services.production]
+build = ["pnpm", "--filter", "@workspace/wedding-app", "run", "build"]
+publicDir = "artifacts/wedding-app/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"

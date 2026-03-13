@@ -1,8 +1,36 @@
 import { Router, type IRouter } from "express";
 import healthRouter from "./health";
+import authRouter from "./auth";
+import weddingsRouter from "./weddings";
+import guestsRouter from "./guests";
+import giftsRouter from "./gifts";
+import tasksRouter from "./tasks";
+import vendorsRouter from "./vendors";
+import coordinatorsRouter from "./coordinators";
+import scheduleRouter from "./schedule";
+import budgetRouter from "./budget";
+import seatingRouter from "./seating";
+import messagesRouter from "./messages";
+import settingsRouter from "./settings";
+import dashboardRouter from "./dashboard";
+import webhooksRouter from "./webhooks";
 
 const router: IRouter = Router();
 
 router.use(healthRouter);
+router.use(authRouter);
+router.use(weddingsRouter);
+router.use(guestsRouter);
+router.use(giftsRouter);
+router.use(tasksRouter);
+router.use(vendorsRouter);
+router.use(coordinatorsRouter);
+router.use(scheduleRouter);
+router.use(budgetRouter);
+router.use(seatingRouter);
+router.use(messagesRouter);
+router.use(settingsRouter);
+router.use(dashboardRouter);
+router.use(webhooksRouter);
 
 export default router;

@@ -1,6 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq, and, ilike } from "drizzle-orm";
-import { db, guestsTable } from "@workspace/db";
+import { db, guestsTable, eq, and, ilike } from "@workspace/db";
 import {
   ListGuestsParams,
   ListGuestsQueryParams,

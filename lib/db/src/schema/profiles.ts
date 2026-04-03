@@ -7,7 +7,9 @@ import { weddingsTable } from "./weddings";
 export const profilesTable = pgTable("profiles", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => usersTable.id),
-  weddingId: integer("wedding_id").notNull().references(() => weddingsTable.id),
+  weddingId: integer("wedding_id")
+    .notNull()
+    .references(() => weddingsTable.id, { onDelete: "cascade" }),
   role: varchar("role", { length: 50 }).notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [

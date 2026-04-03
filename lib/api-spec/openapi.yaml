@@ -1786,6 +1786,14 @@ components:
         date:
           type: string
           format: date-time
+        civilCeremonyAt:
+          type: string
+          format: date-time
+          nullable: true
+        religiousCeremonyAt:
+          type: string
+          format: date-time
+          nullable: true
         venue:
           type: ["string", "null"]
         description:
@@ -1816,6 +1824,12 @@ components:
         brideName:
           type: string
         date:
+          type: string
+          format: date-time
+        civilCeremonyAt:
+          type: string
+          format: date-time
+        religiousCeremonyAt:
           type: string
           format: date-time
         venue:

@@ -154,9 +154,32 @@ Every package extends `tsconfig.base.json` which sets `composite: true`. The roo
 
 ## Development
 
+- **Tudo junto (API + Vite com proxy `/api`):** na raiz, `pnpm dev` **ou** `npm run dev` (após instalar dependências) — abre `http://localhost:5173` (API em `PORT` do `.env`, normalmente 8080).
+
+### Windows: `pnpm` não encontrado no PowerShell
+
+1. Instale dependências **sem** pnpm global: `npm run install:deps` (equivale a `npx pnpm@9 install`).
+2. Suba API + front: `npm run dev`.
+3. **Opcional:** instalar pnpm no PATH — `npm install -g pnpm` ou `corepack enable` + `corepack prepare pnpm@latest --activate` — depois use `pnpm install` / `pnpm dev` normalmente.
+
+### Instalação “travada” ou muito lenta (`Progress: … added 0`)
+
+Repositório em **Google Drive / OneDrive / pasta de rede** (`I:\Meu Drive\...`): o pnpm cria milhares de links; o sync pode travar por **horas** ou parecer congelado.
+
+**Recomendado:** clone o projeto em uma pasta **local** (ex.: `C:\dev\Wedding-Planner-Pro`), copie o `.env`, e rode `npm run install:deps` de lá.
+
+- [`pnpm-workspace.yaml`](pnpm-workspace.yaml): `nodeLinker: hoisted`, `packageImportMethod: copy`.
+- [`.npmrc`](.npmrc): **`inject-workspace-packages=true`** — injeta pacotes `@workspace/*` como cópia em vez de symlink (evita `EISDIR` no Drive).
+
+O `npm` pode avisar que não reconhece `inject-workspace-packages` no `.npmrc`; pode ignorar.
+
+Após mudanças, apague `node_modules` na raiz e em `artifacts/*` / `lib/*` se existirem, depois `npm run install:deps`.
+
+Se já tiver rodado `install:deps` antes de mudar o `.npmrc`, apague só a pasta `node_modules` (mantenha `pnpm-lock.yaml`) e rode `npm run install:deps` de novo.
+
 - API Server: `pnpm --filter @workspace/api-server run dev`
-- Frontend: `pnpm --filter @workspace/wedding-app run dev`
-- DB Push: `pnpm --filter @workspace/db run push`
+- Frontend: `pnpm --filter @workspace/wedding-app run dev` (defina `PORT` e `BASE_PATH`, ex.: `PORT=5173` e `BASE_PATH=/`)
+- DB Push: `pnpm --filter @workspace/db run push` ou `npm run db:push`
 - Codegen: `pnpm --filter @workspace/api-spec run codegen`
 
 ## Important Notes

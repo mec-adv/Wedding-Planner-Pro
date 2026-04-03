@@ -1,7 +1,6 @@
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
-import { eq, and } from "drizzle-orm";
-import { db, weddingsTable, profilesTable } from "@workspace/db";
+import { pool } from "@workspace/db";
 import type { Request, Response, NextFunction } from "express";
 
 export type UserRole = "admin" | "planner" | "coordinator" | "couple" | "guest";
@@ -104,27 +103,26 @@ export async function verifyWeddingAccess(req: Request, res: Response, next: Nex
     return;
   }
 
-  const [wedding] = await db.select().from(weddingsTable).where(eq(weddingsTable.id, weddingId));
-  if (!wedding) {
+  const wRes = await pool.query(`SELECT id, created_by_id FROM weddings WHERE id = $1`, [weddingId]);
+  const wRow = wRes.rows[0] as { id: number; created_by_id: number } | undefined;
+  if (!wRow) {
     res.status(404).json({ error: "Casamento não encontrado" });
     return;
   }
 
-  if (wedding.createdById === authReq.userId) {
+  if (wRow.created_by_id === authReq.userId) {
     authReq.weddingRole = "planner";
     next();
     return;
   }
 
-  const [profile] = await db.select().from(profilesTable).where(
-    and(
-      eq(profilesTable.userId, authReq.userId),
-      eq(profilesTable.weddingId, weddingId),
-    )
+  const pRes = await pool.query(
+    `SELECT role FROM profiles WHERE user_id = $1 AND wedding_id = $2 LIMIT 1`,
+    [authReq.userId, weddingId],
   );
-
-  if (profile) {
-    authReq.weddingRole = profile.role as UserRole;
+  const profileRow = pRes.rows[0] as { role: string } | undefined;
+  if (profileRow) {
+    authReq.weddingRole = profileRow.role as UserRole;
     next();
     return;
   }

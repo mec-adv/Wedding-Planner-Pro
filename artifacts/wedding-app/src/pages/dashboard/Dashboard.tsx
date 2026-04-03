@@ -7,10 +7,30 @@ import { differenceInDays } from "date-fns";
 
 export default function Dashboard() {
   const { weddingId } = useParams();
-  const { data, isLoading, error } = useGetDashboard(Number(weddingId));
+  const wid = Number(weddingId);
+  const { data, isLoading, error } = useGetDashboard(wid, {
+    query: { enabled: Number.isFinite(wid) && wid > 0 },
+  });
+
+  if (!Number.isFinite(wid) || wid <= 0) {
+    return (
+      <div className="text-destructive">
+        ID do casamento inválido. Volte e selecione um casamento na lista.
+      </div>
+    );
+  }
 
   if (isLoading) return <div className="animate-pulse flex space-y-4 flex-col"><div className="h-8 bg-muted rounded w-1/4"></div><div className="grid grid-cols-4 gap-4"><div className="h-32 bg-muted rounded"></div><div className="h-32 bg-muted rounded"></div></div></div>;
-  if (error || !data) return <div className="text-destructive">Erro ao carregar dashboard</div>;
+  if (error) {
+    const detail = error instanceof Error ? error.message : "";
+    return (
+      <div className="text-destructive space-y-2">
+        <p>Erro ao carregar dashboard</p>
+        {detail ? <p className="text-sm font-mono opacity-90">{detail}</p> : null}
+      </div>
+    );
+  }
+  if (!data) return null;
 
   const { wedding, totalGuests, confirmedGuests, completedTasks, totalTasks, totalBudgetEstimated, totalBudgetActual, totalGiftReceived } = data;
   const daysLeft = differenceInDays(new Date(wedding.date), new Date());

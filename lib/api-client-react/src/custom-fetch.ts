@@ -93,7 +93,10 @@ function getStringField(value: unknown, key: string): string | undefined {
   return trimmed === "" ? undefined : trimmed;
 }
 
-function truncate(text: string, maxLength = 300): string {
+/** Limite alto para não cortar HTML de erro do Express / stack traces no toast */
+const ERROR_BODY_MAX = 48_000;
+
+function truncate(text: string, maxLength = ERROR_BODY_MAX): string {
   return text.length > maxLength ? `${text.slice(0, maxLength - 1)}…` : text;
 }
 
@@ -125,6 +128,8 @@ export class ApiError<T = unknown> extends Error {
   readonly status: number;
   readonly statusText: string;
   readonly data: T | null;
+  /** Resposta de erro em texto bruto (HTML ou texto), quando disponível */
+  readonly rawText: string | null;
   readonly headers: Headers;
   readonly response: Response;
   readonly method: string;
@@ -141,10 +146,26 @@ export class ApiError<T = unknown> extends Error {
     this.status = response.status;
     this.statusText = response.statusText;
     this.data = data;
+    this.rawText = typeof data === "string" ? data : null;
     this.headers = response.headers;
     this.response = response;
     this.method = requestInfo.method;
     this.url = response.url || requestInfo.url;
+  }
+
+  /** Mensagem curta (primeira linha útil) + corpo completo para depuração */
+  getFullDetails(): string {
+    const parts: string[] = [this.message];
+    if (this.rawText) {
+      parts.push("", "--- Corpo da resposta (completo) ---", this.rawText);
+    } else if (this.data != null && typeof this.data === "object") {
+      try {
+        parts.push("", "--- JSON ---", JSON.stringify(this.data, null, 2));
+      } catch {
+        parts.push("", String(this.data));
+      }
+    }
+    return parts.join("\n");
   }
 }
 

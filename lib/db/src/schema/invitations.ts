@@ -6,7 +6,9 @@ import { usersTable } from "./users";
 
 export const invitationsTable = pgTable("invitations", {
   id: serial("id").primaryKey(),
-  weddingId: integer("wedding_id").notNull().references(() => weddingsTable.id),
+  weddingId: integer("wedding_id")
+    .notNull()
+    .references(() => weddingsTable.id, { onDelete: "cascade" }),
   invitedById: integer("invited_by_id").notNull().references(() => usersTable.id),
   email: varchar("email", { length: 255 }).notNull(),
   role: varchar("role", { length: 50 }).notNull(),

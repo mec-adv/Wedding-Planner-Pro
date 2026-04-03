@@ -1,5 +1,4 @@
-import { eq } from "drizzle-orm";
-import { db, integrationSettingsTable } from "@workspace/db";
+import { db, integrationSettingsTable, eq } from "@workspace/db";
 
 interface CreatePaymentParams {
   amount: number;

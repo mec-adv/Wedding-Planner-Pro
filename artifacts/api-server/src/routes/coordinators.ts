@@ -1,6 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq, and } from "drizzle-orm";
-import { db, coordinatorsTable } from "@workspace/db";
+import { db, coordinatorsTable, eq, and } from "@workspace/db";
 import {
   ListCoordinatorsParams,
   CreateCoordinatorParams,

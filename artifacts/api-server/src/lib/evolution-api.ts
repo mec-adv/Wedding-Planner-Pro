@@ -1,5 +1,4 @@
-import { eq } from "drizzle-orm";
-import { db, integrationSettingsTable } from "@workspace/db";
+import { db, integrationSettingsTable, eq } from "@workspace/db";
 
 export async function sendWhatsAppMessage(weddingId: number, phone: string, message: string): Promise<void> {
   const [settings] = await db.select().from(integrationSettingsTable)

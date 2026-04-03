@@ -61,6 +61,8 @@ export interface Wedding {
   groomName: string;
   brideName: string;
   date: string;
+  civilCeremonyAt?: string | null;
+  religiousCeremonyAt?: string | null;
   /** @nullable */
   venue?: string | null;
   /** @nullable */
@@ -76,6 +78,8 @@ export interface WeddingInput {
   groomName?: string;
   brideName?: string;
   date?: string;
+  civilCeremonyAt?: string;
+  religiousCeremonyAt?: string;
   /** @nullable */
   venue?: string | null;
   /** @nullable */

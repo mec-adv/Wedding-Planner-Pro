@@ -4,13 +4,19 @@
   "license": "MIT",
   "scripts": {
     "preinstall": "sh -c 'rm -f package-lock.json yarn.lock; case \"$npm_config_user_agent\" in pnpm/*) ;; *) echo \"Use pnpm instead\" >&2; exit 1 ;; esac'",
+    "install:deps": "npx --yes pnpm@9 install",
+    "dev": "concurrently -n api,web -c blue,magenta \"npx --yes pnpm@9 --filter @workspace/api-server run dev\" \"cross-env PORT=5173 BASE_PATH=/ npx --yes pnpm@9 --filter @workspace/wedding-app run dev\"",
+    "db:push": "npx --yes pnpm@9 --filter @workspace/db run push",
+    "db:create": "node scripts/create-database-sys-dev.cjs",
     "build": "pnpm run typecheck && pnpm -r --if-present run build",
     "typecheck:libs": "tsc --build",
     "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck"
   },
   "private": true,
   "devDependencies": {
-    "typescript": "~5.9.2",
-    "prettier": "^3.8.1"
+    "concurrently": "^9.1.2",
+    "cross-env": "^7.0.3",
+    "prettier": "^3.8.1",
+    "typescript": "~5.9.2"
   }
 }

@@ -9,6 +9,7 @@ import Login from "@/pages/auth/Login";
 import Register from "@/pages/auth/Register";
 
 import SelectWedding from "@/pages/weddings/SelectWedding";
+import EditWedding from "@/pages/weddings/EditWedding";
 import Dashboard from "@/pages/dashboard/Dashboard";
 import Guests from "@/pages/guests/Guests";
 import Gifts from "@/pages/gifts/Gifts";
@@ -27,16 +28,23 @@ import NotFound from "@/pages/not-found";
 const queryClient = new QueryClient();
 
 const originalFetch = window.fetch;
-window.fetch = async (...args) => {
-  const token = localStorage.getItem('auth_token');
-  if (token) {
-    if (args[1]) {
-      args[1].headers = { ...args[1].headers, Authorization: `Bearer ${token}` };
-    } else {
-      args[1] = { headers: { Authorization: `Bearer ${token}` } };
-    }
+window.fetch = async (...args: Parameters<typeof fetch>) => {
+  const token = localStorage.getItem("auth_token");
+  if (!token) {
+    return originalFetch(...args);
   }
-  return originalFetch(...args);
+
+  const [input, init] = args;
+  if (!init) {
+    return originalFetch(input, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  }
+
+  /** `Headers` não é objeto plano — `{...init.headers}` apaga Content-Type e o Express não parseia JSON. */
+  const headers = new Headers(init.headers);
+  headers.set("Authorization", `Bearer ${token}`);
+  return originalFetch(input, { ...init, headers });
 };
 
 function ProtectedRoute({ component: Component, ...rest }: { component: React.ComponentType<Record<string, unknown>>; [key: string]: unknown }) {
@@ -60,6 +68,7 @@ function Router() {
       
       <Route path="/" component={() => <ProtectedRoute component={SelectWedding} />} />
       <Route path="/weddings/:weddingId/dashboard" component={() => <ProtectedRoute component={Dashboard} />} />
+      <Route path="/weddings/:weddingId/edit" component={() => <ProtectedRoute component={EditWedding} />} />
       <Route path="/weddings/:weddingId/guests" component={() => <ProtectedRoute component={Guests} />} />
       <Route path="/weddings/:weddingId/gifts" component={() => <ProtectedRoute component={Gifts} />} />
       <Route path="/weddings/:weddingId/extract" component={() => <ProtectedRoute component={Extract} />} />

@@ -1,6 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq, and } from "drizzle-orm";
-import { db, messagesTable, messageTemplatesTable, guestsTable } from "@workspace/db";
+import { db, messagesTable, messageTemplatesTable, guestsTable, eq, and } from "@workspace/db";
 import {
   ListMessagesParams,
   CreateMessageParams,

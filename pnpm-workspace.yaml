@@ -4,6 +4,11 @@ packages:
   - lib/integrations/*
   - scripts
 
+# Google Drive/OneDrive: inject-workspace-packages no .npmrc (evita symlink dos @workspace/*).
+nodeLinker: hoisted
+# `copy` duplica pacotes como drizzle-orm e quebra Table.Symbol entre cópias (ex.: undefined['groomName']).
+packageImportMethod: hardlink
+strictPeerDependencies: false
 autoInstallPeers: false
 
 catalog:

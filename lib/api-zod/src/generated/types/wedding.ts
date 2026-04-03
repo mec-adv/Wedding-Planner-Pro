@@ -12,6 +12,8 @@ export interface Wedding {
   groomName: string;
   brideName: string;
   date: Date;
+  civilCeremonyAt?: Date | null;
+  religiousCeremonyAt?: Date | null;
   /** @nullable */
   venue?: string | null;
   /** @nullable */

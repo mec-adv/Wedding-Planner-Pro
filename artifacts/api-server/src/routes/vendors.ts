@@ -1,6 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq, and } from "drizzle-orm";
-import { db, vendorsTable } from "@workspace/db";
+import { db, vendorsTable, eq, and } from "@workspace/db";
 import {
   ListVendorsParams,
   CreateVendorParams,

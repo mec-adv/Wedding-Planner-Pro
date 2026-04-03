@@ -1,5 +1,5 @@
-import { eq } from "drizzle-orm";
-import { db, integrationSettingsTable, weddingsTable } from "@workspace/db";
+import { db, integrationSettingsTable, eq, pool } from "@workspace/db";
+import { weddingRowFromPg } from "./wedding-pg";
 
 export async function sendEmailInvite(weddingId: number, toEmail: string, guestName: string): Promise<void> {
   const [settings] = await db.select().from(integrationSettingsTable)
@@ -15,10 +15,12 @@ export async function sendEmailInvite(weddingId: number, toEmail: string, guestN
     throw new Error("Configuração de email (SMTP) não definida. Configure SMTP_HOST, SMTP_USER e SMTP_PASS nas variáveis de ambiente.");
   }
 
-  const [wedding] = await db.select().from(weddingsTable).where(eq(weddingsTable.id, weddingId));
-  if (!wedding) {
-    throw new Error("Casamento não encontrado");
+  const wRes = await pool.query(`SELECT * FROM weddings WHERE id = $1`, [weddingId]);
+  const wRow = wRes.rows[0] as Record<string, unknown> | undefined;
+  if (!wRow) {
+    throw new Error("Casamento não encontrado para envio de e-mail");
   }
+  const wedding = weddingRowFromPg(wRow);
 
   const weddingDate = wedding.date.toLocaleDateString("pt-BR", {
     day: "2-digit",

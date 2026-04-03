@@ -76,6 +76,10 @@ import type {
 
 import { customFetch } from "../custom-fetch";
 import type { ErrorType, BodyType } from "../custom-fetch";
+import {
+  pickCreateWeddingMutationInput,
+  pickUpdateWeddingMutationInput,
+} from "../wedding-mutation-vars";
 
 type AwaitedInput<T> = PromiseLike<T> | T;
 
@@ -483,7 +487,7 @@ export const createWedding = async (
     ...options,
     method: "POST",
     headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(weddingInput),
+    body: JSON.stringify(weddingInput ?? {}),
   });
 };
 
@@ -517,9 +521,7 @@ export const getCreateWeddingMutationOptions = <
     Awaited<ReturnType<typeof createWedding>>,
     { data: BodyType<WeddingInput> }
   > = (props) => {
-    const { data } = props ?? {};
-
-    return createWedding(data, requestOptions);
+    return createWedding(pickCreateWeddingMutationInput(props ?? undefined), requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
@@ -657,7 +659,7 @@ export const updateWedding = async (
     ...options,
     method: "PATCH",
     headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(weddingInput),
+    body: JSON.stringify(weddingInput ?? {}),
   });
 };
 
@@ -691,8 +693,7 @@ export const getUpdateWeddingMutationOptions = <
     Awaited<ReturnType<typeof updateWedding>>,
     { id: number; data: BodyType<WeddingInput> }
   > = (props) => {
-    const { id, data } = props ?? {};
-
+    const { id, data } = pickUpdateWeddingMutationInput(props ?? undefined);
     return updateWedding(id, data, requestOptions);
   };
 

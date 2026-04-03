@@ -1,6 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq, and } from "drizzle-orm";
-import { db, scheduleItemsTable } from "@workspace/db";
+import { db, scheduleItemsTable, eq, and } from "@workspace/db";
 import {
   ListScheduleItemsParams,
   CreateScheduleItemParams,

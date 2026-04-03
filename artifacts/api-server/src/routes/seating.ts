@@ -1,6 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq, and } from "drizzle-orm";
-import { db, seatingTablesTable, seatAssignmentsTable, guestsTable } from "@workspace/db";
+import { db, seatingTablesTable, seatAssignmentsTable, guestsTable, eq, and } from "@workspace/db";
 import {
   ListTablesParams,
   CreateTableParams,

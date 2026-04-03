@@ -26,6 +26,10 @@ if (!basePath) {
   );
 }
 
+/** Porta do Express em dev; o Vite usa outra PORT (ex.: 5173). */
+const devApiPort = process.env.DEV_API_PORT ?? "8080";
+const devApiProxyTarget = `http://127.0.0.1:${devApiPort}`;
+
 export default defineConfig({
   base: basePath,
   plugins: [
@@ -62,6 +66,12 @@ export default defineConfig({
     port,
     host: "0.0.0.0",
     allowedHosts: true,
+    proxy: {
+      "/api": {
+        target: devApiProxyTarget,
+        changeOrigin: true,
+      },
+    },
     fs: {
       strict: true,
       deny: ["**/.*"],

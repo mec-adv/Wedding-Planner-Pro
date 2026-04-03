@@ -1,6 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq, and } from "drizzle-orm";
-import { db, tasksTable } from "@workspace/db";
+import { db, tasksTable, eq, and } from "@workspace/db";
 import {
   ListTasksParams,
   ListTasksQueryParams,

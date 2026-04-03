@@ -8,7 +8,10 @@ export const weddingsTable = pgTable("weddings", {
   title: varchar("title", { length: 255 }).notNull(),
   groomName: varchar("groom_name", { length: 255 }).notNull(),
   brideName: varchar("bride_name", { length: 255 }).notNull(),
+  /** Data de referência (ex.: a mais próxima entre civil e religiosa); mantida por compatibilidade */
   date: timestamp("date", { withTimezone: true }).notNull(),
+  civilCeremonyAt: timestamp("civil_ceremony_at", { withTimezone: true }),
+  religiousCeremonyAt: timestamp("religious_ceremony_at", { withTimezone: true }),
   venue: text("venue"),
   description: text("description"),
   coverImageUrl: text("cover_image_url"),

@@ -31,6 +31,9 @@ node_modules
 .env
 .env.local
 
+# Uploads de presentes (binários locais)
+/uploads
+
 # misc
 /.sass-cache
 /connect.lock

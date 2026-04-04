@@ -1,5 +1,9 @@
-import { Router, type IRouter } from "express";
-import { db, giftsTable, giftOrdersTable, eq, and, sql } from "@workspace/db";
+import { randomUUID } from "crypto";
+import { writeFile } from "fs/promises";
+import path from "path";
+import multer from "multer";
+import { Router, type IRouter, type Request, type Response, type NextFunction } from "express";
+import { db, giftsTable, giftOrdersTable, weddingsTable, eq, and } from "@workspace/db";
 import {
   ListGiftsParams,
   CreateGiftParams,
@@ -13,8 +17,45 @@ import {
   GetGiftOrdersSummaryParams,
 } from "@workspace/api-zod";
 import { authMiddleware, requireWeddingRole } from "../lib/auth";
+import {
+  ensureDir,
+  extFromMime,
+  getPublicUrlForRelativeKey,
+  getWeddingEventRelativePath,
+  getWeddingGiftDirAbsolute,
+  isManagedGiftImageUrl,
+  unlinkManagedGiftImage,
+} from "../lib/gift-upload-paths";
 
 const router: IRouter = Router();
+
+const giftImageUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (["image/jpeg", "image/png", "image/webp"].includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error("Use JPG, PNG ou WebP"));
+    }
+  },
+});
+
+function normalizeCategory(value: unknown): string {
+  if (value === undefined || value === null) return "";
+  return String(value).trim();
+}
+
+function uploadGiftImageMiddleware(req: Request, res: Response, next: NextFunction): void {
+  giftImageUpload.single("file")(req, res, (err: unknown) => {
+    if (err) {
+      const msg = err instanceof Error ? err.message : "Falha no upload";
+      res.status(400).json({ error: msg });
+      return;
+    }
+    next();
+  });
+}
 
 router.get("/weddings/:weddingId/gifts", async (req, res): Promise<void> => {
   const params = ListGiftsParams.safeParse(req.params);
@@ -30,6 +71,47 @@ router.get("/weddings/:weddingId/gifts", async (req, res): Promise<void> => {
     createdAt: g.createdAt.toISOString(),
   })));
 });
+
+router.post(
+  "/weddings/:weddingId/gifts/upload-image",
+  authMiddleware,
+  requireWeddingRole("planner", "coordinator"),
+  uploadGiftImageMiddleware,
+  async (req, res): Promise<void> => {
+    const params = CreateGiftParams.safeParse(req.params);
+    if (!params.success) {
+      res.status(400).json({ error: params.error.message });
+      return;
+    }
+
+    const file = req.file;
+    if (!file?.buffer) {
+      res.status(400).json({ error: "Arquivo obrigatório (campo file)" });
+      return;
+    }
+
+    const ext = extFromMime(file.mimetype);
+    if (!ext) {
+      res.status(400).json({ error: "Use JPG, PNG ou WebP" });
+      return;
+    }
+
+    const [wedding] = await db.select().from(weddingsTable).where(eq(weddingsTable.id, params.data.weddingId)).limit(1);
+    if (!wedding) {
+      res.status(404).json({ error: "Casamento não encontrado" });
+      return;
+    }
+
+    const dir = getWeddingGiftDirAbsolute(wedding.id, wedding.createdById, wedding.title);
+    await ensureDir(dir);
+    const fileName = `${randomUUID()}${ext}`;
+    const absPath = path.join(dir, fileName);
+    await writeFile(absPath, file.buffer);
+
+    const rel = path.join(getWeddingEventRelativePath(wedding.id, wedding.createdById, wedding.title), "gifts", fileName);
+    res.json({ url: getPublicUrlForRelativeKey(rel) });
+  },
+);
 
 router.post("/weddings/:weddingId/gifts", authMiddleware, requireWeddingRole("planner", "coordinator"), async (req, res): Promise<void> => {
   const params = CreateGiftParams.safeParse(req.params);
@@ -49,8 +131,10 @@ router.post("/weddings/:weddingId/gifts", authMiddleware, requireWeddingRole("pl
     price: String(parsed.data.price ?? 0),
     description: parsed.data.description,
     imageUrl: parsed.data.imageUrl,
-    category: parsed.data.category || "geral",
+    category: normalizeCategory(parsed.data.category),
+    humorTag: parsed.data.humorTag ?? null,
     weddingId: params.data.weddingId,
+    isActive: parsed.data.isActive ?? true,
   }).returning();
 
   res.status(201).json({
@@ -73,14 +157,45 @@ router.patch("/weddings/:weddingId/gifts/:id", authMiddleware, requireWeddingRol
     return;
   }
 
-  const updateData: Record<string, unknown> = { ...parsed.data };
-  if (updateData.price !== undefined) updateData.price = String(updateData.price);
+  const [existing] = await db.select().from(giftsTable)
+    .where(and(eq(giftsTable.id, params.data.id), eq(giftsTable.weddingId, params.data.weddingId)))
+    .limit(1);
+  if (!existing) {
+    res.status(404).json({ error: "Presente não encontrado" });
+    return;
+  }
 
+  const raw = parsed.data;
+  const updateData: Record<string, unknown> = {};
+  if (raw.name !== undefined) updateData.name = raw.name;
+  if (raw.description !== undefined) updateData.description = raw.description;
+  if (raw.category !== undefined) updateData.category = normalizeCategory(raw.category);
+  if (raw.price !== undefined) updateData.price = String(raw.price);
+  if (raw.imageUrl !== undefined) updateData.imageUrl = raw.imageUrl;
+  if (raw.humorTag !== undefined) updateData.humorTag = raw.humorTag;
+  if (raw.isActive !== undefined) updateData.isActive = raw.isActive;
+
+  if (Object.keys(updateData).length === 0) {
+    res.status(400).json({ error: "Nenhum campo para atualizar" });
+    return;
+  }
+
+  const oldImageUrl = existing.imageUrl;
   const [gift] = await db.update(giftsTable).set(updateData)
     .where(and(eq(giftsTable.id, params.data.id), eq(giftsTable.weddingId, params.data.weddingId))).returning();
   if (!gift) {
     res.status(404).json({ error: "Presente não encontrado" });
     return;
+  }
+
+  const newImageUrl = gift.imageUrl;
+  if (
+    raw.imageUrl !== undefined &&
+    oldImageUrl &&
+    String(oldImageUrl) !== String(newImageUrl ?? "") &&
+    isManagedGiftImageUrl(String(oldImageUrl))
+  ) {
+    await unlinkManagedGiftImage(String(oldImageUrl));
   }
 
   res.json({
@@ -95,6 +210,14 @@ router.delete("/weddings/:weddingId/gifts/:id", authMiddleware, requireWeddingRo
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
     return;
+  }
+
+  const [row] = await db.select().from(giftsTable)
+    .where(and(eq(giftsTable.id, params.data.id), eq(giftsTable.weddingId, params.data.weddingId)))
+    .limit(1);
+
+  if (row?.imageUrl && isManagedGiftImageUrl(String(row.imageUrl))) {
+    await unlinkManagedGiftImage(String(row.imageUrl));
   }
 
   await db.delete(giftsTable).where(and(eq(giftsTable.id, params.data.id), eq(giftsTable.weddingId, params.data.weddingId)));

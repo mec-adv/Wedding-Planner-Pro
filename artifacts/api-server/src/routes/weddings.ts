@@ -10,6 +10,7 @@ import {
 } from "@workspace/api-zod";
 import { authMiddleware, verifyWeddingAccess, type AuthRequest } from "../lib/auth";
 import { weddingRowFromPg } from "../lib/wedding-pg";
+import { removeWeddingUploadDirectory } from "../lib/gift-upload-paths";
 
 const router: IRouter = Router();
 
@@ -306,13 +307,25 @@ router.delete("/weddings/:id", authMiddleware, verifyWeddingAccess, async (req, 
 
   const id = params.data.id;
   const client = await pool.connect();
+  let uploadCleanup: { createdById: number; title: string } | null = null;
   try {
+    const metaRes = await client.query(
+      `SELECT created_by_id, title FROM weddings WHERE id = $1`,
+      [id],
+    );
+    const metaRow = metaRes.rows[0] as { created_by_id: number; title: string } | undefined;
+    if (metaRow) {
+      uploadCleanup = { createdById: metaRow.created_by_id, title: metaRow.title };
+    }
     await client.query("BEGIN");
     await client.query(`DELETE FROM profiles WHERE wedding_id = $1`, [id]);
     await client.query(`DELETE FROM invitations WHERE wedding_id = $1`, [id]);
     await client.query(`DELETE FROM weddings WHERE id = $1`, [id]);
     await client.query("COMMIT");
     res.sendStatus(204);
+    if (uploadCleanup) {
+      void removeWeddingUploadDirectory(id, uploadCleanup.createdById, uploadCleanup.title);
+    }
   } catch (err) {
     await client.query("ROLLBACK");
     console.error("[DELETE /weddings/:id]", err);

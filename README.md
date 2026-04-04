@@ -37,6 +37,7 @@ O frontend consome a API em `/api` (em desenvolvimento, o proxy do Vite usa `DEV
 - Autenticação com **JWT** (Bearer) e **bcryptjs** para senhas
 - **Nodemailer** para envio de convites por e-mail (SMTP via variáveis de ambiente)
 - Integrações por casamento: **Evolution API** (WhatsApp), **Asaas** (PIX, boleto, cartão, etc.), configuráveis no banco
+- **Multer** para upload multipart de imagens de presentes (memória + gravação em disco)
 
 ### Dados e contratos
 
@@ -50,7 +51,8 @@ O frontend consome a API em `/api` (em desenvolvimento, o proxy do Vite usa `DEV
 - **Casamentos**: seleção do evento ativo, edição de dados do casamento e dashboard agregado.
 - **Convidados**: cadastro, importação, RSVP e fluxos relacionados a convites.
 - **Convites e lembretes**: envio por canais suportados (ex.: e-mail SMTP, WhatsApp quando configurado).
-- **Lista de presentes e checkout**: pedidos, métodos de pagamento e integração com Asaas quando habilitada.
+- **Lista de presentes**: CRUD de itens (criação e edição para cerimonialista/coordenador; exclusão apenas cerimonialista/admin); categoria opcional (“sem categoria”); campo de **comentário** (na API: `humorTag`); imagem via **upload** (JPEG, PNG ou WebP, limite **5 MB** por arquivo) ou **URL externa**; alternância entre visualização em **grade** e em **lista** (preferência salva no navegador por casamento). Arquivos enviados ficam fora do banco: pasta `uploads/` na raiz do monorepo (ou caminho definido por `UPLOAD_ROOT`), organizada por usuário criador do evento e identificação do casamento (`users/{id}/…-w{weddingId}/gifts/`). Imagens são servidas em **`/api/uploads`** (leitura pública, para o checkout). Ao **excluir o casamento**, a pasta de uploads daquele evento é removida; ao **excluir ou trocar** um presente com imagem local, o arquivo correspondente é apagado quando aplicável.
+- **Checkout**: escolha de presente e pedidos com métodos de pagamento; integração com Asaas quando habilitada.
 - **Extrato**: visão financeira / movimentação ligada a presentes e pagamentos.
 - **Tarefas**: checklist do planejamento com prioridade e status.
 - **Orçamento**: controle de custos do evento.
@@ -71,7 +73,8 @@ O frontend consome a API em `/api` (em desenvolvimento, o proxy do Vite usa `DEV
 ## Configuração rápida
 
 1. **Variáveis de ambiente**  
-   Copie `.env.example` para `.env` na raiz e ajuste, no mínimo, `DATABASE_URL`, `PORT` / `DEV_API_PORT` e, em produção, `JWT_SECRET`.
+   Copie `.env.example` para `.env` na raiz e ajuste, no mínimo, `DATABASE_URL`, `PORT` / `DEV_API_PORT` e, em produção, `JWT_SECRET`.  
+   Opcional: **`UPLOAD_ROOT`** — diretório absoluto onde a API grava as imagens de presentes; se omitido, é usado `../../uploads` em relação ao diretório de trabalho do processo do `api-server` (tipicamente a pasta `uploads/` na raiz do repositório). A pasta de uploads está no **`.gitignore`** para não versionar binários.
 
 2. **Dependências**
 

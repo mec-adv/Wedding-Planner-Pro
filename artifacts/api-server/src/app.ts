@@ -1,6 +1,7 @@
 import express, { type Express, type NextFunction, type Request, type Response } from "express";
 import cors from "cors";
 import router from "./routes";
+import { getUploadRoot } from "./lib/gift-upload-paths";
 
 const app: Express = express();
 
@@ -15,6 +16,7 @@ app.use((req, _res, next) => {
   next();
 });
 
+app.use("/api/uploads", express.static(getUploadRoot()));
 app.use("/api", router);
 
 app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {

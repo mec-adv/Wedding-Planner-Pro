@@ -39,7 +39,7 @@ The `ROLE_LABELS` constant in both `auth.ts` (backend) and `AppLayout.tsx` (fron
 - **Role-based auth**: admin, planner (cerimonialista), coordinator, couple, guest
 - **RBAC on all endpoints**: Each GET/POST/PATCH/DELETE route enforces role-based access via `requireWeddingRole()`
 - **Guest management**: RSVP tracking, invite sending (WhatsApp/email), import, search/filter
-- **Gift registry**: with Asaas payment gateway (PIX/boleto/card), payment status tracking via webhooks
+- **Gift registry**: image upload (JPEG/PNG/WebP, 5 MB) or external URL, stored under `uploads/` (or `UPLOAD_ROOT`) by user/event; public `/api/uploads`; files removed when wedding or gift is deleted; grid/list view; optional category and comment field; Asaas checkout (PIX/boleto/card) and webhooks for payment status
 - **Financial extract**: Transaction history with withdrawal status tracking (pending → available → withdrawn)
 - **Automatic reminders**: Scheduled RSVP reminders via WhatsApp (configurable interval, start/stop/send-now)
 - **Task management**: Kanban board with drag-and-drop, priorities, due dates

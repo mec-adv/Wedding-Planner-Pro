@@ -5,6 +5,8 @@
  * Wedding Management API
  * OpenAPI spec version: 0.1.0
  */
+import type { GuestCompanion } from "./guestCompanion";
+import type { GuestInvitedBy } from "./guestInvitedBy";
 import type { GuestRsvpStatus } from "./guestRsvpStatus";
 
 export interface Guest {
@@ -15,12 +17,16 @@ export interface Guest {
   email?: string | null;
   /** @nullable */
   phone?: string | null;
-  /** @nullable */
-  group?: string | null;
+  /** FK para grupo de convidados do casamento */
+  guestGroupId?: number | null;
+  /** Nome do grupo (somente leitura na API) */
+  guestGroupName?: string | null;
+  /** Convidado pelo noivo (groom) ou pela noiva (bride) */
+  invitedBy?: GuestInvitedBy;
   rsvpStatus: GuestRsvpStatus;
-  plusOne: boolean;
-  /** @nullable */
-  plusOneName?: string | null;
+  companions: GuestCompanion[];
+  /** Número de acompanhantes (redundante para a UI) */
+  companionCount: number;
   /** @nullable */
   dietaryRestrictions?: string | null;
   /** @nullable */

@@ -1,2 +1,2 @@
 export * from "./generated/api";
-export * from "./generated/types";
+/** Tipos TS duplicam nomes dos schemas Zod em `./generated/api`; exportar os dois quebra `tsc --build`. */

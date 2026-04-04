@@ -1,4 +1,4 @@
-import type { WeddingInput } from "./api.schemas";
+import type { WeddingInput } from "./generated/api.schemas";
 
 /**
  * Orval pode gerar mutationFn como `const { data } = props` — se o caller passar
@@ -10,6 +10,7 @@ export function pickCreateWeddingMutationInput(
 ): WeddingInput {
   if (props == null || typeof props !== "object") return {} as WeddingInput;
   if (
+    "data" in props &&
     props.data !== undefined &&
     props.data !== null &&
     typeof props.data === "object" &&
@@ -33,6 +34,7 @@ export function pickUpdateWeddingMutationInput(
   }
   const id = Number((props as { id: number }).id);
   if (
+    "data" in props &&
     props.data !== undefined &&
     props.data !== null &&
     typeof props.data === "object" &&

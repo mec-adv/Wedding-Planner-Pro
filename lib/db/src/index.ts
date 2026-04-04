@@ -14,6 +14,6 @@ export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 export const db = drizzle(pool, { schema });
 
 /** Reexport do mesmo pacote drizzle-orm das tabelas (evita duas cópias e `is(SQL)` falhar no `.set()`). */
-export { eq, or, inArray, and, sql, ilike } from "drizzle-orm";
+export { eq, or, inArray, and, sql, ilike, asc } from "drizzle-orm";
 
 export * from "./schema";

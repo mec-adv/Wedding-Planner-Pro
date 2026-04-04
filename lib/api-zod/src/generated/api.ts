@@ -152,6 +152,34 @@ export const DeleteWeddingParams = zod.object({
 });
 
 /**
+ * @summary List guest groups
+ */
+export const ListGuestGroupsParams = zod.object({
+  weddingId: zod.coerce.number(),
+});
+
+export const ListGuestGroupsResponseItem = zod.object({
+  id: zod.number(),
+  weddingId: zod.number(),
+  name: zod.string(),
+  createdAt: zod.date(),
+});
+export const ListGuestGroupsResponse = zod.array(ListGuestGroupsResponseItem);
+
+/**
+ * @summary Create guest group
+ */
+export const CreateGuestGroupParams = zod.object({
+  weddingId: zod.coerce.number(),
+});
+
+export const createGuestGroupBodyNameMax = 100;
+
+export const CreateGuestGroupBody = zod.object({
+  name: zod.string().min(1).max(createGuestGroupBodyNameMax),
+});
+
+/**
  * @summary List guests
  */
 export const ListGuestsParams = zod.object({
@@ -169,10 +197,30 @@ export const ListGuestsResponseItem = zod.object({
   name: zod.string(),
   email: zod.string().nullish(),
   phone: zod.string().nullish(),
-  group: zod.string().nullish(),
+  guestGroupId: zod
+    .number()
+    .nullish()
+    .describe("FK para grupo de convidados do casamento"),
+  guestGroupName: zod
+    .string()
+    .nullish()
+    .describe("Nome do grupo (somente leitura na API)"),
+  invitedBy: zod
+    .enum(["groom", "bride"])
+    .nullish()
+    .describe("Convidado pelo noivo (groom) ou pela noiva (bride)"),
   rsvpStatus: zod.enum(["pending", "confirmed", "declined", "maybe"]),
-  plusOne: zod.boolean(),
-  plusOneName: zod.string().nullish(),
+  companions: zod.array(
+    zod.object({
+      id: zod.number(),
+      name: zod.string(),
+      age: zod.number(),
+      phone: zod.string().nullish().describe("Celular opcional"),
+    }),
+  ),
+  companionCount: zod
+    .number()
+    .describe("Número de acompanhantes (redundante para a UI)"),
   dietaryRestrictions: zod.string().nullish(),
   notes: zod.string().nullish(),
   inviteSentAt: zod.date().nullish(),
@@ -191,12 +239,14 @@ export const CreateGuestBody = zod.object({
   name: zod.string().optional(),
   email: zod.string().nullish(),
   phone: zod.string().nullish(),
-  group: zod.string().nullish(),
+  guestGroupId: zod.number().nullish(),
+  invitedBy: zod
+    .enum(["groom", "bride"])
+    .nullish()
+    .describe("Convidado pelo noivo (groom) ou pela noiva (bride)"),
   rsvpStatus: zod
     .enum(["pending", "confirmed", "declined", "maybe"])
     .optional(),
-  plusOne: zod.boolean().optional(),
-  plusOneName: zod.string().nullish(),
   dietaryRestrictions: zod.string().nullish(),
   notes: zod.string().nullish(),
 });
@@ -214,12 +264,14 @@ export const ImportGuestsBody = zod.object({
       name: zod.string().optional(),
       email: zod.string().nullish(),
       phone: zod.string().nullish(),
-      group: zod.string().nullish(),
+      guestGroupId: zod.number().nullish(),
+      invitedBy: zod
+        .enum(["groom", "bride"])
+        .nullish()
+        .describe("Convidado pelo noivo (groom) ou pela noiva (bride)"),
       rsvpStatus: zod
         .enum(["pending", "confirmed", "declined", "maybe"])
         .optional(),
-      plusOne: zod.boolean().optional(),
-      plusOneName: zod.string().nullish(),
       dietaryRestrictions: zod.string().nullish(),
       notes: zod.string().nullish(),
     }),
@@ -246,10 +298,30 @@ export const GetGuestResponse = zod.object({
   name: zod.string(),
   email: zod.string().nullish(),
   phone: zod.string().nullish(),
-  group: zod.string().nullish(),
+  guestGroupId: zod
+    .number()
+    .nullish()
+    .describe("FK para grupo de convidados do casamento"),
+  guestGroupName: zod
+    .string()
+    .nullish()
+    .describe("Nome do grupo (somente leitura na API)"),
+  invitedBy: zod
+    .enum(["groom", "bride"])
+    .nullish()
+    .describe("Convidado pelo noivo (groom) ou pela noiva (bride)"),
   rsvpStatus: zod.enum(["pending", "confirmed", "declined", "maybe"]),
-  plusOne: zod.boolean(),
-  plusOneName: zod.string().nullish(),
+  companions: zod.array(
+    zod.object({
+      id: zod.number(),
+      name: zod.string(),
+      age: zod.number(),
+      phone: zod.string().nullish().describe("Celular opcional"),
+    }),
+  ),
+  companionCount: zod
+    .number()
+    .describe("Número de acompanhantes (redundante para a UI)"),
   dietaryRestrictions: zod.string().nullish(),
   notes: zod.string().nullish(),
   inviteSentAt: zod.date().nullish(),
@@ -268,12 +340,14 @@ export const UpdateGuestBody = zod.object({
   name: zod.string().optional(),
   email: zod.string().nullish(),
   phone: zod.string().nullish(),
-  group: zod.string().nullish(),
+  guestGroupId: zod.number().nullish(),
+  invitedBy: zod
+    .enum(["groom", "bride"])
+    .nullish()
+    .describe("Convidado pelo noivo (groom) ou pela noiva (bride)"),
   rsvpStatus: zod
     .enum(["pending", "confirmed", "declined", "maybe"])
     .optional(),
-  plusOne: zod.boolean().optional(),
-  plusOneName: zod.string().nullish(),
   dietaryRestrictions: zod.string().nullish(),
   notes: zod.string().nullish(),
 });
@@ -284,10 +358,30 @@ export const UpdateGuestResponse = zod.object({
   name: zod.string(),
   email: zod.string().nullish(),
   phone: zod.string().nullish(),
-  group: zod.string().nullish(),
+  guestGroupId: zod
+    .number()
+    .nullish()
+    .describe("FK para grupo de convidados do casamento"),
+  guestGroupName: zod
+    .string()
+    .nullish()
+    .describe("Nome do grupo (somente leitura na API)"),
+  invitedBy: zod
+    .enum(["groom", "bride"])
+    .nullish()
+    .describe("Convidado pelo noivo (groom) ou pela noiva (bride)"),
   rsvpStatus: zod.enum(["pending", "confirmed", "declined", "maybe"]),
-  plusOne: zod.boolean(),
-  plusOneName: zod.string().nullish(),
+  companions: zod.array(
+    zod.object({
+      id: zod.number(),
+      name: zod.string(),
+      age: zod.number(),
+      phone: zod.string().nullish().describe("Celular opcional"),
+    }),
+  ),
+  companionCount: zod
+    .number()
+    .describe("Número de acompanhantes (redundante para a UI)"),
   dietaryRestrictions: zod.string().nullish(),
   notes: zod.string().nullish(),
   inviteSentAt: zod.date().nullish(),
@@ -310,10 +404,29 @@ export const UpdateGuestRsvpParams = zod.object({
   id: zod.coerce.number(),
 });
 
+export const updateGuestRsvpBodyCompanionsItemNameMax = 255;
+
+export const updateGuestRsvpBodyCompanionsItemAgeMin = 0;
+export const updateGuestRsvpBodyCompanionsItemAgeMax = 120;
+
 export const UpdateGuestRsvpBody = zod.object({
   rsvpStatus: zod.enum(["pending", "confirmed", "declined", "maybe"]),
   dietaryRestrictions: zod.string().nullish(),
-  plusOneName: zod.string().nullish(),
+  companions: zod
+    .array(
+      zod.object({
+        name: zod.string().min(1).max(updateGuestRsvpBodyCompanionsItemNameMax),
+        age: zod
+          .number()
+          .min(updateGuestRsvpBodyCompanionsItemAgeMin)
+          .max(updateGuestRsvpBodyCompanionsItemAgeMax),
+        phone: zod.string().nullish(),
+      }),
+    )
+    .optional()
+    .describe(
+      "Se enviado, substitui toda a lista de acompanhantes do convidado",
+    ),
 });
 
 export const UpdateGuestRsvpResponse = zod.object({
@@ -322,10 +435,30 @@ export const UpdateGuestRsvpResponse = zod.object({
   name: zod.string(),
   email: zod.string().nullish(),
   phone: zod.string().nullish(),
-  group: zod.string().nullish(),
+  guestGroupId: zod
+    .number()
+    .nullish()
+    .describe("FK para grupo de convidados do casamento"),
+  guestGroupName: zod
+    .string()
+    .nullish()
+    .describe("Nome do grupo (somente leitura na API)"),
+  invitedBy: zod
+    .enum(["groom", "bride"])
+    .nullish()
+    .describe("Convidado pelo noivo (groom) ou pela noiva (bride)"),
   rsvpStatus: zod.enum(["pending", "confirmed", "declined", "maybe"]),
-  plusOne: zod.boolean(),
-  plusOneName: zod.string().nullish(),
+  companions: zod.array(
+    zod.object({
+      id: zod.number(),
+      name: zod.string(),
+      age: zod.number(),
+      phone: zod.string().nullish().describe("Celular opcional"),
+    }),
+  ),
+  companionCount: zod
+    .number()
+    .describe("Número de acompanhantes (redundante para a UI)"),
   dietaryRestrictions: zod.string().nullish(),
   notes: zod.string().nullish(),
   inviteSentAt: zod.date().nullish(),

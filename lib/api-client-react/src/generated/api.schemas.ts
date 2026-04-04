@@ -88,6 +88,55 @@ export interface WeddingInput {
   coverImageUrl?: string | null;
 }
 
+export interface GuestGroup {
+  id: number;
+  weddingId: number;
+  name: string;
+  createdAt: string;
+}
+
+export interface CreateGuestGroupBody {
+  /**
+   * @minLength 1
+   * @maxLength 100
+   */
+  name: string;
+}
+
+export interface GuestCompanion {
+  id: number;
+  name: string;
+  age: number;
+  /** Celular opcional */
+  phone?: string | null;
+}
+
+export interface GuestCompanionInput {
+  /**
+   * @minLength 1
+   * @maxLength 255
+   */
+  name: string;
+  /**
+   * @minimum 0
+   * @maximum 120
+   */
+  age: number;
+  phone?: string | null;
+}
+
+/**
+ * Convidado pelo noivo (groom) ou pela noiva (bride)
+ */
+export type GuestInvitedBy =
+  | (typeof GuestInvitedBy)[keyof typeof GuestInvitedBy]
+  | null;
+
+export const GuestInvitedBy = {
+  groom: "groom",
+  bride: "bride",
+} as const;
+
 export type GuestRsvpStatus =
   (typeof GuestRsvpStatus)[keyof typeof GuestRsvpStatus];
 
@@ -106,12 +155,16 @@ export interface Guest {
   email?: string | null;
   /** @nullable */
   phone?: string | null;
-  /** @nullable */
-  group?: string | null;
+  /** FK para grupo de convidados do casamento */
+  guestGroupId?: number | null;
+  /** Nome do grupo (somente leitura na API) */
+  guestGroupName?: string | null;
+  /** Convidado pelo noivo (groom) ou pela noiva (bride) */
+  invitedBy?: GuestInvitedBy;
   rsvpStatus: GuestRsvpStatus;
-  plusOne: boolean;
-  /** @nullable */
-  plusOneName?: string | null;
+  companions: GuestCompanion[];
+  /** Número de acompanhantes (redundante para a UI) */
+  companionCount: number;
   /** @nullable */
   dietaryRestrictions?: string | null;
   /** @nullable */
@@ -120,6 +173,18 @@ export interface Guest {
   inviteSentAt?: string | null;
   createdAt: string;
 }
+
+/**
+ * Convidado pelo noivo (groom) ou pela noiva (bride)
+ */
+export type GuestInputInvitedBy =
+  | (typeof GuestInputInvitedBy)[keyof typeof GuestInputInvitedBy]
+  | null;
+
+export const GuestInputInvitedBy = {
+  groom: "groom",
+  bride: "bride",
+} as const;
 
 export type GuestInputRsvpStatus =
   (typeof GuestInputRsvpStatus)[keyof typeof GuestInputRsvpStatus];
@@ -137,12 +202,10 @@ export interface GuestInput {
   email?: string | null;
   /** @nullable */
   phone?: string | null;
-  /** @nullable */
-  group?: string | null;
+  guestGroupId?: number | null;
+  /** Convidado pelo noivo (groom) ou pela noiva (bride) */
+  invitedBy?: GuestInputInvitedBy;
   rsvpStatus?: GuestInputRsvpStatus;
-  plusOne?: boolean;
-  /** @nullable */
-  plusOneName?: string | null;
   /** @nullable */
   dietaryRestrictions?: string | null;
   /** @nullable */
@@ -173,8 +236,8 @@ export interface RsvpInput {
   rsvpStatus: RsvpInputRsvpStatus;
   /** @nullable */
   dietaryRestrictions?: string | null;
-  /** @nullable */
-  plusOneName?: string | null;
+  /** Se enviado, substitui toda a lista de acompanhantes do convidado */
+  companions?: GuestCompanionInput[];
 }
 
 export type SendInviteInputChannel =

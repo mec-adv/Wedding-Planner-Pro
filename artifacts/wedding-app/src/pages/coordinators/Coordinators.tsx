@@ -4,11 +4,13 @@ import { useListCoordinators, useCreateCoordinator, useDeleteCoordinator } from 
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PhoneInput } from "@/components/phone-input";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Plus, Phone, Mail, Trash2, UserCog, Shield } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { formatPhoneBrReadOnly } from "@/lib/phone-br";
 
 const AVAILABLE_PERMISSIONS = [
   { id: "guests", label: "Convidados" },
@@ -24,6 +26,7 @@ export default function Coordinators() {
   const { weddingId } = useParams();
   const wid = Number(weddingId);
   const [isOpen, setIsOpen] = useState(false);
+  const [phoneDigits, setPhoneDigits] = useState("");
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -47,13 +50,14 @@ export default function Coordinators() {
         data: {
           name: fd.get("name") as string,
           role: fd.get("role") as string,
-          phone: fd.get("phone") as string || null,
+          phone: phoneDigits.trim() ? phoneDigits.trim() : null,
           email: fd.get("email") as string || null,
           permissions: selectedPermissions,
         },
       });
       queryClient.invalidateQueries({ queryKey: [`/api/weddings/${wid}/coordinators`] });
       setIsOpen(false);
+      setPhoneDigits("");
       setSelectedPermissions([]);
       toast({ title: "Coordenador adicionado" });
     } catch {
@@ -78,7 +82,16 @@ export default function Coordinators() {
           <h1 className="text-3xl font-serif text-foreground">Equipe / Coordenadores</h1>
           <p className="text-muted-foreground mt-1">Gerencie a equipe de coordenação do casamento.</p>
         </div>
-        <Dialog open={isOpen} onOpenChange={(open) => { setIsOpen(open); if (!open) setSelectedPermissions([]); }}>
+        <Dialog
+          open={isOpen}
+          onOpenChange={(open) => {
+            setIsOpen(open);
+            if (!open) {
+              setSelectedPermissions([]);
+              setPhoneDigits("");
+            }
+          }}
+        >
           <DialogTrigger asChild>
             <Button className="rounded-full shadow-md"><Plus className="w-4 h-4 mr-2" /> Novo Coordenador</Button>
           </DialogTrigger>
@@ -88,7 +101,10 @@ export default function Coordinators() {
               <div><label className="text-sm font-medium">Nome</label><Input name="name" required /></div>
               <div><label className="text-sm font-medium">Função</label><Input name="role" placeholder="Ex: Cerimonialista, Assistente" required /></div>
               <div className="grid grid-cols-2 gap-4">
-                <div><label className="text-sm font-medium">Telefone</label><Input name="phone" /></div>
+                <div>
+                  <label className="text-sm font-medium">Telefone</label>
+                  <PhoneInput className="mt-1.5" value={phoneDigits} onDigitsChange={setPhoneDigits} />
+                </div>
                 <div><label className="text-sm font-medium">E-mail</label><Input name="email" type="email" /></div>
               </div>
               <div>
@@ -138,7 +154,11 @@ export default function Coordinators() {
                     <h3 className="font-semibold text-lg">{coord.name}</h3>
                     <p className="text-sm text-muted-foreground">{coord.role}</p>
                     <div className="mt-3 space-y-1">
-                      {coord.phone && <p className="text-sm flex items-center gap-2"><Phone className="w-3 h-3" /> {coord.phone}</p>}
+                      {coord.phone && (
+                        <p className="text-sm flex items-center gap-2">
+                          <Phone className="w-3 h-3 shrink-0" /> {formatPhoneBrReadOnly(coord.phone)}
+                        </p>
+                      )}
                       {coord.email && <p className="text-sm flex items-center gap-2"><Mail className="w-3 h-3" /> {coord.email}</p>}
                     </div>
                     {permissions.length > 0 && (

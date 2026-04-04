@@ -5,12 +5,13 @@
  * Wedding Management API
  * OpenAPI spec version: 0.1.0
  */
+import type { GuestCompanionInput } from "./guestCompanionInput";
 import type { RsvpInputRsvpStatus } from "./rsvpInputRsvpStatus";
 
 export interface RsvpInput {
   rsvpStatus: RsvpInputRsvpStatus;
   /** @nullable */
   dietaryRestrictions?: string | null;
-  /** @nullable */
-  plusOneName?: string | null;
+  /** Se enviado, substitui toda a lista de acompanhantes do convidado */
+  companions?: GuestCompanionInput[];
 }

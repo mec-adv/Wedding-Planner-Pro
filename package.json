@@ -7,6 +7,8 @@
     "install:deps": "npx --yes pnpm@9 install",
     "dev": "concurrently -n api,web -c blue,magenta \"npx --yes pnpm@9 --filter @workspace/api-server run dev\" \"cross-env PORT=5173 BASE_PATH=/ npx --yes pnpm@9 --filter @workspace/wedding-app run dev\"",
     "db:push": "npx --yes pnpm@9 --filter @workspace/db run push",
+    "db:migrate:guest-groups": "npx --yes pnpm@9 --filter @workspace/db run migrate-guest-groups",
+    "db:migrate:guest-companions": "npx --yes pnpm@9 --filter @workspace/db run migrate-guest-companions",
     "db:create": "node scripts/create-database-sys-dev.cjs",
     "build": "pnpm run typecheck && pnpm -r --if-present run build",
     "typecheck:libs": "tsc --build",

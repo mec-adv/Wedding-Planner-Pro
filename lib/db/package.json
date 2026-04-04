@@ -9,7 +9,9 @@
   },
   "scripts": {
     "push": "dotenv -e ../../.env -- drizzle-kit push --config ./drizzle.config.ts",
-    "push-force": "dotenv -e ../../.env -- drizzle-kit push --force --config ./drizzle.config.ts"
+    "push-force": "dotenv -e ../../.env -- drizzle-kit push --force --config ./drizzle.config.ts",
+    "migrate-guest-groups": "dotenv -e ../../.env -- node ./scripts/migrate-guest-groups.cjs",
+    "migrate-guest-companions": "dotenv -e ../../.env -- node ./scripts/migrate-guest-companions.cjs"
   },
   "dependencies": {
     "drizzle-orm": "catalog:",

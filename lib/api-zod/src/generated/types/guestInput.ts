@@ -5,6 +5,7 @@
  * Wedding Management API
  * OpenAPI spec version: 0.1.0
  */
+import type { GuestInputInvitedBy } from "./guestInputInvitedBy";
 import type { GuestInputRsvpStatus } from "./guestInputRsvpStatus";
 
 export interface GuestInput {
@@ -13,12 +14,10 @@ export interface GuestInput {
   email?: string | null;
   /** @nullable */
   phone?: string | null;
-  /** @nullable */
-  group?: string | null;
+  guestGroupId?: number | null;
+  /** Convidado pelo noivo (groom) ou pela noiva (bride) */
+  invitedBy?: GuestInputInvitedBy;
   rsvpStatus?: GuestInputRsvpStatus;
-  plusOne?: boolean;
-  /** @nullable */
-  plusOneName?: string | null;
   /** @nullable */
   dietaryRestrictions?: string | null;
   /** @nullable */

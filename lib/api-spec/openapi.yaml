@@ -15,6 +15,8 @@ tags:
     description: Wedding management
   - name: guests
     description: Guest management
+  - name: guestGroups
+    description: Guest group labels (per wedding)
   - name: gifts
     description: Gift registry
   - name: tasks
@@ -185,6 +187,50 @@ paths:
       responses:
         "204":
           description: Deleted
+
+  /weddings/{weddingId}/guest-groups:
+    get:
+      operationId: listGuestGroups
+      tags: [guestGroups]
+      summary: List guest groups
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Guest groups for the wedding
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GuestGroup"
+    post:
+      operationId: createGuestGroup
+      tags: [guestGroups]
+      summary: Create guest group
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateGuestGroupBody"
+      responses:
+        "201":
+          description: Guest group created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GuestGroup"
 
   /weddings/{weddingId}/guests:
     get:
@@ -1839,6 +1885,70 @@ components:
         coverImageUrl:
           type: ["string", "null"]
 
+    GuestGroup:
+      type: object
+      properties:
+        id:
+          type: integer
+        weddingId:
+          type: integer
+        name:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - weddingId
+        - name
+        - createdAt
+
+    CreateGuestGroupBody:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+      required:
+        - name
+
+    GuestCompanion:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        age:
+          type: integer
+        phone:
+          type: string
+          nullable: true
+          description: Celular opcional
+      required:
+        - id
+        - name
+        - age
+
+    GuestCompanionInput:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        age:
+          type: integer
+          minimum: 0
+          maximum: 120
+        phone:
+          type: string
+          nullable: true
+      required:
+        - name
+        - age
+
     Guest:
       type: object
       properties:
@@ -1852,15 +1962,29 @@ components:
           type: ["string", "null"]
         phone:
           type: ["string", "null"]
-        group:
-          type: ["string", "null"]
+        guestGroupId:
+          type: integer
+          nullable: true
+          description: FK para grupo de convidados do casamento
+        guestGroupName:
+          type: string
+          nullable: true
+          description: Nome do grupo (somente leitura na API)
+        invitedBy:
+          type: string
+          nullable: true
+          enum: [groom, bride]
+          description: Convidado pelo noivo (groom) ou pela noiva (bride)
         rsvpStatus:
           type: string
           enum: [pending, confirmed, declined, maybe]
-        plusOne:
-          type: boolean
-        plusOneName:
-          type: ["string", "null"]
+        companions:
+          type: array
+          items:
+            $ref: "#/components/schemas/GuestCompanion"
+        companionCount:
+          type: integer
+          description: Número de acompanhantes (redundante para a UI)
         dietaryRestrictions:
           type: ["string", "null"]
         notes:
@@ -1876,7 +2000,8 @@ components:
         - weddingId
         - name
         - rsvpStatus
-        - plusOne
+        - companions
+        - companionCount
         - createdAt
 
     GuestInput:
@@ -1888,15 +2013,17 @@ components:
           type: ["string", "null"]
         phone:
           type: ["string", "null"]
-        group:
-          type: ["string", "null"]
+        guestGroupId:
+          type: integer
+          nullable: true
+        invitedBy:
+          type: string
+          nullable: true
+          enum: [groom, bride]
+          description: Convidado pelo noivo (groom) ou pela noiva (bride)
         rsvpStatus:
           type: string
           enum: [pending, confirmed, declined, maybe]
-        plusOne:
-          type: boolean
-        plusOneName:
-          type: ["string", "null"]
         dietaryRestrictions:
           type: ["string", "null"]
         notes:
@@ -1936,8 +2063,11 @@ components:
           enum: [pending, confirmed, declined, maybe]
         dietaryRestrictions:
           type: ["string", "null"]
-        plusOneName:
-          type: ["string", "null"]
+        companions:
+          type: array
+          description: Se enviado, substitui toda a lista de acompanhantes do convidado
+          items:
+            $ref: "#/components/schemas/GuestCompanionInput"
       required:
         - rsvpStatus
 

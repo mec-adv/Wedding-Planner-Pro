@@ -138,6 +138,11 @@ router.post("/weddings", authMiddleware, async (req, res): Promise<void> => {
     "planner",
   ]);
 
+  await pool.query(
+    `INSERT INTO guest_groups (wedding_id, name) VALUES ($1, 'Colegas'), ($1, 'Trabalho'), ($1, 'Família')`,
+    [wedding.id],
+  );
+
   res.status(201).json(serializeWedding(wedding));
 });
 

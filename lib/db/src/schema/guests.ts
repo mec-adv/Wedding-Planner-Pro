@@ -2,6 +2,7 @@ import { pgTable, text, serial, timestamp, varchar, integer, boolean } from "dri
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { weddingsTable } from "./weddings";
+import { guestGroupsTable } from "./guest_groups";
 
 export const guestsTable = pgTable("guests", {
   id: serial("id").primaryKey(),
@@ -9,10 +10,10 @@ export const guestsTable = pgTable("guests", {
   name: varchar("name", { length: 255 }).notNull(),
   email: varchar("email", { length: 255 }),
   phone: varchar("phone", { length: 50 }),
-  group: varchar("group_name", { length: 100 }),
+  guestGroupId: integer("guest_group_id").references(() => guestGroupsTable.id, { onDelete: "set null" }),
+  /** Convidado pelo noivo (`groom`) ou pela noiva (`bride`); nomes vêm do cadastro do casamento */
+  invitedBy: varchar("invited_by", { length: 10 }),
   rsvpStatus: varchar("rsvp_status", { length: 20 }).notNull().default("pending"),
-  plusOne: boolean("plus_one").notNull().default(false),
-  plusOneName: varchar("plus_one_name", { length: 255 }),
   dietaryRestrictions: text("dietary_restrictions"),
   notes: text("notes"),
   inviteSentAt: timestamp("invite_sent_at", { withTimezone: true }),

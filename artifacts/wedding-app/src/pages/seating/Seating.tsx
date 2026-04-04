@@ -288,7 +288,7 @@ export default function Seating() {
                         ) : getUnassignedGuests().map(guest => (
                           <button key={guest.id} onClick={() => handleAssign(guest.id)}
                             className="w-full text-left p-3 rounded-lg hover:bg-secondary/50 transition-colors text-sm">
-                            {guest.name} <span className="text-muted-foreground">({guest.group || "sem grupo"})</span>
+                            {guest.name} <span className="text-muted-foreground">({guest.guestGroupName ?? "sem grupo"})</span>
                           </button>
                         ))}
                       </div>
@@ -371,7 +371,7 @@ export default function Seating() {
                           ) : getUnassignedGuests().map(guest => (
                             <button key={guest.id} onClick={() => handleAssign(guest.id)}
                               className="w-full text-left p-3 rounded-lg hover:bg-secondary/50 transition-colors text-sm">
-                              {guest.name} <span className="text-muted-foreground">({guest.group || "sem grupo"})</span>
+                              {guest.name} <span className="text-muted-foreground">({guest.guestGroupName ?? "sem grupo"})</span>
                             </button>
                           ))}
                         </div>

@@ -1,5 +1,5 @@
 import { useParams, Link } from "wouter";
-import { useGetWedding, useUpdateWedding, ApiError } from "@workspace/api-client-react";
+import { useGetWedding, useUpdateWedding, ApiError, getGetWeddingQueryKey } from "@workspace/api-client-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,7 +26,10 @@ export default function EditWedding() {
   const { weddingId } = useParams();
   const wid = Number(weddingId);
   const { data, isLoading, error } = useGetWedding(wid, {
-    query: { enabled: Number.isFinite(wid) && wid > 0 },
+    query: {
+      queryKey: getGetWeddingQueryKey(wid),
+      enabled: Number.isFinite(wid) && wid > 0,
+    },
   });
   const updateMutation = useUpdateWedding();
   const { toast } = useToast();

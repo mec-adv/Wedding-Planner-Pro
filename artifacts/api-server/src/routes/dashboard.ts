@@ -43,8 +43,8 @@ router.get("/weddings/:weddingId/dashboard", authMiddleware, async (req, res): P
 
     const now = new Date();
     const nowMs = now.getTime();
-    const weddingDateMs = timeMs(wedding.date) ?? nowMs;
-    const daysUntilWedding = Math.ceil((weddingDateMs - nowMs) / (1000 * 60 * 60 * 24));
+    const countdownMs = timeMs(wedding.religiousCeremonyAt) ?? timeMs(wedding.date) ?? nowMs;
+    const daysUntilWedding = Math.ceil((countdownMs - nowMs) / (1000 * 60 * 60 * 24));
 
     const overdueTasks = tasks.filter((t) => {
       const due = timeMs(t.dueDate);

@@ -1,4 +1,4 @@
-import { useGetDashboard } from "@workspace/api-client-react";
+import { useGetDashboard, getGetDashboardQueryKey } from "@workspace/api-client-react";
 import { useParams } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
@@ -9,7 +9,10 @@ export default function Dashboard() {
   const { weddingId } = useParams();
   const wid = Number(weddingId);
   const { data, isLoading, error } = useGetDashboard(wid, {
-    query: { enabled: Number.isFinite(wid) && wid > 0 },
+    query: {
+      queryKey: getGetDashboardQueryKey(wid),
+      enabled: Number.isFinite(wid) && wid > 0,
+    },
   });
 
   if (!Number.isFinite(wid) || wid <= 0) {
@@ -33,7 +36,8 @@ export default function Dashboard() {
   if (!data) return null;
 
   const { wedding, totalGuests, confirmedGuests, completedTasks, totalTasks, totalBudgetEstimated, totalBudgetActual, totalGiftReceived } = data;
-  const daysLeft = differenceInDays(new Date(wedding.date), new Date());
+  const countdownTo = wedding.religiousCeremonyAt ?? wedding.date;
+  const daysLeft = differenceInDays(new Date(countdownTo), new Date());
 
   const stats = [
     { label: "Convidados Confirmados", value: `${confirmedGuests} / ${totalGuests}`, icon: Users, color: "text-blue-500", bg: "bg-blue-500/10" },

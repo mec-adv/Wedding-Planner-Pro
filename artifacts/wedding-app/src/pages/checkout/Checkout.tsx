@@ -5,6 +5,7 @@ import type { GiftOrderInput } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PhoneInput } from "@/components/phone-input";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Gift, QrCode, FileText, CreditCard, CheckCircle, AlertCircle } from "lucide-react";
@@ -26,7 +27,8 @@ interface CheckoutState {
   cardExpiry: string;
   cardCvv: string;
   cardHolderCpf: string;
-  cardHolderPhone: string;
+  /** Apenas dígitos (BR), até 11 */
+  cardHolderPhoneDigits: string;
   cardHolderPostalCode: string;
   cardHolderAddressNumber: string;
   installmentCount: number;
@@ -55,7 +57,7 @@ const INITIAL_STATE: CheckoutState = {
   cardExpiry: "",
   cardCvv: "",
   cardHolderCpf: "",
-  cardHolderPhone: "",
+  cardHolderPhoneDigits: "",
   cardHolderPostalCode: "",
   cardHolderAddressNumber: "",
   installmentCount: 1,
@@ -133,7 +135,10 @@ export default function Checkout() {
         creditCardCcv: state.paymentMethod === "credit_card" ? state.cardCvv : null,
         creditCardHolderCpf: state.paymentMethod === "credit_card" ? state.cardHolderCpf : null,
         creditCardHolderEmail: state.paymentMethod === "credit_card" ? (state.guestEmail || null) : null,
-        creditCardHolderPhone: state.paymentMethod === "credit_card" ? (state.cardHolderPhone || null) : null,
+        creditCardHolderPhone:
+          state.paymentMethod === "credit_card"
+            ? state.cardHolderPhoneDigits.trim() || null
+            : null,
         creditCardHolderPostalCode: state.paymentMethod === "credit_card" ? (state.cardHolderPostalCode || null) : null,
         creditCardHolderAddressNumber: state.paymentMethod === "credit_card" ? (state.cardHolderAddressNumber || null) : null,
         installmentCount: state.paymentMethod === "credit_card" && state.installmentCount > 1 ? state.installmentCount : null,
@@ -346,9 +351,10 @@ export default function Checkout() {
               </div>
               <div>
                 <label className="text-sm font-medium">Telefone do Titular</label>
-                <Input
-                  value={state.cardHolderPhone}
-                  onChange={e => setState({ ...state, cardHolderPhone: e.target.value })}
+                <PhoneInput
+                  className="mt-1.5"
+                  value={state.cardHolderPhoneDigits}
+                  onDigitsChange={d => setState({ ...state, cardHolderPhoneDigits: d })}
                   placeholder="(11) 99999-9999"
                 />
               </div>

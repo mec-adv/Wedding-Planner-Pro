@@ -29,6 +29,7 @@ import type {
   ConnectionTestResult,
   Coordinator,
   CoordinatorInput,
+  CreateGuestGroupBody,
   DashboardData,
   FinancialSummary,
   Gift,
@@ -36,6 +37,7 @@ import type {
   GiftOrder,
   GiftOrderInput,
   Guest,
+  GuestGroup,
   GuestImportInput,
   GuestInput,
   HealthStatus,
@@ -76,10 +78,6 @@ import type {
 
 import { customFetch } from "../custom-fetch";
 import type { ErrorType, BodyType } from "../custom-fetch";
-import {
-  pickCreateWeddingMutationInput,
-  pickUpdateWeddingMutationInput,
-} from "../wedding-mutation-vars";
 
 type AwaitedInput<T> = PromiseLike<T> | T;
 
@@ -487,7 +485,7 @@ export const createWedding = async (
     ...options,
     method: "POST",
     headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(weddingInput ?? {}),
+    body: JSON.stringify(weddingInput),
   });
 };
 
@@ -521,7 +519,9 @@ export const getCreateWeddingMutationOptions = <
     Awaited<ReturnType<typeof createWedding>>,
     { data: BodyType<WeddingInput> }
   > = (props) => {
-    return createWedding(pickCreateWeddingMutationInput(props ?? undefined), requestOptions);
+    const { data } = props ?? {};
+
+    return createWedding(data, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
@@ -659,7 +659,7 @@ export const updateWedding = async (
     ...options,
     method: "PATCH",
     headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(weddingInput ?? {}),
+    body: JSON.stringify(weddingInput),
   });
 };
 
@@ -693,7 +693,8 @@ export const getUpdateWeddingMutationOptions = <
     Awaited<ReturnType<typeof updateWedding>>,
     { id: number; data: BodyType<WeddingInput> }
   > = (props) => {
-    const { id, data } = pickUpdateWeddingMutationInput(props ?? undefined);
+    const { id, data } = props ?? {};
+
     return updateWedding(id, data, requestOptions);
   };
 
@@ -811,6 +812,181 @@ export const useDeleteWedding = <
   TContext
 > => {
   return useMutation(getDeleteWeddingMutationOptions(options));
+};
+
+/**
+ * @summary List guest groups
+ */
+export const getListGuestGroupsUrl = (weddingId: number) => {
+  return `/api/weddings/${weddingId}/guest-groups`;
+};
+
+export const listGuestGroups = async (
+  weddingId: number,
+  options?: RequestInit,
+): Promise<GuestGroup[]> => {
+  return customFetch<GuestGroup[]>(getListGuestGroupsUrl(weddingId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListGuestGroupsQueryKey = (weddingId: number) => {
+  return [`/api/weddings/${weddingId}/guest-groups`] as const;
+};
+
+export const getListGuestGroupsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listGuestGroups>>,
+  TError = ErrorType<unknown>,
+>(
+  weddingId: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listGuestGroups>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getListGuestGroupsQueryKey(weddingId);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listGuestGroups>>> = ({
+    signal,
+  }) => listGuestGroups(weddingId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!weddingId,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof listGuestGroups>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListGuestGroupsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listGuestGroups>>
+>;
+export type ListGuestGroupsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List guest groups
+ */
+
+export function useListGuestGroups<
+  TData = Awaited<ReturnType<typeof listGuestGroups>>,
+  TError = ErrorType<unknown>,
+>(
+  weddingId: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listGuestGroups>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListGuestGroupsQueryOptions(weddingId, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Create guest group
+ */
+export const getCreateGuestGroupUrl = (weddingId: number) => {
+  return `/api/weddings/${weddingId}/guest-groups`;
+};
+
+export const createGuestGroup = async (
+  weddingId: number,
+  createGuestGroupBody: CreateGuestGroupBody,
+  options?: RequestInit,
+): Promise<GuestGroup> => {
+  return customFetch<GuestGroup>(getCreateGuestGroupUrl(weddingId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createGuestGroupBody),
+  });
+};
+
+export const getCreateGuestGroupMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createGuestGroup>>,
+    TError,
+    { weddingId: number; data: BodyType<CreateGuestGroupBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createGuestGroup>>,
+  TError,
+  { weddingId: number; data: BodyType<CreateGuestGroupBody> },
+  TContext
+> => {
+  const mutationKey = ["createGuestGroup"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createGuestGroup>>,
+    { weddingId: number; data: BodyType<CreateGuestGroupBody> }
+  > = (props) => {
+    const { weddingId, data } = props ?? {};
+
+    return createGuestGroup(weddingId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateGuestGroupMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createGuestGroup>>
+>;
+export type CreateGuestGroupMutationBody = BodyType<CreateGuestGroupBody>;
+export type CreateGuestGroupMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Create guest group
+ */
+export const useCreateGuestGroup = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createGuestGroup>>,
+    TError,
+    { weddingId: number; data: BodyType<CreateGuestGroupBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createGuestGroup>>,
+  TError,
+  { weddingId: number; data: BodyType<CreateGuestGroupBody> },
+  TContext
+> => {
+  return useMutation(getCreateGuestGroupMutationOptions(options));
 };
 
 /**

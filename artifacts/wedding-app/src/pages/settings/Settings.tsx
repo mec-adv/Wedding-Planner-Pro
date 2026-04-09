@@ -1,21 +1,38 @@
 import { useState, useEffect } from "react";
 import { useParams } from "wouter";
-import { useGetIntegrationSettings, useUpdateIntegrationSettings, useTestWhatsappConnection, useTestAsaasConnection } from "@workspace/api-client-react";
+import {
+  useGetIntegrationSettings,
+  useUpdateIntegrationSettings,
+  useTestWhatsappConnection,
+  useTestAsaasConnection,
+  useListGuestGroups,
+  useCreateGuestGroup,
+  useUpdateGuestGroup,
+  useDeleteGuestGroup,
+  getListGuestGroupsQueryKey,
+  ApiError,
+} from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { MessageCircle, CreditCard, Loader2 } from "lucide-react";
+import { MessageCircle, CreditCard, Loader2, Users, Pencil, Trash2, Check, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Settings() {
   const { weddingId } = useParams();
   const wid = Number(weddingId);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const { data: settings, isLoading } = useGetIntegrationSettings(wid);
+  const { data: guestGroups, isLoading: isLoadingGroups } = useListGuestGroups(wid);
   const updateMutation = useUpdateIntegrationSettings();
   const testWhatsapp = useTestWhatsappConnection();
   const testAsaas = useTestAsaasConnection();
+  const createGuestGroup = useCreateGuestGroup();
+  const updateGuestGroup = useUpdateGuestGroup();
+  const deleteGuestGroup = useDeleteGuestGroup();
 
   const [form, setForm] = useState({
     evolutionApiUrl: "",
@@ -24,6 +41,15 @@ export default function Settings() {
     asaasApiKey: "",
     asaasEnvironment: "sandbox" as "sandbox" | "production",
   });
+  const [newGroupName, setNewGroupName] = useState("");
+  const [editingGroupId, setEditingGroupId] = useState<number | null>(null);
+  const [editingGroupName, setEditingGroupName] = useState("");
+
+  const getApiErrorMessage = (err: unknown): string | null => {
+    if (!(err instanceof ApiError)) return null;
+    const data = err.data as { error?: string; message?: string } | null;
+    return data?.error ?? data?.message ?? null;
+  };
 
   useEffect(() => {
     if (settings) {
@@ -72,6 +98,99 @@ export default function Settings() {
       });
     } catch {
       toast({ variant: "destructive", title: "Erro ao testar conexão" });
+    }
+  };
+
+  const reloadGuestGroups = async () => {
+    await queryClient.invalidateQueries({ queryKey: getListGuestGroupsQueryKey(wid) });
+    await queryClient.invalidateQueries({ queryKey: [`/api/weddings/${wid}/guests`] });
+  };
+
+  const handleCreateGroup = async () => {
+    const name = newGroupName.trim();
+    if (!name) {
+      toast({ variant: "destructive", title: "Informe o nome do grupo." });
+      return;
+    }
+    try {
+      await createGuestGroup.mutateAsync({
+        weddingId: wid,
+        data: { name },
+      });
+      setNewGroupName("");
+      await reloadGuestGroups();
+      toast({ title: "Grupo criado" });
+    } catch (err) {
+      const message = getApiErrorMessage(err);
+      toast({
+        variant: "destructive",
+        title:
+          message?.includes("Já existe um grupo") || message?.includes("duplicate")
+            ? "Já existe um grupo com o mesmo nome."
+            : "Erro ao criar grupo",
+        description:
+          message?.includes("Já existe um grupo") || message?.includes("duplicate")
+            ? undefined
+            : message ?? undefined,
+      });
+    }
+  };
+
+  const startEditGroup = (id: number, name: string) => {
+    setEditingGroupId(id);
+    setEditingGroupName(name);
+  };
+
+  const cancelEditGroup = () => {
+    setEditingGroupId(null);
+    setEditingGroupName("");
+  };
+
+  const handleSaveGroup = async () => {
+    if (editingGroupId == null) return;
+    const name = editingGroupName.trim();
+    if (!name) {
+      toast({ variant: "destructive", title: "Informe o nome do grupo." });
+      return;
+    }
+    try {
+      await updateGuestGroup.mutateAsync({
+        weddingId: wid,
+        id: editingGroupId,
+        data: { name },
+      });
+      cancelEditGroup();
+      await reloadGuestGroups();
+      toast({ title: "Grupo atualizado" });
+    } catch (err) {
+      const message = getApiErrorMessage(err);
+      toast({
+        variant: "destructive",
+        title:
+          message?.includes("Já existe um grupo") || message?.includes("duplicate")
+            ? "Grupo já existe."
+            : "Erro ao atualizar grupo",
+        description:
+          message?.includes("Já existe um grupo") || message?.includes("duplicate")
+            ? "Use outro nome para continuar."
+            : message ?? undefined,
+      });
+    }
+  };
+
+  const handleDeleteGroup = async (id: number, name: string) => {
+    if (!confirm(`Excluir o grupo "${name}"?`)) return;
+    try {
+      await deleteGuestGroup.mutateAsync({ weddingId: wid, id });
+      await reloadGuestGroups();
+      toast({ title: "Grupo removido" });
+      if (editingGroupId === id) cancelEditGroup();
+    } catch {
+      toast({
+        variant: "destructive",
+        title: "Não foi possível excluir",
+        description: "Se houver convidados vinculados, troque o grupo deles antes de excluir.",
+      });
     }
   };
 
@@ -134,6 +253,128 @@ export default function Settings() {
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <div className="p-3 rounded-2xl bg-violet-500/10">
+              <Users className="w-6 h-6 text-violet-600" />
+            </div>
+            <div>
+              <CardTitle>Grupos de convidados</CardTitle>
+              <CardDescription>Visualize, inclua, edite e exclua grupos usados no campo Grupo.</CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Input
+              value={newGroupName}
+              onChange={(e) => setNewGroupName(e.target.value)}
+              placeholder="Ex.: Família da noiva"
+            />
+            <Button
+              type="button"
+              onClick={handleCreateGroup}
+              disabled={createGuestGroup.isPending}
+              className="sm:w-auto"
+            >
+              {createGuestGroup.isPending ? "Incluindo..." : "Incluir grupo"}
+            </Button>
+          </div>
+
+          <div className="rounded-xl border border-border overflow-hidden">
+            <table className="w-full text-sm">
+              <thead className="bg-secondary/30">
+                <tr>
+                  <th className="text-left px-4 py-3 font-semibold">Nome</th>
+                  <th className="text-right px-4 py-3 font-semibold">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {isLoadingGroups ? (
+                  <tr>
+                    <td colSpan={2} className="px-4 py-4 text-center text-muted-foreground">
+                      Carregando grupos...
+                    </td>
+                  </tr>
+                ) : !guestGroups?.length ? (
+                  <tr>
+                    <td colSpan={2} className="px-4 py-4 text-center text-muted-foreground">
+                      Nenhum grupo cadastrado.
+                    </td>
+                  </tr>
+                ) : (
+                  guestGroups.map((group) => (
+                    <tr key={group.id} className="border-t border-border/50">
+                      <td className="px-4 py-3">
+                        {editingGroupId === group.id ? (
+                          <Input
+                            value={editingGroupName}
+                            onChange={(e) => setEditingGroupName(e.target.value)}
+                            autoFocus
+                          />
+                        ) : (
+                          <span className="font-medium">{group.name}</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center justify-end gap-1">
+                          {editingGroupId === group.id ? (
+                            <>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                title="Salvar"
+                                onClick={handleSaveGroup}
+                                disabled={updateGuestGroup.isPending}
+                              >
+                                <Check className="w-4 h-4 text-emerald-600" />
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                title="Cancelar"
+                                onClick={cancelEditGroup}
+                              >
+                                <X className="w-4 h-4" />
+                              </Button>
+                            </>
+                          ) : (
+                            <>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                title="Editar grupo"
+                                onClick={() => startEditGroup(group.id, group.name)}
+                              >
+                                <Pencil className="w-4 h-4 text-amber-700" />
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                title="Excluir grupo"
+                                onClick={() => void handleDeleteGroup(group.id, group.name)}
+                                disabled={deleteGuestGroup.isPending}
+                              >
+                                <Trash2 className="w-4 h-4 text-destructive" />
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="flex justify-end">
         <Button onClick={handleSave} disabled={updateMutation.isPending} className="px-8">

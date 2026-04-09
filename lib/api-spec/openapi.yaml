@@ -232,6 +232,54 @@ paths:
               schema:
                 $ref: "#/components/schemas/GuestGroup"
 
+  /weddings/{weddingId}/guest-groups/{id}:
+    patch:
+      operationId: updateGuestGroup
+      tags: [guestGroups]
+      summary: Update guest group
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateGuestGroupBody"
+      responses:
+        "200":
+          description: Guest group updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GuestGroup"
+    delete:
+      operationId: deleteGuestGroup
+      tags: [guestGroups]
+      summary: Delete guest group
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
   /weddings/{weddingId}/guests:
     get:
       operationId: listGuests
@@ -440,6 +488,218 @@ paths:
               schema:
                 $ref: "#/components/schemas/SendInviteResult"
 
+  /weddings/{weddingId}/guests/{id}/rotate-invite-token:
+    post:
+      operationId: rotateGuestInviteToken
+      tags: [guests]
+      summary: Gera novo token do link público do convite
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Convidado atualizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Guest"
+
+  /public/invite/{token}:
+    get:
+      operationId: getPublicInvite
+      tags: [guests]
+      summary: Página pública do convite (RSVP) — dados do casamento e convidado
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Dados do convite
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicInviteResponse"
+        "404":
+          description: Token inválido
+    patch:
+      operationId: patchPublicInviteRsvp
+      tags: [guests]
+      summary: Atualizar RSVP pela página pública
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RsvpInput"
+      responses:
+        "200":
+          description: RSVP atualizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicInviteRsvpResult"
+
+  /public/invite/{token}/gifts:
+    get:
+      operationId: listPublicInviteGifts
+      tags: [gifts]
+      summary: Lista de presentes (página pública)
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Lista de presentes ativos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Gift"
+
+  /public/invite/{token}/gift-orders:
+    post:
+      operationId: createPublicGiftOrder
+      tags: [gifts]
+      summary: Criar pedido de presente (página pública)
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PublicGiftOrderInput"
+      responses:
+        "200":
+          description: Pedido idempotente já existente
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GiftOrderResult"
+        "201":
+          description: Pedido criado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GiftOrderResult"
+
+  /weddings/{weddingId}/public-invite-templates:
+    get:
+      operationId: listPublicInviteTemplates
+      tags: [guests]
+      summary: Listar modelos de página pública do convite
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Modelos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PublicInviteTemplate"
+    post:
+      operationId: createPublicInviteTemplate
+      tags: [guests]
+      summary: Criar modelo de página pública
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PublicInviteTemplateInput"
+      responses:
+        "201":
+          description: Criado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicInviteTemplate"
+
+  /weddings/{weddingId}/public-invite-templates/{id}:
+    patch:
+      operationId: updatePublicInviteTemplate
+      tags: [guests]
+      summary: Atualizar modelo de página pública
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PublicInviteTemplatePatch"
+      responses:
+        "200":
+          description: Atualizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicInviteTemplate"
+    delete:
+      operationId: deletePublicInviteTemplate
+      tags: [guests]
+      summary: Excluir modelo de página pública
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Excluído
+
   /weddings/{weddingId}/gifts:
     get:
       operationId: listGifts
@@ -569,6 +829,12 @@ paths:
             schema:
               $ref: "#/components/schemas/GiftOrderInput"
       responses:
+        "200":
+          description: Pedido idempotente já existente
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GiftOrder"
         "201":
           description: Gift order created
           content:
@@ -1913,6 +2179,16 @@ components:
       required:
         - name
 
+    UpdateGuestGroupBody:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+      required:
+        - name
+
     GuestCompanion:
       type: object
       properties:
@@ -1992,6 +2268,15 @@ components:
         inviteSentAt:
           type: ["string", "null"]
           format: date-time
+        inviteToken:
+          type: string
+          description: Token secreto para o link público (somente para equipe do casamento)
+        publicInvitePath:
+          type: string
+          description: Caminho relativo da página pública (ex. /p/convite/{token})
+        publicInviteTemplateId:
+          type: integer
+          nullable: true
         createdAt:
           type: string
           format: date-time
@@ -2002,6 +2287,8 @@ components:
         - rsvpStatus
         - companions
         - companionCount
+        - inviteToken
+        - publicInvitePath
         - createdAt
 
     GuestInput:
@@ -2028,6 +2315,10 @@ components:
           type: ["string", "null"]
         notes:
           type: ["string", "null"]
+        publicInviteTemplateId:
+          type: integer
+          nullable: true
+          description: Modelo de página pública; null usa o padrão do casamento
 
     GuestImportInput:
       type: object
@@ -2183,6 +2474,22 @@ components:
           type: ["string", "null"]
         pixCopyPaste:
           type: ["string", "null"]
+        guestId:
+          type: integer
+          nullable: true
+        idempotencyKey:
+          type: ["string", "null"]
+        coupleMessage:
+          type: ["string", "null"]
+        coupleMessageStatus:
+          type: string
+          enum: [pending, delivered, skipped]
+        coupleMessageProcessedAt:
+          type: ["string", "null"]
+          format: date-time
+        idempotentReplay:
+          type: boolean
+          description: Presente quando resposta veio de chave de idempotência
         createdAt:
           type: string
           format: date-time
@@ -2235,11 +2542,159 @@ components:
           type: ["string", "null"]
         installmentCount:
           type: ["integer", "null"]
+        guestId:
+          type: integer
+          nullable: true
+          description: Opcional; ao comprar via página pública é preenchido automaticamente
+        coupleMessage:
+          type: ["string", "null"]
+          maxLength: 2000
+          description: Mensagem opcional ao casal
       required:
         - giftId
         - guestName
         - amount
         - paymentMethod
+
+    PublicGiftOrderInput:
+      allOf:
+        - $ref: "#/components/schemas/GiftOrderInput"
+        - type: object
+          properties:
+            idempotencyKey:
+              type: string
+              maxLength: 128
+
+    GiftOrderResult:
+      allOf:
+        - $ref: "#/components/schemas/GiftOrder"
+
+    PublicInviteWedding:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        brideName:
+          type: string
+        groomName:
+          type: string
+        date:
+          type: string
+          format: date-time
+        civilCeremonyAt:
+          type: ["string", "null"]
+          format: date-time
+        religiousCeremonyAt:
+          type: ["string", "null"]
+          format: date-time
+        venue:
+          type: ["string", "null"]
+        description:
+          type: ["string", "null"]
+        coverImageUrl:
+          type: ["string", "null"]
+
+    PublicInviteGuest:
+      type: object
+      properties:
+        name:
+          type: string
+        rsvpStatus:
+          type: string
+          enum: [pending, confirmed, declined, maybe]
+        dietaryRestrictions:
+          type: ["string", "null"]
+        companions:
+          type: array
+          items:
+            $ref: "#/components/schemas/GuestCompanion"
+        companionCount:
+          type: integer
+
+    PublicInviteTemplateView:
+      type: object
+      properties:
+        id:
+          type: integer
+          nullable: true
+        name:
+          type: string
+          nullable: true
+        config:
+          type: object
+          additionalProperties: true
+
+    PublicInviteResponse:
+      type: object
+      properties:
+        wedding:
+          $ref: "#/components/schemas/PublicInviteWedding"
+        guest:
+          $ref: "#/components/schemas/PublicInviteGuest"
+        template:
+          $ref: "#/components/schemas/PublicInviteTemplateView"
+        lgpdNotice:
+          type: string
+
+    PublicInviteRsvpResult:
+      type: object
+      properties:
+        guest:
+          $ref: "#/components/schemas/PublicInviteGuest"
+
+    PublicInviteTemplate:
+      type: object
+      properties:
+        id:
+          type: integer
+        weddingId:
+          type: integer
+        name:
+          type: string
+        isDefault:
+          type: boolean
+        config:
+          type: object
+          additionalProperties: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - weddingId
+        - name
+        - isDefault
+        - createdAt
+        - updatedAt
+
+    PublicInviteTemplateInput:
+      type: object
+      properties:
+        name:
+          type: string
+        isDefault:
+          type: boolean
+        config:
+          type: object
+          additionalProperties: true
+      required:
+        - name
+
+    PublicInviteTemplatePatch:
+      type: object
+      properties:
+        name:
+          type: string
+        isDefault:
+          type: boolean
+        config:
+          type: object
+          additionalProperties: true
 
     FinancialSummary:
       type: object

@@ -36,6 +36,7 @@ import type {
   GiftInput,
   GiftOrder,
   GiftOrderInput,
+  GiftOrderResult,
   Guest,
   GuestGroup,
   GuestImportInput,
@@ -52,6 +53,12 @@ import type {
   MessageInput,
   MessageTemplate,
   MessageTemplateInput,
+  PublicGiftOrderInput,
+  PublicInviteResponse,
+  PublicInviteRsvpResult,
+  PublicInviteTemplate,
+  PublicInviteTemplateInput,
+  PublicInviteTemplatePatch,
   RegisterInput,
   RemindersResponse,
   RemindersSendResult,
@@ -68,6 +75,7 @@ import type {
   StartRemindersBody,
   Task,
   TaskInput,
+  UpdateGuestGroupBody,
   UpdateWithdrawalStatusBody,
   User,
   Vendor,
@@ -990,6 +998,179 @@ export const useCreateGuestGroup = <
 };
 
 /**
+ * @summary Update guest group
+ */
+export const getUpdateGuestGroupUrl = (weddingId: number, id: number) => {
+  return `/api/weddings/${weddingId}/guest-groups/${id}`;
+};
+
+export const updateGuestGroup = async (
+  weddingId: number,
+  id: number,
+  updateGuestGroupBody: UpdateGuestGroupBody,
+  options?: RequestInit,
+): Promise<GuestGroup> => {
+  return customFetch<GuestGroup>(getUpdateGuestGroupUrl(weddingId, id), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateGuestGroupBody),
+  });
+};
+
+export const getUpdateGuestGroupMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateGuestGroup>>,
+    TError,
+    { weddingId: number; id: number; data: BodyType<UpdateGuestGroupBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateGuestGroup>>,
+  TError,
+  { weddingId: number; id: number; data: BodyType<UpdateGuestGroupBody> },
+  TContext
+> => {
+  const mutationKey = ["updateGuestGroup"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateGuestGroup>>,
+    { weddingId: number; id: number; data: BodyType<UpdateGuestGroupBody> }
+  > = (props) => {
+    const { weddingId, id, data } = props ?? {};
+
+    return updateGuestGroup(weddingId, id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateGuestGroupMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateGuestGroup>>
+>;
+export type UpdateGuestGroupMutationBody = BodyType<UpdateGuestGroupBody>;
+export type UpdateGuestGroupMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Update guest group
+ */
+export const useUpdateGuestGroup = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateGuestGroup>>,
+    TError,
+    { weddingId: number; id: number; data: BodyType<UpdateGuestGroupBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateGuestGroup>>,
+  TError,
+  { weddingId: number; id: number; data: BodyType<UpdateGuestGroupBody> },
+  TContext
+> => {
+  return useMutation(getUpdateGuestGroupMutationOptions(options));
+};
+
+/**
+ * @summary Delete guest group
+ */
+export const getDeleteGuestGroupUrl = (weddingId: number, id: number) => {
+  return `/api/weddings/${weddingId}/guest-groups/${id}`;
+};
+
+export const deleteGuestGroup = async (
+  weddingId: number,
+  id: number,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getDeleteGuestGroupUrl(weddingId, id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeleteGuestGroupMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteGuestGroup>>,
+    TError,
+    { weddingId: number; id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteGuestGroup>>,
+  TError,
+  { weddingId: number; id: number },
+  TContext
+> => {
+  const mutationKey = ["deleteGuestGroup"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteGuestGroup>>,
+    { weddingId: number; id: number }
+  > = (props) => {
+    const { weddingId, id } = props ?? {};
+
+    return deleteGuestGroup(weddingId, id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteGuestGroupMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteGuestGroup>>
+>;
+
+export type DeleteGuestGroupMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Delete guest group
+ */
+export const useDeleteGuestGroup = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteGuestGroup>>,
+    TError,
+    { weddingId: number; id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteGuestGroup>>,
+  TError,
+  { weddingId: number; id: number },
+  TContext
+> => {
+  return useMutation(getDeleteGuestGroupMutationOptions(options));
+};
+
+/**
  * @summary List guests
  */
 export const getListGuestsUrl = (
@@ -1710,6 +1891,821 @@ export const useSendGuestInvite = <
   TContext
 > => {
   return useMutation(getSendGuestInviteMutationOptions(options));
+};
+
+/**
+ * @summary Gera novo token do link público do convite
+ */
+export const getRotateGuestInviteTokenUrl = (weddingId: number, id: number) => {
+  return `/api/weddings/${weddingId}/guests/${id}/rotate-invite-token`;
+};
+
+export const rotateGuestInviteToken = async (
+  weddingId: number,
+  id: number,
+  options?: RequestInit,
+): Promise<Guest> => {
+  return customFetch<Guest>(getRotateGuestInviteTokenUrl(weddingId, id), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getRotateGuestInviteTokenMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof rotateGuestInviteToken>>,
+    TError,
+    { weddingId: number; id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof rotateGuestInviteToken>>,
+  TError,
+  { weddingId: number; id: number },
+  TContext
+> => {
+  const mutationKey = ["rotateGuestInviteToken"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof rotateGuestInviteToken>>,
+    { weddingId: number; id: number }
+  > = (props) => {
+    const { weddingId, id } = props ?? {};
+
+    return rotateGuestInviteToken(weddingId, id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RotateGuestInviteTokenMutationResult = NonNullable<
+  Awaited<ReturnType<typeof rotateGuestInviteToken>>
+>;
+
+export type RotateGuestInviteTokenMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Gera novo token do link público do convite
+ */
+export const useRotateGuestInviteToken = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof rotateGuestInviteToken>>,
+    TError,
+    { weddingId: number; id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof rotateGuestInviteToken>>,
+  TError,
+  { weddingId: number; id: number },
+  TContext
+> => {
+  return useMutation(getRotateGuestInviteTokenMutationOptions(options));
+};
+
+/**
+ * @summary Página pública do convite (RSVP) — dados do casamento e convidado
+ */
+export const getGetPublicInviteUrl = (token: string) => {
+  return `/api/public/invite/${token}`;
+};
+
+export const getPublicInvite = async (
+  token: string,
+  options?: RequestInit,
+): Promise<PublicInviteResponse> => {
+  return customFetch<PublicInviteResponse>(getGetPublicInviteUrl(token), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetPublicInviteQueryKey = (token: string) => {
+  return [`/api/public/invite/${token}`] as const;
+};
+
+export const getGetPublicInviteQueryOptions = <
+  TData = Awaited<ReturnType<typeof getPublicInvite>>,
+  TError = ErrorType<void>,
+>(
+  token: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getPublicInvite>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetPublicInviteQueryKey(token);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getPublicInvite>>> = ({
+    signal,
+  }) => getPublicInvite(token, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!token,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getPublicInvite>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetPublicInviteQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getPublicInvite>>
+>;
+export type GetPublicInviteQueryError = ErrorType<void>;
+
+/**
+ * @summary Página pública do convite (RSVP) — dados do casamento e convidado
+ */
+
+export function useGetPublicInvite<
+  TData = Awaited<ReturnType<typeof getPublicInvite>>,
+  TError = ErrorType<void>,
+>(
+  token: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getPublicInvite>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetPublicInviteQueryOptions(token, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Atualizar RSVP pela página pública
+ */
+export const getPatchPublicInviteRsvpUrl = (token: string) => {
+  return `/api/public/invite/${token}`;
+};
+
+export const patchPublicInviteRsvp = async (
+  token: string,
+  rsvpInput: RsvpInput,
+  options?: RequestInit,
+): Promise<PublicInviteRsvpResult> => {
+  return customFetch<PublicInviteRsvpResult>(
+    getPatchPublicInviteRsvpUrl(token),
+    {
+      ...options,
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(rsvpInput),
+    },
+  );
+};
+
+export const getPatchPublicInviteRsvpMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof patchPublicInviteRsvp>>,
+    TError,
+    { token: string; data: BodyType<RsvpInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof patchPublicInviteRsvp>>,
+  TError,
+  { token: string; data: BodyType<RsvpInput> },
+  TContext
+> => {
+  const mutationKey = ["patchPublicInviteRsvp"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof patchPublicInviteRsvp>>,
+    { token: string; data: BodyType<RsvpInput> }
+  > = (props) => {
+    const { token, data } = props ?? {};
+
+    return patchPublicInviteRsvp(token, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type PatchPublicInviteRsvpMutationResult = NonNullable<
+  Awaited<ReturnType<typeof patchPublicInviteRsvp>>
+>;
+export type PatchPublicInviteRsvpMutationBody = BodyType<RsvpInput>;
+export type PatchPublicInviteRsvpMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Atualizar RSVP pela página pública
+ */
+export const usePatchPublicInviteRsvp = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof patchPublicInviteRsvp>>,
+    TError,
+    { token: string; data: BodyType<RsvpInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof patchPublicInviteRsvp>>,
+  TError,
+  { token: string; data: BodyType<RsvpInput> },
+  TContext
+> => {
+  return useMutation(getPatchPublicInviteRsvpMutationOptions(options));
+};
+
+/**
+ * @summary Lista de presentes (página pública)
+ */
+export const getListPublicInviteGiftsUrl = (token: string) => {
+  return `/api/public/invite/${token}/gifts`;
+};
+
+export const listPublicInviteGifts = async (
+  token: string,
+  options?: RequestInit,
+): Promise<Gift[]> => {
+  return customFetch<Gift[]>(getListPublicInviteGiftsUrl(token), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListPublicInviteGiftsQueryKey = (token: string) => {
+  return [`/api/public/invite/${token}/gifts`] as const;
+};
+
+export const getListPublicInviteGiftsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listPublicInviteGifts>>,
+  TError = ErrorType<unknown>,
+>(
+  token: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listPublicInviteGifts>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getListPublicInviteGiftsQueryKey(token);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listPublicInviteGifts>>
+  > = ({ signal }) =>
+    listPublicInviteGifts(token, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!token,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof listPublicInviteGifts>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListPublicInviteGiftsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listPublicInviteGifts>>
+>;
+export type ListPublicInviteGiftsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Lista de presentes (página pública)
+ */
+
+export function useListPublicInviteGifts<
+  TData = Awaited<ReturnType<typeof listPublicInviteGifts>>,
+  TError = ErrorType<unknown>,
+>(
+  token: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listPublicInviteGifts>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListPublicInviteGiftsQueryOptions(token, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Criar pedido de presente (página pública)
+ */
+export const getCreatePublicGiftOrderUrl = (token: string) => {
+  return `/api/public/invite/${token}/gift-orders`;
+};
+
+export const createPublicGiftOrder = async (
+  token: string,
+  publicGiftOrderInput: PublicGiftOrderInput,
+  options?: RequestInit,
+): Promise<GiftOrderResult> => {
+  return customFetch<GiftOrderResult>(getCreatePublicGiftOrderUrl(token), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(publicGiftOrderInput),
+  });
+};
+
+export const getCreatePublicGiftOrderMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createPublicGiftOrder>>,
+    TError,
+    { token: string; data: BodyType<PublicGiftOrderInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createPublicGiftOrder>>,
+  TError,
+  { token: string; data: BodyType<PublicGiftOrderInput> },
+  TContext
+> => {
+  const mutationKey = ["createPublicGiftOrder"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createPublicGiftOrder>>,
+    { token: string; data: BodyType<PublicGiftOrderInput> }
+  > = (props) => {
+    const { token, data } = props ?? {};
+
+    return createPublicGiftOrder(token, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreatePublicGiftOrderMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createPublicGiftOrder>>
+>;
+export type CreatePublicGiftOrderMutationBody = BodyType<PublicGiftOrderInput>;
+export type CreatePublicGiftOrderMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Criar pedido de presente (página pública)
+ */
+export const useCreatePublicGiftOrder = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createPublicGiftOrder>>,
+    TError,
+    { token: string; data: BodyType<PublicGiftOrderInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createPublicGiftOrder>>,
+  TError,
+  { token: string; data: BodyType<PublicGiftOrderInput> },
+  TContext
+> => {
+  return useMutation(getCreatePublicGiftOrderMutationOptions(options));
+};
+
+/**
+ * @summary Listar modelos de página pública do convite
+ */
+export const getListPublicInviteTemplatesUrl = (weddingId: number) => {
+  return `/api/weddings/${weddingId}/public-invite-templates`;
+};
+
+export const listPublicInviteTemplates = async (
+  weddingId: number,
+  options?: RequestInit,
+): Promise<PublicInviteTemplate[]> => {
+  return customFetch<PublicInviteTemplate[]>(
+    getListPublicInviteTemplatesUrl(weddingId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getListPublicInviteTemplatesQueryKey = (weddingId: number) => {
+  return [`/api/weddings/${weddingId}/public-invite-templates`] as const;
+};
+
+export const getListPublicInviteTemplatesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listPublicInviteTemplates>>,
+  TError = ErrorType<unknown>,
+>(
+  weddingId: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listPublicInviteTemplates>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getListPublicInviteTemplatesQueryKey(weddingId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listPublicInviteTemplates>>
+  > = ({ signal }) =>
+    listPublicInviteTemplates(weddingId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!weddingId,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof listPublicInviteTemplates>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListPublicInviteTemplatesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listPublicInviteTemplates>>
+>;
+export type ListPublicInviteTemplatesQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Listar modelos de página pública do convite
+ */
+
+export function useListPublicInviteTemplates<
+  TData = Awaited<ReturnType<typeof listPublicInviteTemplates>>,
+  TError = ErrorType<unknown>,
+>(
+  weddingId: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listPublicInviteTemplates>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListPublicInviteTemplatesQueryOptions(
+    weddingId,
+    options,
+  );
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Criar modelo de página pública
+ */
+export const getCreatePublicInviteTemplateUrl = (weddingId: number) => {
+  return `/api/weddings/${weddingId}/public-invite-templates`;
+};
+
+export const createPublicInviteTemplate = async (
+  weddingId: number,
+  publicInviteTemplateInput: PublicInviteTemplateInput,
+  options?: RequestInit,
+): Promise<PublicInviteTemplate> => {
+  return customFetch<PublicInviteTemplate>(
+    getCreatePublicInviteTemplateUrl(weddingId),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(publicInviteTemplateInput),
+    },
+  );
+};
+
+export const getCreatePublicInviteTemplateMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createPublicInviteTemplate>>,
+    TError,
+    { weddingId: number; data: BodyType<PublicInviteTemplateInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createPublicInviteTemplate>>,
+  TError,
+  { weddingId: number; data: BodyType<PublicInviteTemplateInput> },
+  TContext
+> => {
+  const mutationKey = ["createPublicInviteTemplate"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createPublicInviteTemplate>>,
+    { weddingId: number; data: BodyType<PublicInviteTemplateInput> }
+  > = (props) => {
+    const { weddingId, data } = props ?? {};
+
+    return createPublicInviteTemplate(weddingId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreatePublicInviteTemplateMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createPublicInviteTemplate>>
+>;
+export type CreatePublicInviteTemplateMutationBody =
+  BodyType<PublicInviteTemplateInput>;
+export type CreatePublicInviteTemplateMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Criar modelo de página pública
+ */
+export const useCreatePublicInviteTemplate = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createPublicInviteTemplate>>,
+    TError,
+    { weddingId: number; data: BodyType<PublicInviteTemplateInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createPublicInviteTemplate>>,
+  TError,
+  { weddingId: number; data: BodyType<PublicInviteTemplateInput> },
+  TContext
+> => {
+  return useMutation(getCreatePublicInviteTemplateMutationOptions(options));
+};
+
+/**
+ * @summary Atualizar modelo de página pública
+ */
+export const getUpdatePublicInviteTemplateUrl = (
+  weddingId: number,
+  id: number,
+) => {
+  return `/api/weddings/${weddingId}/public-invite-templates/${id}`;
+};
+
+export const updatePublicInviteTemplate = async (
+  weddingId: number,
+  id: number,
+  publicInviteTemplatePatch: PublicInviteTemplatePatch,
+  options?: RequestInit,
+): Promise<PublicInviteTemplate> => {
+  return customFetch<PublicInviteTemplate>(
+    getUpdatePublicInviteTemplateUrl(weddingId, id),
+    {
+      ...options,
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(publicInviteTemplatePatch),
+    },
+  );
+};
+
+export const getUpdatePublicInviteTemplateMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updatePublicInviteTemplate>>,
+    TError,
+    {
+      weddingId: number;
+      id: number;
+      data: BodyType<PublicInviteTemplatePatch>;
+    },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updatePublicInviteTemplate>>,
+  TError,
+  { weddingId: number; id: number; data: BodyType<PublicInviteTemplatePatch> },
+  TContext
+> => {
+  const mutationKey = ["updatePublicInviteTemplate"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updatePublicInviteTemplate>>,
+    { weddingId: number; id: number; data: BodyType<PublicInviteTemplatePatch> }
+  > = (props) => {
+    const { weddingId, id, data } = props ?? {};
+
+    return updatePublicInviteTemplate(weddingId, id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdatePublicInviteTemplateMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updatePublicInviteTemplate>>
+>;
+export type UpdatePublicInviteTemplateMutationBody =
+  BodyType<PublicInviteTemplatePatch>;
+export type UpdatePublicInviteTemplateMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Atualizar modelo de página pública
+ */
+export const useUpdatePublicInviteTemplate = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updatePublicInviteTemplate>>,
+    TError,
+    {
+      weddingId: number;
+      id: number;
+      data: BodyType<PublicInviteTemplatePatch>;
+    },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updatePublicInviteTemplate>>,
+  TError,
+  { weddingId: number; id: number; data: BodyType<PublicInviteTemplatePatch> },
+  TContext
+> => {
+  return useMutation(getUpdatePublicInviteTemplateMutationOptions(options));
+};
+
+/**
+ * @summary Excluir modelo de página pública
+ */
+export const getDeletePublicInviteTemplateUrl = (
+  weddingId: number,
+  id: number,
+) => {
+  return `/api/weddings/${weddingId}/public-invite-templates/${id}`;
+};
+
+export const deletePublicInviteTemplate = async (
+  weddingId: number,
+  id: number,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getDeletePublicInviteTemplateUrl(weddingId, id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeletePublicInviteTemplateMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deletePublicInviteTemplate>>,
+    TError,
+    { weddingId: number; id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deletePublicInviteTemplate>>,
+  TError,
+  { weddingId: number; id: number },
+  TContext
+> => {
+  const mutationKey = ["deletePublicInviteTemplate"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deletePublicInviteTemplate>>,
+    { weddingId: number; id: number }
+  > = (props) => {
+    const { weddingId, id } = props ?? {};
+
+    return deletePublicInviteTemplate(weddingId, id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeletePublicInviteTemplateMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deletePublicInviteTemplate>>
+>;
+
+export type DeletePublicInviteTemplateMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Excluir modelo de página pública
+ */
+export const useDeletePublicInviteTemplate = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deletePublicInviteTemplate>>,
+    TError,
+    { weddingId: number; id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deletePublicInviteTemplate>>,
+  TError,
+  { weddingId: number; id: number },
+  TContext
+> => {
+  return useMutation(getDeletePublicInviteTemplateMutationOptions(options));
 };
 
 /**

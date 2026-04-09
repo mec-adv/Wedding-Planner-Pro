@@ -33,5 +33,10 @@ export interface Guest {
   notes?: string | null;
   /** @nullable */
   inviteSentAt?: Date | null;
+  /** Token secreto para o link público (somente para equipe do casamento) */
+  inviteToken: string;
+  /** Caminho relativo da página pública (ex. /p/convite/{token}) */
+  publicInvitePath: string;
+  publicInviteTemplateId?: number | null;
   createdAt: Date;
 }

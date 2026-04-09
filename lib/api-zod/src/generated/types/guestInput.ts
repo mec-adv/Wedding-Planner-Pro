@@ -22,4 +22,6 @@ export interface GuestInput {
   dietaryRestrictions?: string | null;
   /** @nullable */
   notes?: string | null;
+  /** Modelo de página pública; null usa o padrão do casamento */
+  publicInviteTemplateId?: number | null;
 }

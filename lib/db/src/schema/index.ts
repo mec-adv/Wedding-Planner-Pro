@@ -3,6 +3,7 @@ export * from "./weddings";
 export * from "./profiles";
 export * from "./invitations";
 export * from "./guest_groups";
+export * from "./public_invite_templates";
 export * from "./guests";
 export * from "./guest_companions";
 export * from "./gifts";

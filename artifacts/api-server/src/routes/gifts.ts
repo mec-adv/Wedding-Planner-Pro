@@ -26,6 +26,7 @@ import {
   isManagedGiftImageUrl,
   unlinkManagedGiftImage,
 } from "../lib/gift-upload-paths";
+import { createGiftOrderWithPayment } from "../lib/create-gift-order";
 
 const router: IRouter = Router();
 
@@ -242,6 +243,11 @@ router.get("/weddings/:weddingId/gift-orders", authMiddleware, requireWeddingRol
     ...o.order,
     amount: Number(o.order.amount),
     giftName: o.giftName,
+    guestId: o.order.guestId ?? null,
+    coupleMessage: o.order.coupleMessage ?? null,
+    coupleMessageStatus: o.order.coupleMessageStatus,
+    coupleMessageProcessedAt: o.order.coupleMessageProcessedAt?.toISOString() ?? null,
+    idempotencyKey: o.order.idempotencyKey ?? null,
     withdrawnAt: o.order.withdrawnAt?.toISOString() ?? null,
     createdAt: o.order.createdAt.toISOString(),
   })));
@@ -260,37 +266,36 @@ router.post("/weddings/:weddingId/gift-orders", async (req, res): Promise<void> 
     return;
   }
 
-  let asaasPaymentId: string | null = null;
-  let paymentStatus = "pending";
-  let paymentArtifacts: Record<string, unknown> = {};
+  const idempotencyKey =
+    typeof req.headers["idempotency-key"] === "string" ? req.headers["idempotency-key"].trim().slice(0, 128) || null : null;
+
+  let result: Awaited<ReturnType<typeof createGiftOrderWithPayment>>;
   try {
-    const { createAsaasPayment } = await import("../lib/asaas");
-    const payment = await createAsaasPayment(params.data.weddingId, {
-      amount: parsed.data.amount,
-      paymentMethod: parsed.data.paymentMethod,
-      customerName: parsed.data.guestName,
-      customerEmail: parsed.data.guestEmail || undefined,
-      customerCpf: parsed.data.guestCpf || undefined,
-      creditCardNumber: parsed.data.creditCardNumber || undefined,
-      creditCardHolderName: parsed.data.creditCardHolderName || undefined,
-      creditCardExpiryMonth: parsed.data.creditCardExpiryMonth || undefined,
-      creditCardExpiryYear: parsed.data.creditCardExpiryYear || undefined,
-      creditCardCcv: parsed.data.creditCardCcv || undefined,
-      creditCardHolderCpf: parsed.data.creditCardHolderCpf || undefined,
-      creditCardHolderEmail: parsed.data.creditCardHolderEmail || undefined,
-      creditCardHolderPhone: parsed.data.creditCardHolderPhone || undefined,
-      creditCardHolderPostalCode: parsed.data.creditCardHolderPostalCode || undefined,
-      creditCardHolderAddressNumber: parsed.data.creditCardHolderAddressNumber || undefined,
-      installmentCount: parsed.data.installmentCount || undefined,
+    result = await createGiftOrderWithPayment({
+      weddingId: params.data.weddingId,
+      giftId: parsed.data.giftId,
+      guestId: parsed.data.guestId ?? null,
+      idempotencyKey,
+      coupleMessage: parsed.data.coupleMessage ?? null,
+      payment: {
+        amount: parsed.data.amount,
+        paymentMethod: parsed.data.paymentMethod,
+        guestName: parsed.data.guestName,
+        guestEmail: parsed.data.guestEmail,
+        guestCpf: parsed.data.guestCpf,
+        creditCardNumber: parsed.data.creditCardNumber,
+        creditCardHolderName: parsed.data.creditCardHolderName,
+        creditCardExpiryMonth: parsed.data.creditCardExpiryMonth,
+        creditCardExpiryYear: parsed.data.creditCardExpiryYear,
+        creditCardCcv: parsed.data.creditCardCcv,
+        creditCardHolderCpf: parsed.data.creditCardHolderCpf,
+        creditCardHolderEmail: parsed.data.creditCardHolderEmail,
+        creditCardHolderPhone: parsed.data.creditCardHolderPhone,
+        creditCardHolderPostalCode: parsed.data.creditCardHolderPostalCode,
+        creditCardHolderAddressNumber: parsed.data.creditCardHolderAddressNumber,
+        installmentCount: parsed.data.installmentCount,
+      },
     });
-    asaasPaymentId = payment.id;
-    paymentArtifacts = {
-      invoiceUrl: payment.invoiceUrl,
-      bankSlipUrl: payment.bankSlipUrl,
-      pixQrCode: payment.pixQrCode,
-      pixCopyPaste: payment.pixCopyPaste,
-      paymentStatus: payment.status,
-    };
   } catch (e: unknown) {
     const { getAsaasConfig } = await import("../lib/asaas");
     const config = await getAsaasConfig(params.data.weddingId);
@@ -298,26 +303,19 @@ router.post("/weddings/:weddingId/gift-orders", async (req, res): Promise<void> 
       res.status(502).json({ error: `Erro ao processar pagamento: ${e instanceof Error ? e.message : String(e)}` });
       return;
     }
-    paymentStatus = "manual";
+    res.status(500).json({ error: e instanceof Error ? e.message : "Erro ao criar pedido" });
+    return;
   }
 
-  const [order] = await db.insert(giftOrdersTable).values({
-    giftId: parsed.data.giftId,
-    guestName: parsed.data.guestName,
-    guestEmail: parsed.data.guestEmail ?? null,
-    paymentMethod: parsed.data.paymentMethod,
-    amount: String(parsed.data.amount),
-    weddingId: params.data.weddingId,
-    asaasPaymentId,
-    paymentStatus,
-  }).returning();
-
-  res.status(201).json({
+  const { order, paymentArtifacts, reused } = result;
+  const status = reused ? 200 : 201;
+  res.status(status).json({
     ...order,
     amount: Number(order.amount),
     giftName: null,
     createdAt: order.createdAt.toISOString(),
     ...paymentArtifacts,
+    idempotentReplay: reused,
   });
 });
 

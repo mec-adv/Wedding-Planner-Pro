@@ -12,6 +12,8 @@ import {
   useCreateGuestGroup,
   useImportGuests,
   getListGuestGroupsQueryKey,
+  getListGuestsQueryKey,
+  useRotateGuestInviteToken,
 } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -42,6 +44,8 @@ import {
   Download,
   FileDown,
   ChevronDown,
+  Link2,
+  KeyRound,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -116,6 +120,7 @@ export default function Guests() {
   const updateRsvpMutation = useUpdateGuestRsvp();
   const deleteMutation = useDeleteGuest();
   const sendInviteMutation = useSendGuestInvite();
+  const rotateInviteTokenMutation = useRotateGuestInviteToken();
   const importGuestsMutation = useImportGuests();
 
   const handleCreate = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -186,6 +191,34 @@ export default function Guests() {
       }
     } catch {
       toast({ variant: "destructive", title: "Erro ao enviar convite" });
+    }
+  };
+
+  const buildPublicInviteUrl = (guest: Guest) => {
+    const path = guest.publicInvitePath ?? `/p/convite/${guest.inviteToken}`;
+    const base = import.meta.env.BASE_URL.endsWith("/") ? import.meta.env.BASE_URL : `${import.meta.env.BASE_URL}/`;
+    return `${window.location.origin}${base}${path.replace(/^\//, "")}`;
+  };
+
+  const copyPublicInviteLink = async (guest: Guest) => {
+    try {
+      await navigator.clipboard.writeText(buildPublicInviteUrl(guest));
+      toast({ title: "Link da página pública copiado" });
+    } catch {
+      toast({ variant: "destructive", title: "Não foi possível copiar" });
+    }
+  };
+
+  const handleRotateInviteToken = async (guestId: number) => {
+    if (!confirm("Gerar novo link? O link antigo deixará de funcionar.")) return;
+    try {
+      await rotateInviteTokenMutation.mutateAsync({ weddingId: wid, id: guestId });
+      await queryClient.invalidateQueries({
+        queryKey: getListGuestsQueryKey(wid, { search: search || undefined }),
+      });
+      toast({ title: "Novo link gerado" });
+    } catch (e: unknown) {
+      toast({ variant: "destructive", title: e instanceof Error ? e.message : "Erro" });
     }
   };
 
@@ -1080,6 +1113,25 @@ export default function Guests() {
                         className="text-violet-600 hover:text-violet-700 hover:bg-violet-50"
                       >
                         <UserPlus className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => void copyPublicInviteLink(guest)}
+                        title="Copiar link da página pública (RSVP e presentes)"
+                        className="text-slate-600 hover:text-slate-800 hover:bg-slate-100"
+                      >
+                        <Link2 className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => void handleRotateInviteToken(guest.id)}
+                        title="Gerar novo link público"
+                        disabled={rotateInviteTokenMutation.isPending}
+                        className="text-slate-500 hover:text-slate-700 hover:bg-slate-50"
+                      >
+                        <KeyRound className="w-4 h-4" />
                       </Button>
                       {guest.email && (
                         <Button

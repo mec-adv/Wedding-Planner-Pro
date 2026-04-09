@@ -3,6 +3,7 @@ import { authMiddleware, verifyWeddingAccess } from "../lib/auth";
 import healthRouter from "./health";
 import authRouter from "./auth";
 import weddingsRouter from "./weddings";
+import publicInviteRouter from "./public-invite";
 import guestGroupsRouter from "./guest-groups";
 import guestsRouter from "./guests";
 import giftsRouter from "./gifts";
@@ -18,16 +19,19 @@ import dashboardRouter from "./dashboard";
 import webhooksRouter from "./webhooks";
 import invitationsRouter from "./invitations";
 import remindersRouter from "./reminders";
+import publicInviteTemplatesRouter from "./public-invite-templates";
 
 const router: IRouter = Router();
 
 router.use(healthRouter);
 router.use(authRouter);
+router.use(publicInviteRouter);
 router.use(weddingsRouter);
 router.use("/weddings/:weddingId", authMiddleware, verifyWeddingAccess);
 router.use(guestGroupsRouter);
 router.use(guestsRouter);
 router.use(giftsRouter);
+router.use(publicInviteTemplatesRouter);
 router.use(tasksRouter);
 router.use(vendorsRouter);
 router.use(coordinatorsRouter);

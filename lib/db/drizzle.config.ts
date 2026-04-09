@@ -10,6 +10,7 @@ export default defineConfig({
     "./src/schema/coordinators.ts",
     "./src/schema/gifts.ts",
     "./src/schema/guest_groups.ts",
+    "./src/schema/public_invite_templates.ts",
     "./src/schema/guests.ts",
     "./src/schema/guest_companions.ts",
     "./src/schema/invitations.ts",

@@ -5,6 +5,7 @@
  * Wedding Management API
  * OpenAPI spec version: 0.1.0
  */
+import type { GiftOrderCoupleMessageStatus } from "./giftOrderCoupleMessageStatus";
 import type { GiftOrderPaymentMethod } from "./giftOrderPaymentMethod";
 import type { GiftOrderPaymentStatus } from "./giftOrderPaymentStatus";
 import type { GiftOrderWithdrawalStatus } from "./giftOrderWithdrawalStatus";
@@ -34,5 +35,15 @@ export interface GiftOrder {
   pixQrCode?: string | null;
   /** @nullable */
   pixCopyPaste?: string | null;
+  guestId?: number | null;
+  /** @nullable */
+  idempotencyKey?: string | null;
+  /** @nullable */
+  coupleMessage?: string | null;
+  coupleMessageStatus?: GiftOrderCoupleMessageStatus;
+  /** @nullable */
+  coupleMessageProcessedAt?: Date | null;
+  /** Presente quando resposta veio de chave de idempotência */
+  idempotentReplay?: boolean;
   createdAt: Date;
 }

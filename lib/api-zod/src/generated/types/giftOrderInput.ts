@@ -38,4 +38,12 @@ export interface GiftOrderInput {
   creditCardHolderAddressNumber?: string | null;
   /** @nullable */
   installmentCount?: number | null;
+  /** Opcional; ao comprar via página pública é preenchido automaticamente */
+  guestId?: number | null;
+  /**
+   * Mensagem opcional ao casal
+   * @maxLength 2000
+   * @nullable
+   */
+  coupleMessage?: string | null;
 }

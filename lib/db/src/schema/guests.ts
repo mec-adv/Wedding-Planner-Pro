@@ -3,6 +3,7 @@ import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { weddingsTable } from "./weddings";
 import { guestGroupsTable } from "./guest_groups";
+import { publicInviteTemplatesTable } from "./public_invite_templates";
 
 export const guestsTable = pgTable("guests", {
   id: serial("id").primaryKey(),
@@ -17,10 +18,21 @@ export const guestsTable = pgTable("guests", {
   dietaryRestrictions: text("dietary_restrictions"),
   notes: text("notes"),
   inviteSentAt: timestamp("invite_sent_at", { withTimezone: true }),
+  /** Token secreto para a página pública do convite (sem login) */
+  inviteToken: varchar("invite_token", { length: 64 }).notNull(),
+  inviteTokenExpiresAt: timestamp("invite_token_expires_at", { withTimezone: true }),
+  publicInviteTemplateId: integer("public_invite_template_id").references(() => publicInviteTemplatesTable.id, {
+    onDelete: "set null",
+  }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });
 
-export const insertGuestSchema = createInsertSchema(guestsTable).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertGuestSchema = createInsertSchema(guestsTable).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  inviteToken: true,
+});
 export type InsertGuest = z.infer<typeof insertGuestSchema>;
 export type Guest = typeof guestsTable.$inferSelect;

@@ -180,6 +180,35 @@ export const CreateGuestGroupBody = zod.object({
 });
 
 /**
+ * @summary Update guest group
+ */
+export const UpdateGuestGroupParams = zod.object({
+  weddingId: zod.coerce.number(),
+  id: zod.coerce.number(),
+});
+
+export const updateGuestGroupBodyNameMax = 100;
+
+export const UpdateGuestGroupBody = zod.object({
+  name: zod.string().min(1).max(updateGuestGroupBodyNameMax),
+});
+
+export const UpdateGuestGroupResponse = zod.object({
+  id: zod.number(),
+  weddingId: zod.number(),
+  name: zod.string(),
+  createdAt: zod.date(),
+});
+
+/**
+ * @summary Delete guest group
+ */
+export const DeleteGuestGroupParams = zod.object({
+  weddingId: zod.coerce.number(),
+  id: zod.coerce.number(),
+});
+
+/**
  * @summary List guests
  */
 export const ListGuestsParams = zod.object({
@@ -224,6 +253,15 @@ export const ListGuestsResponseItem = zod.object({
   dietaryRestrictions: zod.string().nullish(),
   notes: zod.string().nullish(),
   inviteSentAt: zod.date().nullish(),
+  inviteToken: zod
+    .string()
+    .describe(
+      "Token secreto para o link público (somente para equipe do casamento)",
+    ),
+  publicInvitePath: zod
+    .string()
+    .describe("Caminho relativo da página pública (ex. \/p\/convite\/{token})"),
+  publicInviteTemplateId: zod.number().nullish(),
   createdAt: zod.date(),
 });
 export const ListGuestsResponse = zod.array(ListGuestsResponseItem);
@@ -249,6 +287,10 @@ export const CreateGuestBody = zod.object({
     .optional(),
   dietaryRestrictions: zod.string().nullish(),
   notes: zod.string().nullish(),
+  publicInviteTemplateId: zod
+    .number()
+    .nullish()
+    .describe("Modelo de página pública; null usa o padrão do casamento"),
 });
 
 /**
@@ -274,6 +316,10 @@ export const ImportGuestsBody = zod.object({
         .optional(),
       dietaryRestrictions: zod.string().nullish(),
       notes: zod.string().nullish(),
+      publicInviteTemplateId: zod
+        .number()
+        .nullish()
+        .describe("Modelo de página pública; null usa o padrão do casamento"),
     }),
   ),
 });
@@ -325,6 +371,15 @@ export const GetGuestResponse = zod.object({
   dietaryRestrictions: zod.string().nullish(),
   notes: zod.string().nullish(),
   inviteSentAt: zod.date().nullish(),
+  inviteToken: zod
+    .string()
+    .describe(
+      "Token secreto para o link público (somente para equipe do casamento)",
+    ),
+  publicInvitePath: zod
+    .string()
+    .describe("Caminho relativo da página pública (ex. \/p\/convite\/{token})"),
+  publicInviteTemplateId: zod.number().nullish(),
   createdAt: zod.date(),
 });
 
@@ -350,6 +405,10 @@ export const UpdateGuestBody = zod.object({
     .optional(),
   dietaryRestrictions: zod.string().nullish(),
   notes: zod.string().nullish(),
+  publicInviteTemplateId: zod
+    .number()
+    .nullish()
+    .describe("Modelo de página pública; null usa o padrão do casamento"),
 });
 
 export const UpdateGuestResponse = zod.object({
@@ -385,6 +444,15 @@ export const UpdateGuestResponse = zod.object({
   dietaryRestrictions: zod.string().nullish(),
   notes: zod.string().nullish(),
   inviteSentAt: zod.date().nullish(),
+  inviteToken: zod
+    .string()
+    .describe(
+      "Token secreto para o link público (somente para equipe do casamento)",
+    ),
+  publicInvitePath: zod
+    .string()
+    .describe("Caminho relativo da página pública (ex. \/p\/convite\/{token})"),
+  publicInviteTemplateId: zod.number().nullish(),
   createdAt: zod.date(),
 });
 
@@ -462,6 +530,15 @@ export const UpdateGuestRsvpResponse = zod.object({
   dietaryRestrictions: zod.string().nullish(),
   notes: zod.string().nullish(),
   inviteSentAt: zod.date().nullish(),
+  inviteToken: zod
+    .string()
+    .describe(
+      "Token secreto para o link público (somente para equipe do casamento)",
+    ),
+  publicInvitePath: zod
+    .string()
+    .describe("Caminho relativo da página pública (ex. \/p\/convite\/{token})"),
+  publicInviteTemplateId: zod.number().nullish(),
   createdAt: zod.date(),
 });
 
@@ -481,6 +558,337 @@ export const SendGuestInviteBody = zod.object({
 export const SendGuestInviteResponse = zod.object({
   success: zod.boolean(),
   message: zod.string(),
+});
+
+/**
+ * @summary Gera novo token do link público do convite
+ */
+export const RotateGuestInviteTokenParams = zod.object({
+  weddingId: zod.coerce.number(),
+  id: zod.coerce.number(),
+});
+
+export const RotateGuestInviteTokenResponse = zod.object({
+  id: zod.number(),
+  weddingId: zod.number(),
+  name: zod.string(),
+  email: zod.string().nullish(),
+  phone: zod.string().nullish(),
+  guestGroupId: zod
+    .number()
+    .nullish()
+    .describe("FK para grupo de convidados do casamento"),
+  guestGroupName: zod
+    .string()
+    .nullish()
+    .describe("Nome do grupo (somente leitura na API)"),
+  invitedBy: zod
+    .enum(["groom", "bride"])
+    .nullish()
+    .describe("Convidado pelo noivo (groom) ou pela noiva (bride)"),
+  rsvpStatus: zod.enum(["pending", "confirmed", "declined", "maybe"]),
+  companions: zod.array(
+    zod.object({
+      id: zod.number(),
+      name: zod.string(),
+      age: zod.number(),
+      phone: zod.string().nullish().describe("Celular opcional"),
+    }),
+  ),
+  companionCount: zod
+    .number()
+    .describe("Número de acompanhantes (redundante para a UI)"),
+  dietaryRestrictions: zod.string().nullish(),
+  notes: zod.string().nullish(),
+  inviteSentAt: zod.date().nullish(),
+  inviteToken: zod
+    .string()
+    .describe(
+      "Token secreto para o link público (somente para equipe do casamento)",
+    ),
+  publicInvitePath: zod
+    .string()
+    .describe("Caminho relativo da página pública (ex. \/p\/convite\/{token})"),
+  publicInviteTemplateId: zod.number().nullish(),
+  createdAt: zod.date(),
+});
+
+/**
+ * @summary Página pública do convite (RSVP) — dados do casamento e convidado
+ */
+export const GetPublicInviteParams = zod.object({
+  token: zod.coerce.string(),
+});
+
+export const GetPublicInviteResponse = zod.object({
+  wedding: zod
+    .object({
+      id: zod.number().optional(),
+      title: zod.string().optional(),
+      brideName: zod.string().optional(),
+      groomName: zod.string().optional(),
+      date: zod.date().optional(),
+      civilCeremonyAt: zod.date().nullish(),
+      religiousCeremonyAt: zod.date().nullish(),
+      venue: zod.string().nullish(),
+      description: zod.string().nullish(),
+      coverImageUrl: zod.string().nullish(),
+    })
+    .optional(),
+  guest: zod
+    .object({
+      name: zod.string().optional(),
+      rsvpStatus: zod
+        .enum(["pending", "confirmed", "declined", "maybe"])
+        .optional(),
+      dietaryRestrictions: zod.string().nullish(),
+      companions: zod
+        .array(
+          zod.object({
+            id: zod.number(),
+            name: zod.string(),
+            age: zod.number(),
+            phone: zod.string().nullish().describe("Celular opcional"),
+          }),
+        )
+        .optional(),
+      companionCount: zod.number().optional(),
+    })
+    .optional(),
+  template: zod
+    .object({
+      id: zod.number().nullish(),
+      name: zod.string().nullish(),
+      config: zod.record(zod.string(), zod.unknown()).optional(),
+    })
+    .optional(),
+  lgpdNotice: zod.string().optional(),
+});
+
+/**
+ * @summary Atualizar RSVP pela página pública
+ */
+export const PatchPublicInviteRsvpParams = zod.object({
+  token: zod.coerce.string(),
+});
+
+export const patchPublicInviteRsvpBodyCompanionsItemNameMax = 255;
+
+export const patchPublicInviteRsvpBodyCompanionsItemAgeMin = 0;
+export const patchPublicInviteRsvpBodyCompanionsItemAgeMax = 120;
+
+export const PatchPublicInviteRsvpBody = zod.object({
+  rsvpStatus: zod.enum(["pending", "confirmed", "declined", "maybe"]),
+  dietaryRestrictions: zod.string().nullish(),
+  companions: zod
+    .array(
+      zod.object({
+        name: zod
+          .string()
+          .min(1)
+          .max(patchPublicInviteRsvpBodyCompanionsItemNameMax),
+        age: zod
+          .number()
+          .min(patchPublicInviteRsvpBodyCompanionsItemAgeMin)
+          .max(patchPublicInviteRsvpBodyCompanionsItemAgeMax),
+        phone: zod.string().nullish(),
+      }),
+    )
+    .optional()
+    .describe(
+      "Se enviado, substitui toda a lista de acompanhantes do convidado",
+    ),
+});
+
+export const PatchPublicInviteRsvpResponse = zod.object({
+  guest: zod
+    .object({
+      name: zod.string().optional(),
+      rsvpStatus: zod
+        .enum(["pending", "confirmed", "declined", "maybe"])
+        .optional(),
+      dietaryRestrictions: zod.string().nullish(),
+      companions: zod
+        .array(
+          zod.object({
+            id: zod.number(),
+            name: zod.string(),
+            age: zod.number(),
+            phone: zod.string().nullish().describe("Celular opcional"),
+          }),
+        )
+        .optional(),
+      companionCount: zod.number().optional(),
+    })
+    .optional(),
+});
+
+/**
+ * @summary Lista de presentes (página pública)
+ */
+export const ListPublicInviteGiftsParams = zod.object({
+  token: zod.coerce.string(),
+});
+
+export const ListPublicInviteGiftsResponseItem = zod.object({
+  id: zod.number(),
+  weddingId: zod.number(),
+  name: zod.string(),
+  description: zod.string().nullish(),
+  category: zod.string(),
+  price: zod.number(),
+  imageUrl: zod.string().nullish(),
+  humorTag: zod.string().nullish(),
+  isActive: zod.boolean(),
+  createdAt: zod.date(),
+});
+export const ListPublicInviteGiftsResponse = zod.array(
+  ListPublicInviteGiftsResponseItem,
+);
+
+/**
+ * @summary Criar pedido de presente (página pública)
+ */
+export const CreatePublicGiftOrderParams = zod.object({
+  token: zod.coerce.string(),
+});
+
+export const createPublicGiftOrderBodyOneCoupleMessageMax = 2000;
+
+export const createPublicGiftOrderBodyTwoIdempotencyKeyMax = 128;
+
+export const CreatePublicGiftOrderBody = zod
+  .object({
+    giftId: zod.number(),
+    guestName: zod.string(),
+    guestEmail: zod.string().nullish(),
+    guestCpf: zod.string().nullish(),
+    amount: zod.number(),
+    paymentMethod: zod.enum(["pix", "boleto", "credit_card"]),
+    creditCardNumber: zod.string().nullish(),
+    creditCardHolderName: zod.string().nullish(),
+    creditCardExpiryMonth: zod.string().nullish(),
+    creditCardExpiryYear: zod.string().nullish(),
+    creditCardCcv: zod.string().nullish(),
+    creditCardHolderCpf: zod.string().nullish(),
+    creditCardHolderEmail: zod.string().nullish(),
+    creditCardHolderPhone: zod.string().nullish(),
+    creditCardHolderPostalCode: zod.string().nullish(),
+    creditCardHolderAddressNumber: zod.string().nullish(),
+    installmentCount: zod.number().nullish(),
+    guestId: zod
+      .number()
+      .nullish()
+      .describe(
+        "Opcional; ao comprar via página pública é preenchido automaticamente",
+      ),
+    coupleMessage: zod
+      .string()
+      .max(createPublicGiftOrderBodyOneCoupleMessageMax)
+      .nullish()
+      .describe("Mensagem opcional ao casal"),
+  })
+  .and(
+    zod.object({
+      idempotencyKey: zod
+        .string()
+        .max(createPublicGiftOrderBodyTwoIdempotencyKeyMax)
+        .optional(),
+    }),
+  );
+
+export const CreatePublicGiftOrderResponse = zod.object({
+  id: zod.number(),
+  weddingId: zod.number(),
+  giftId: zod.number(),
+  guestName: zod.string(),
+  guestEmail: zod.string().nullish(),
+  amount: zod.number(),
+  paymentMethod: zod.enum(["pix", "boleto", "credit_card"]),
+  paymentStatus: zod.enum(["pending", "confirmed", "failed", "refunded"]),
+  withdrawalStatus: zod.enum(["pending", "available", "withdrawn"]),
+  withdrawnAt: zod.date().nullish(),
+  asaasPaymentId: zod.string().nullish(),
+  giftName: zod.string().nullish(),
+  invoiceUrl: zod.string().nullish(),
+  bankSlipUrl: zod.string().nullish(),
+  pixQrCode: zod.string().nullish(),
+  pixCopyPaste: zod.string().nullish(),
+  guestId: zod.number().nullish(),
+  idempotencyKey: zod.string().nullish(),
+  coupleMessage: zod.string().nullish(),
+  coupleMessageStatus: zod.enum(["pending", "delivered", "skipped"]).optional(),
+  coupleMessageProcessedAt: zod.date().nullish(),
+  idempotentReplay: zod
+    .boolean()
+    .optional()
+    .describe("Presente quando resposta veio de chave de idempotência"),
+  createdAt: zod.date(),
+});
+
+/**
+ * @summary Listar modelos de página pública do convite
+ */
+export const ListPublicInviteTemplatesParams = zod.object({
+  weddingId: zod.coerce.number(),
+});
+
+export const ListPublicInviteTemplatesResponseItem = zod.object({
+  id: zod.number(),
+  weddingId: zod.number(),
+  name: zod.string(),
+  isDefault: zod.boolean(),
+  config: zod.record(zod.string(), zod.unknown()).optional(),
+  createdAt: zod.date(),
+  updatedAt: zod.date(),
+});
+export const ListPublicInviteTemplatesResponse = zod.array(
+  ListPublicInviteTemplatesResponseItem,
+);
+
+/**
+ * @summary Criar modelo de página pública
+ */
+export const CreatePublicInviteTemplateParams = zod.object({
+  weddingId: zod.coerce.number(),
+});
+
+export const CreatePublicInviteTemplateBody = zod.object({
+  name: zod.string(),
+  isDefault: zod.boolean().optional(),
+  config: zod.record(zod.string(), zod.unknown()).optional(),
+});
+
+/**
+ * @summary Atualizar modelo de página pública
+ */
+export const UpdatePublicInviteTemplateParams = zod.object({
+  weddingId: zod.coerce.number(),
+  id: zod.coerce.number(),
+});
+
+export const UpdatePublicInviteTemplateBody = zod.object({
+  name: zod.string().optional(),
+  isDefault: zod.boolean().optional(),
+  config: zod.record(zod.string(), zod.unknown()).optional(),
+});
+
+export const UpdatePublicInviteTemplateResponse = zod.object({
+  id: zod.number(),
+  weddingId: zod.number(),
+  name: zod.string(),
+  isDefault: zod.boolean(),
+  config: zod.record(zod.string(), zod.unknown()).optional(),
+  createdAt: zod.date(),
+  updatedAt: zod.date(),
+});
+
+/**
+ * @summary Excluir modelo de página pública
+ */
+export const DeletePublicInviteTemplateParams = zod.object({
+  weddingId: zod.coerce.number(),
+  id: zod.coerce.number(),
 });
 
 /**
@@ -584,6 +992,15 @@ export const ListGiftOrdersResponseItem = zod.object({
   bankSlipUrl: zod.string().nullish(),
   pixQrCode: zod.string().nullish(),
   pixCopyPaste: zod.string().nullish(),
+  guestId: zod.number().nullish(),
+  idempotencyKey: zod.string().nullish(),
+  coupleMessage: zod.string().nullish(),
+  coupleMessageStatus: zod.enum(["pending", "delivered", "skipped"]).optional(),
+  coupleMessageProcessedAt: zod.date().nullish(),
+  idempotentReplay: zod
+    .boolean()
+    .optional()
+    .describe("Presente quando resposta veio de chave de idempotência"),
   createdAt: zod.date(),
 });
 export const ListGiftOrdersResponse = zod.array(ListGiftOrdersResponseItem);
@@ -594,6 +1011,8 @@ export const ListGiftOrdersResponse = zod.array(ListGiftOrdersResponseItem);
 export const CreateGiftOrderParams = zod.object({
   weddingId: zod.coerce.number(),
 });
+
+export const createGiftOrderBodyCoupleMessageMax = 2000;
 
 export const CreateGiftOrderBody = zod.object({
   giftId: zod.number(),
@@ -613,6 +1032,46 @@ export const CreateGiftOrderBody = zod.object({
   creditCardHolderPostalCode: zod.string().nullish(),
   creditCardHolderAddressNumber: zod.string().nullish(),
   installmentCount: zod.number().nullish(),
+  guestId: zod
+    .number()
+    .nullish()
+    .describe(
+      "Opcional; ao comprar via página pública é preenchido automaticamente",
+    ),
+  coupleMessage: zod
+    .string()
+    .max(createGiftOrderBodyCoupleMessageMax)
+    .nullish()
+    .describe("Mensagem opcional ao casal"),
+});
+
+export const CreateGiftOrderResponse = zod.object({
+  id: zod.number(),
+  weddingId: zod.number(),
+  giftId: zod.number(),
+  guestName: zod.string(),
+  guestEmail: zod.string().nullish(),
+  amount: zod.number(),
+  paymentMethod: zod.enum(["pix", "boleto", "credit_card"]),
+  paymentStatus: zod.enum(["pending", "confirmed", "failed", "refunded"]),
+  withdrawalStatus: zod.enum(["pending", "available", "withdrawn"]),
+  withdrawnAt: zod.date().nullish(),
+  asaasPaymentId: zod.string().nullish(),
+  giftName: zod.string().nullish(),
+  invoiceUrl: zod.string().nullish(),
+  bankSlipUrl: zod.string().nullish(),
+  pixQrCode: zod.string().nullish(),
+  pixCopyPaste: zod.string().nullish(),
+  guestId: zod.number().nullish(),
+  idempotencyKey: zod.string().nullish(),
+  coupleMessage: zod.string().nullish(),
+  coupleMessageStatus: zod.enum(["pending", "delivered", "skipped"]).optional(),
+  coupleMessageProcessedAt: zod.date().nullish(),
+  idempotentReplay: zod
+    .boolean()
+    .optional()
+    .describe("Presente quando resposta veio de chave de idempotência"),
+  createdAt: zod.date(),
 });
 
 /**
@@ -666,6 +1125,15 @@ export const UpdateWithdrawalStatusResponse = zod.object({
   bankSlipUrl: zod.string().nullish(),
   pixQrCode: zod.string().nullish(),
   pixCopyPaste: zod.string().nullish(),
+  guestId: zod.number().nullish(),
+  idempotencyKey: zod.string().nullish(),
+  coupleMessage: zod.string().nullish(),
+  coupleMessageStatus: zod.enum(["pending", "delivered", "skipped"]).optional(),
+  coupleMessageProcessedAt: zod.date().nullish(),
+  idempotentReplay: zod
+    .boolean()
+    .optional()
+    .describe("Presente quando resposta veio de chave de idempotência"),
   createdAt: zod.date(),
 });
 

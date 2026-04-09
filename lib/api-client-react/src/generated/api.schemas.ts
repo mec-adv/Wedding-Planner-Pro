@@ -103,6 +103,14 @@ export interface CreateGuestGroupBody {
   name: string;
 }
 
+export interface UpdateGuestGroupBody {
+  /**
+   * @minLength 1
+   * @maxLength 100
+   */
+  name: string;
+}
+
 export interface GuestCompanion {
   id: number;
   name: string;
@@ -171,6 +179,11 @@ export interface Guest {
   notes?: string | null;
   /** @nullable */
   inviteSentAt?: string | null;
+  /** Token secreto para o link público (somente para equipe do casamento) */
+  inviteToken: string;
+  /** Caminho relativo da página pública (ex. /p/convite/{token}) */
+  publicInvitePath: string;
+  publicInviteTemplateId?: number | null;
   createdAt: string;
 }
 
@@ -210,6 +223,8 @@ export interface GuestInput {
   dietaryRestrictions?: string | null;
   /** @nullable */
   notes?: string | null;
+  /** Modelo de página pública; null usa o padrão do casamento */
+  publicInviteTemplateId?: number | null;
 }
 
 export interface GuestImportInput {
@@ -316,6 +331,15 @@ export const GiftOrderWithdrawalStatus = {
   withdrawn: "withdrawn",
 } as const;
 
+export type GiftOrderCoupleMessageStatus =
+  (typeof GiftOrderCoupleMessageStatus)[keyof typeof GiftOrderCoupleMessageStatus];
+
+export const GiftOrderCoupleMessageStatus = {
+  pending: "pending",
+  delivered: "delivered",
+  skipped: "skipped",
+} as const;
+
 export interface GiftOrder {
   id: number;
   weddingId: number;
@@ -341,6 +365,16 @@ export interface GiftOrder {
   pixQrCode?: string | null;
   /** @nullable */
   pixCopyPaste?: string | null;
+  guestId?: number | null;
+  /** @nullable */
+  idempotencyKey?: string | null;
+  /** @nullable */
+  coupleMessage?: string | null;
+  coupleMessageStatus?: GiftOrderCoupleMessageStatus;
+  /** @nullable */
+  coupleMessageProcessedAt?: string | null;
+  /** Presente quando resposta veio de chave de idempotência */
+  idempotentReplay?: boolean;
   createdAt: string;
 }
 
@@ -384,6 +418,105 @@ export interface GiftOrderInput {
   creditCardHolderAddressNumber?: string | null;
   /** @nullable */
   installmentCount?: number | null;
+  /** Opcional; ao comprar via página pública é preenchido automaticamente */
+  guestId?: number | null;
+  /**
+   * Mensagem opcional ao casal
+   * @maxLength 2000
+   * @nullable
+   */
+  coupleMessage?: string | null;
+}
+
+export type PublicGiftOrderInput = GiftOrderInput & {
+  /** @maxLength 128 */
+  idempotencyKey?: string;
+};
+
+export type GiftOrderResult = GiftOrder;
+
+export interface PublicInviteWedding {
+  id?: number;
+  title?: string;
+  brideName?: string;
+  groomName?: string;
+  date?: string;
+  /** @nullable */
+  civilCeremonyAt?: string | null;
+  /** @nullable */
+  religiousCeremonyAt?: string | null;
+  /** @nullable */
+  venue?: string | null;
+  /** @nullable */
+  description?: string | null;
+  /** @nullable */
+  coverImageUrl?: string | null;
+}
+
+export type PublicInviteGuestRsvpStatus =
+  (typeof PublicInviteGuestRsvpStatus)[keyof typeof PublicInviteGuestRsvpStatus];
+
+export const PublicInviteGuestRsvpStatus = {
+  pending: "pending",
+  confirmed: "confirmed",
+  declined: "declined",
+  maybe: "maybe",
+} as const;
+
+export interface PublicInviteGuest {
+  name?: string;
+  rsvpStatus?: PublicInviteGuestRsvpStatus;
+  /** @nullable */
+  dietaryRestrictions?: string | null;
+  companions?: GuestCompanion[];
+  companionCount?: number;
+}
+
+export type PublicInviteTemplateViewConfig = { [key: string]: unknown };
+
+export interface PublicInviteTemplateView {
+  id?: number | null;
+  name?: string | null;
+  config?: PublicInviteTemplateViewConfig;
+}
+
+export interface PublicInviteResponse {
+  wedding?: PublicInviteWedding;
+  guest?: PublicInviteGuest;
+  template?: PublicInviteTemplateView;
+  lgpdNotice?: string;
+}
+
+export interface PublicInviteRsvpResult {
+  guest?: PublicInviteGuest;
+}
+
+export type PublicInviteTemplateConfig = { [key: string]: unknown };
+
+export interface PublicInviteTemplate {
+  id: number;
+  weddingId: number;
+  name: string;
+  isDefault: boolean;
+  config?: PublicInviteTemplateConfig;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type PublicInviteTemplateInputConfig = { [key: string]: unknown };
+
+export interface PublicInviteTemplateInput {
+  name: string;
+  isDefault?: boolean;
+  config?: PublicInviteTemplateInputConfig;
+}
+
+export type PublicInviteTemplatePatchConfig = { [key: string]: unknown };
+
+export interface PublicInviteTemplatePatch {
+  name?: string;
+  isDefault?: boolean;
+  config?: PublicInviteTemplatePatchConfig;
 }
 
 export interface GuestContribution {

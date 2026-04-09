@@ -23,6 +23,8 @@ import Messages from "@/pages/messages/Messages";
 import Settings from "@/pages/settings/Settings";
 import Seating from "@/pages/seating/Seating";
 import Checkout from "@/pages/checkout/Checkout";
+import PublicInvite from "@/pages/public/PublicInvite";
+import PublicInviteTemplates from "@/pages/public/PublicInviteTemplates";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
@@ -65,7 +67,8 @@ function Router() {
     <Switch>
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
-      
+      <Route path="/p/convite/:token" component={PublicInvite} />
+
       <Route path="/" component={() => <ProtectedRoute component={SelectWedding} />} />
       <Route path="/weddings/:weddingId/dashboard" component={() => <ProtectedRoute component={Dashboard} />} />
       <Route path="/weddings/:weddingId/edit" component={() => <ProtectedRoute component={EditWedding} />} />
@@ -81,6 +84,7 @@ function Router() {
       <Route path="/weddings/:weddingId/settings" component={() => <ProtectedRoute component={Settings} />} />
       <Route path="/weddings/:weddingId/seating" component={() => <ProtectedRoute component={Seating} />} />
       <Route path="/weddings/:weddingId/checkout" component={() => <ProtectedRoute component={Checkout} />} />
+      <Route path="/weddings/:weddingId/public-invite-templates" component={() => <ProtectedRoute component={PublicInviteTemplates} />} />
 
       <Route component={NotFound} />
     </Switch>

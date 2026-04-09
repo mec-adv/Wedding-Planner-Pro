@@ -3,7 +3,7 @@ import {
   db,
   guestsTable,
   guestGroupsTable,
-  guestCompanionsTable,
+  publicInviteTemplatesTable,
   eq,
   and,
   ilike,
@@ -28,11 +28,11 @@ import {
   ImportGuestsBody,
 } from "@workspace/api-zod";
 import { authMiddleware, requireWeddingRole } from "../lib/auth";
+import { newInviteToken } from "../lib/invite-token";
+import { companionsByGuestIds, replaceGuestCompanions, type CompanionJson } from "../lib/guest-companion-ops";
 import type { InferSelectModel } from "drizzle-orm";
 
 type GuestRow = InferSelectModel<typeof guestsTable>;
-
-type CompanionJson = { id: number; name: string; age: number; phone: string | null };
 
 function mapGuestJson(g: GuestRow, guestGroupName: string | null, companions: CompanionJson[]) {
   return {
@@ -50,47 +50,11 @@ function mapGuestJson(g: GuestRow, guestGroupName: string | null, companions: Co
     dietaryRestrictions: g.dietaryRestrictions ?? null,
     notes: g.notes ?? null,
     inviteSentAt: g.inviteSentAt?.toISOString() ?? null,
+    inviteToken: g.inviteToken,
+    publicInvitePath: `/p/convite/${g.inviteToken}`,
+    publicInviteTemplateId: g.publicInviteTemplateId ?? null,
     createdAt: g.createdAt.toISOString(),
   };
-}
-
-async function companionsByGuestIds(guestIds: number[]): Promise<Map<number, CompanionJson[]>> {
-  const map = new Map<number, CompanionJson[]>();
-  if (guestIds.length === 0) return map;
-  const rows = await db
-    .select()
-    .from(guestCompanionsTable)
-    .where(inArray(guestCompanionsTable.guestId, guestIds))
-    .orderBy(asc(guestCompanionsTable.id));
-  for (const r of rows) {
-    const list = map.get(r.guestId) ?? [];
-    list.push({
-      id: r.id,
-      name: r.name,
-      age: r.age,
-      phone: r.phone ?? null,
-    });
-    map.set(r.guestId, list);
-  }
-  return map;
-}
-
-async function replaceGuestCompanions(
-  guestId: number,
-  items: { name: string; age: number; phone?: string | null }[],
-): Promise<void> {
-  await db.delete(guestCompanionsTable).where(eq(guestCompanionsTable.guestId, guestId));
-  if (items.length === 0) return;
-  const rows = items
-    .map((c) => ({
-      guestId,
-      name: c.name.trim(),
-      age: c.age,
-      phone: c.phone?.trim() ? c.phone.trim() : null,
-    }))
-    .filter((c) => c.name.length > 0);
-  if (rows.length === 0) return;
-  await db.insert(guestCompanionsTable).values(rows);
 }
 
 async function ensureGuestGroupForWedding(weddingId: number, guestGroupId: number | null | undefined): Promise<boolean> {
@@ -100,6 +64,15 @@ async function ensureGuestGroupForWedding(weddingId: number, guestGroupId: numbe
     .from(guestGroupsTable)
     .where(and(eq(guestGroupsTable.id, guestGroupId), eq(guestGroupsTable.weddingId, weddingId)));
   return !!row;
+}
+
+async function isPublicInviteTemplateForWedding(weddingId: number, templateId: number): Promise<boolean> {
+  const [tpl] = await db
+    .select({ id: publicInviteTemplatesTable.id })
+    .from(publicInviteTemplatesTable)
+    .where(and(eq(publicInviteTemplatesTable.id, templateId), eq(publicInviteTemplatesTable.weddingId, weddingId)))
+    .limit(1);
+  return !!tpl;
 }
 
 async function loadGuestJson(weddingId: number, guestId: number) {
@@ -168,6 +141,14 @@ router.post("/weddings/:weddingId/guests", authMiddleware, requireWeddingRole("p
     return;
   }
 
+  if (parsed.data.publicInviteTemplateId != null) {
+    const okTpl = await isPublicInviteTemplateForWedding(params.data.weddingId, parsed.data.publicInviteTemplateId);
+    if (!okTpl) {
+      res.status(400).json({ error: "Modelo de página pública inválido para este casamento." });
+      return;
+    }
+  }
+
   const [inserted] = await db
     .insert(guestsTable)
     .values({
@@ -180,6 +161,8 @@ router.post("/weddings/:weddingId/guests", authMiddleware, requireWeddingRole("p
       dietaryRestrictions: parsed.data.dietaryRestrictions,
       notes: parsed.data.notes,
       weddingId: params.data.weddingId,
+      inviteToken: newInviteToken(),
+      publicInviteTemplateId: parsed.data.publicInviteTemplateId ?? null,
     })
     .returning();
 
@@ -218,6 +201,14 @@ router.post("/weddings/:weddingId/guests/import", authMiddleware, requireWedding
         messages.push(`Grupo inválido para ${guestData.name ?? "convidado"}`);
         continue;
       }
+      if (guestData.publicInviteTemplateId != null) {
+        const okTpl = await isPublicInviteTemplateForWedding(params.data.weddingId, guestData.publicInviteTemplateId);
+        if (!okTpl) {
+          errors++;
+          messages.push(`Modelo de página inválido para ${guestData.name ?? "convidado"}`);
+          continue;
+        }
+      }
       await db.insert(guestsTable).values({
         name: guestData.name || "",
         email: guestData.email,
@@ -228,6 +219,8 @@ router.post("/weddings/:weddingId/guests/import", authMiddleware, requireWedding
         dietaryRestrictions: guestData.dietaryRestrictions,
         notes: guestData.notes,
         weddingId: params.data.weddingId,
+        inviteToken: newInviteToken(),
+        publicInviteTemplateId: guestData.publicInviteTemplateId ?? null,
       });
       imported++;
     } catch (e: unknown) {
@@ -276,6 +269,14 @@ router.patch("/weddings/:weddingId/guests/:id", authMiddleware, requireWeddingRo
     }
   }
 
+  if (parsed.data.publicInviteTemplateId != null) {
+    const okTpl = await isPublicInviteTemplateForWedding(params.data.weddingId, parsed.data.publicInviteTemplateId);
+    if (!okTpl) {
+      res.status(400).json({ error: "Modelo de página pública inválido para este casamento." });
+      return;
+    }
+  }
+
   const [guest] = await db
     .update(guestsTable)
     .set(parsed.data)
@@ -300,6 +301,33 @@ router.delete("/weddings/:weddingId/guests/:id", authMiddleware, requireWeddingR
   await db.delete(guestsTable).where(and(eq(guestsTable.id, params.data.id), eq(guestsTable.weddingId, params.data.weddingId)));
   res.sendStatus(204);
 });
+
+router.post(
+  "/weddings/:weddingId/guests/:id/rotate-invite-token",
+  authMiddleware,
+  requireWeddingRole("planner", "coordinator"),
+  async (req, res): Promise<void> => {
+    const params = GetGuestParams.safeParse(req.params);
+    if (!params.success) {
+      res.status(400).json({ error: params.error.message });
+      return;
+    }
+
+    const [updated] = await db
+      .update(guestsTable)
+      .set({ inviteToken: newInviteToken() })
+      .where(and(eq(guestsTable.id, params.data.id), eq(guestsTable.weddingId, params.data.weddingId)))
+      .returning();
+
+    if (!updated) {
+      res.status(404).json({ error: "Convidado não encontrado" });
+      return;
+    }
+
+    const json = await loadGuestJson(params.data.weddingId, updated.id);
+    res.json(json);
+  },
+);
 
 router.patch("/weddings/:weddingId/guests/:id/rsvp", authMiddleware, async (req, res): Promise<void> => {
   const params = UpdateGuestRsvpParams.safeParse(req.params);
@@ -337,7 +365,7 @@ router.patch("/weddings/:weddingId/guests/:id/rsvp", authMiddleware, async (req,
   }
 
   if (parsed.data.rsvpStatus === "declined") {
-    await db.delete(guestCompanionsTable).where(eq(guestCompanionsTable.guestId, guest.id));
+    await replaceGuestCompanions(guest.id, []);
   } else if (parsed.data.companions !== undefined) {
     await replaceGuestCompanions(guest.id, parsed.data.companions);
   }

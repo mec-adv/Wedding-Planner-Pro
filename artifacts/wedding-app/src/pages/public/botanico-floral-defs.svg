@@ -1,0 +1,534 @@
+﻿    <svg width="0" height="0" style="position:absolute;overflow:hidden;" aria-hidden="true">
+      <defs>
+
+        <!-- ── GRADIENTES DE PÉTALAS ── -->
+
+        <!-- Rosa amarela: pétala com luz central e sombra nas bordas -->
+        <radialGradient id="gPetalYellow1" cx="45%" cy="35%" r="60%">
+          <stop offset="0%"   stop-color="#FFF0A0"/>
+          <stop offset="40%"  stop-color="#F7D444"/>
+          <stop offset="75%"  stop-color="#E8B820"/>
+          <stop offset="100%" stop-color="#C9880A"/>
+        </radialGradient>
+        <radialGradient id="gPetalYellow2" cx="55%" cy="30%" r="65%">
+          <stop offset="0%"   stop-color="#FFFACC"/>
+          <stop offset="35%"  stop-color="#F5C842"/>
+          <stop offset="70%"  stop-color="#D9A00E"/>
+          <stop offset="100%" stop-color="#A97200"/>
+        </radialGradient>
+        <radialGradient id="gPetalYellowInner" cx="50%" cy="40%" r="55%">
+          <stop offset="0%"   stop-color="#FFF8D0"/>
+          <stop offset="50%"  stop-color="#F2C030"/>
+          <stop offset="100%" stop-color="#C08010"/>
+        </radialGradient>
+
+        <!-- Flor azul: pétala com brilho e profundidade -->
+        <radialGradient id="gPetalBlue1" cx="40%" cy="30%" r="65%">
+          <stop offset="0%"   stop-color="#CDEAF8"/>
+          <stop offset="40%"  stop-color="#7FB3D3"/>
+          <stop offset="75%"  stop-color="#4A88B0"/>
+          <stop offset="100%" stop-color="#2C5F7A"/>
+        </radialGradient>
+        <radialGradient id="gPetalBlue2" cx="50%" cy="25%" r="70%">
+          <stop offset="0%"   stop-color="#E8F5FF"/>
+          <stop offset="45%"  stop-color="#90C0DC"/>
+          <stop offset="80%"  stop-color="#5490B8"/>
+          <stop offset="100%" stop-color="#1E4F6A"/>
+        </radialGradient>
+        <radialGradient id="gPetalBlueLight" cx="45%" cy="35%" r="60%">
+          <stop offset="0%"   stop-color="#F0F8FF"/>
+          <stop offset="50%"  stop-color="#A8C9E0"/>
+          <stop offset="100%" stop-color="#5080A0"/>
+        </radialGradient>
+
+        <!-- Folha: verde-azulado com veia iluminada -->
+        <linearGradient id="gLeaf1" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%"   stop-color="#4A8C6A"/>
+          <stop offset="40%"  stop-color="#3A7558"/>
+          <stop offset="100%" stop-color="#1E4E38"/>
+        </linearGradient>
+        <linearGradient id="gLeaf2" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%"   stop-color="#5A9E78"/>
+          <stop offset="50%"  stop-color="#3D7A5C"/>
+          <stop offset="100%" stop-color="#1A4030"/>
+        </linearGradient>
+        <linearGradient id="gLeafOlive" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%"   stop-color="#8FA860"/>
+          <stop offset="50%"  stop-color="#6A8840"/>
+          <stop offset="100%" stop-color="#445C22"/>
+        </linearGradient>
+
+        <!-- Miolo/estame amarelo-dourado -->
+        <radialGradient id="gCenter" cx="50%" cy="40%" r="60%">
+          <stop offset="0%"   stop-color="#FFF5A0"/>
+          <stop offset="50%"  stop-color="#E8A800"/>
+          <stop offset="100%" stop-color="#9A6000"/>
+        </radialGradient>
+        <radialGradient id="gCenterBlue" cx="50%" cy="45%" r="55%">
+          <stop offset="0%"   stop-color="#FFFAEE"/>
+          <stop offset="50%"  stop-color="#F0D060"/>
+          <stop offset="100%" stop-color="#A07010"/>
+        </radialGradient>
+
+        <!-- Haste verde -->
+        <linearGradient id="gStem" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%"   stop-color="#1E4E38"/>
+          <stop offset="40%"  stop-color="#3A7558"/>
+          <stop offset="100%" stop-color="#1A3828"/>
+        </linearGradient>
+
+        <!-- Filtro de sombra suave -->
+        <filter id="fShadow" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="1" dy="2" stdDeviation="2" flood-color="#00000030"/>
+        </filter>
+        <filter id="fShadowLight" x="-10%" y="-10%" width="120%" height="120%">
+          <feDropShadow dx="0.5" dy="1" stdDeviation="1.2" flood-color="#00000020"/>
+        </filter>
+        <!-- Textura orgânica leve nas pétalas -->
+        <filter id="fPetal">
+          <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" result="noise"/>
+          <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.5" xChannelSelector="R" yChannelSelector="G"/>
+        </filter>
+        <filter id="fLeaf">
+          <feTurbulence type="fractalNoise" baseFrequency="0.5" numOctaves="2" result="noise"/>
+          <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.2" xChannelSelector="R" yChannelSelector="G"/>
+        </filter>
+
+        <!-- ════════════════════════════════════
+             SÍMBOLO: ROSA AMARELA GRANDE (~80px)
+        ════════════════════════════════════ -->
+        <symbol id="roseYellowLg" viewBox="0 0 80 80">
+          <!-- sombra base -->
+          <ellipse cx="40" cy="72" rx="18" ry="5" fill="#00000018"/>
+          <!-- pétalas externas — camada 1 -->
+          <g filter="url(#fPetal)">
+            <path d="M40 40 Q28 22 30 10 Q38 18 40 28 Q42 18 50 10 Q52 22 40 40Z"
+                  fill="url(#gPetalYellow1)" opacity="0.92"/>
+            <path d="M40 40 Q55 25 68 28 Q62 36 52 38 Q60 42 66 50 Q54 50 40 40Z"
+                  fill="url(#gPetalYellow2)" opacity="0.90"/>
+            <path d="M40 40 Q55 55 52 68 Q44 62 42 52 Q38 62 36 68 Q28 62 40 40Z"
+                  fill="url(#gPetalYellow1)" opacity="0.88"/>
+            <path d="M40 40 Q25 55 12 52 Q18 44 28 42 Q20 36 14 28 Q26 26 40 40Z"
+                  fill="url(#gPetalYellow2)" opacity="0.90"/>
+          </g>
+          <!-- pétalas intermediárias — camada 2 -->
+          <g filter="url(#fPetal)">
+            <path d="M40 40 Q33 24 34 14 Q40 20 40 30 Q40 20 46 14 Q47 24 40 40Z"
+                  fill="url(#gPetalYellowInner)" opacity="0.95"/>
+            <path d="M40 40 Q52 30 62 32 Q58 38 50 39 Q56 44 60 50 Q50 51 40 40Z"
+                  fill="url(#gPetalYellowInner)" opacity="0.93"/>
+            <path d="M40 40 Q48 53 46 64 Q42 58 41 50 Q38 58 34 64 Q32 53 40 40Z"
+                  fill="url(#gPetalYellowInner)" opacity="0.93"/>
+            <path d="M40 40 Q28 30 18 32 Q22 38 30 39 Q24 44 20 50 Q30 51 40 40Z"
+                  fill="url(#gPetalYellowInner)" opacity="0.93"/>
+          </g>
+          <!-- pétalas internas — camada 3 -->
+          <g filter="url(#fPetal)">
+            <path d="M40 40 Q36 28 37 20 Q40 24 40 33 Q40 24 43 20 Q44 28 40 40Z"
+                  fill="url(#gPetalYellow1)" opacity="0.97"/>
+            <path d="M40 40 Q50 36 56 38 Q53 41 47 41 Q52 45 54 50 Q46 48 40 40Z"
+                  fill="url(#gPetalYellow2)" opacity="0.95"/>
+            <path d="M40 40 Q44 51 43 58 Q41 54 40 48 Q39 54 37 58 Q36 51 40 40Z"
+                  fill="url(#gPetalYellow1)" opacity="0.95"/>
+            <path d="M40 40 Q30 36 24 38 Q27 41 33 41 Q28 45 26 50 Q34 48 40 40Z"
+                  fill="url(#gPetalYellow2)" opacity="0.95"/>
+          </g>
+          <!-- miolo -->
+          <circle cx="40" cy="40" r="7" fill="url(#gCenter)" filter="url(#fShadow)"/>
+          <circle cx="40" cy="40" r="4.5" fill="#E8A800"/>
+          <circle cx="40" cy="40" r="2.5" fill="#C07000"/>
+          <!-- estames pontuais -->
+          <circle cx="38" cy="35" r="1"   fill="#FFF080" opacity="0.9"/>
+          <circle cx="42" cy="34" r="0.9" fill="#FFF080" opacity="0.9"/>
+          <circle cx="44" cy="37" r="0.9" fill="#FFF080" opacity="0.9"/>
+          <circle cx="43" cy="43" r="1"   fill="#FFF080" opacity="0.9"/>
+          <circle cx="38" cy="44" r="0.9" fill="#FFF080" opacity="0.9"/>
+          <circle cx="36" cy="41" r="0.9" fill="#FFF080" opacity="0.9"/>
+          <!-- veias nas pétalas -->
+          <line x1="40" y1="38" x2="40" y2="15" stroke="#F5D050" stroke-width="0.4" opacity="0.4"/>
+          <line x1="40" y1="40" x2="64" y2="32" stroke="#F5D050" stroke-width="0.4" opacity="0.4"/>
+          <line x1="40" y1="40" x2="16" y2="32" stroke="#F5D050" stroke-width="0.4" opacity="0.4"/>
+        </symbol>
+
+        <!-- ════════════════════════════════════
+             SÍMBOLO: ROSA AMARELA PEQUENA (~40px)
+        ════════════════════════════════════ -->
+        <symbol id="roseYellowSm" viewBox="0 0 40 40">
+          <ellipse cx="20" cy="36" rx="9" ry="3" fill="#00000015"/>
+          <g filter="url(#fPetal)">
+            <path d="M20 20 Q14 11 15 5 Q19 9 20 14 Q21 9 25 5 Q26 11 20 20Z"
+                  fill="url(#gPetalYellow1)" opacity="0.92"/>
+            <path d="M20 20 Q28 13 34 14 Q31 18 26 19 Q30 21 33 25 Q27 25 20 20Z"
+                  fill="url(#gPetalYellow2)" opacity="0.90"/>
+            <path d="M20 20 Q26 28 25 34 Q22 31 21 26 Q19 31 18 34 Q14 31 20 20Z"
+                  fill="url(#gPetalYellow1)" opacity="0.88"/>
+            <path d="M20 20 Q12 27 6 25 Q9 21 14 20 Q10 18 7 14 Q13 13 20 20Z"
+                  fill="url(#gPetalYellow2)" opacity="0.90"/>
+            <path d="M20 20 Q16 12 17 7 Q20 11 20 16 Q20 11 23 7 Q24 12 20 20Z"
+                  fill="url(#gPetalYellowInner)" opacity="0.95"/>
+            <path d="M20 20 Q26 18 29 19 Q27 21 23 21 Q26 23 27 26 Q23 24 20 20Z"
+                  fill="url(#gPetalYellowInner)" opacity="0.93"/>
+            <path d="M20 20 Q22 26 21 30 Q20 27 20 24 Q19 27 18 30 Q18 26 20 20Z"
+                  fill="url(#gPetalYellowInner)" opacity="0.93"/>
+            <path d="M20 20 Q14 18 11 19 Q13 21 17 21 Q14 23 13 26 Q17 24 20 20Z"
+                  fill="url(#gPetalYellowInner)" opacity="0.93"/>
+          </g>
+          <circle cx="20" cy="20" r="3.5" fill="url(#gCenter)"/>
+          <circle cx="20" cy="20" r="2"   fill="#E8A800"/>
+          <circle cx="20" cy="20" r="1.2" fill="#C07000"/>
+          <circle cx="19" cy="17.5" r="0.6" fill="#FFF080" opacity="0.9"/>
+          <circle cx="21" cy="17"   r="0.5" fill="#FFF080" opacity="0.9"/>
+          <circle cx="22" cy="19"   r="0.5" fill="#FFF080" opacity="0.9"/>
+          <circle cx="21" cy="22"   r="0.6" fill="#FFF080" opacity="0.9"/>
+          <circle cx="18" cy="22"   r="0.5" fill="#FFF080" opacity="0.9"/>
+        </symbol>
+
+        <!-- ════════════════════════════════════
+             SÍMBOLO: FLOR AZUL GRANDE (~70px)
+        ════════════════════════════════════ -->
+        <symbol id="flowerBlueLg" viewBox="0 0 70 70">
+          <ellipse cx="35" cy="64" rx="15" ry="4" fill="#00000018"/>
+          <!-- 6 pétalas ovais -->
+          <g filter="url(#fPetal)">
+            <ellipse cx="35" cy="18" rx="8" ry="14" fill="url(#gPetalBlue1)" filter="url(#fShadowLight)" opacity="0.93"/>
+            <ellipse cx="35" cy="52" rx="8" ry="14" fill="url(#gPetalBlue2)" filter="url(#fShadowLight)" opacity="0.90"/>
+            <ellipse cx="35" cy="35" rx="14" ry="8" fill="url(#gPetalBlue1)" filter="url(#fShadowLight)" opacity="0.93"/>
+            <ellipse cx="35" cy="35" rx="8" ry="14" transform="rotate(45 35 35)"  fill="url(#gPetalBlue2)" filter="url(#fShadowLight)" opacity="0.88"/>
+            <ellipse cx="35" cy="35" rx="8" ry="14" transform="rotate(-45 35 35)" fill="url(#gPetalBlueLight)" filter="url(#fShadowLight)" opacity="0.88"/>
+            <ellipse cx="35" cy="35" rx="14" ry="8" transform="rotate(90 35 35)"  fill="url(#gPetalBlue1)" filter="url(#fShadowLight)" opacity="0.90"/>
+          </g>
+          <!-- camada interna de pétalas -->
+          <g filter="url(#fPetal)" opacity="0.9">
+            <ellipse cx="35" cy="23" rx="5.5" ry="10" fill="url(#gPetalBlue2)"/>
+            <ellipse cx="35" cy="47" rx="5.5" ry="10" fill="url(#gPetalBlue1)"/>
+            <ellipse cx="35" cy="35" rx="10" ry="5.5" fill="url(#gPetalBlue2)"/>
+            <ellipse cx="35" cy="35" rx="5.5" ry="10" transform="rotate(60 35 35)"  fill="url(#gPetalBlueLight)"/>
+            <ellipse cx="35" cy="35" rx="5.5" ry="10" transform="rotate(-60 35 35)" fill="url(#gPetalBlue1)"/>
+          </g>
+          <!-- veias nas pétalas -->
+          <line x1="35" y1="30" x2="35" y2="7"  stroke="#AACCEE" stroke-width="0.5" opacity="0.5"/>
+          <line x1="35" y1="40" x2="35" y2="63" stroke="#AACCEE" stroke-width="0.5" opacity="0.5"/>
+          <line x1="30" y1="35" x2="8"  y2="35" stroke="#AACCEE" stroke-width="0.5" opacity="0.5"/>
+          <line x1="40" y1="35" x2="62" y2="35" stroke="#AACCEE" stroke-width="0.5" opacity="0.5"/>
+          <!-- miolo -->
+          <circle cx="35" cy="35" r="8" fill="url(#gCenterBlue)" filter="url(#fShadow)"/>
+          <circle cx="35" cy="35" r="5" fill="#F0D050"/>
+          <circle cx="35" cy="35" r="3" fill="#C09020"/>
+          <!-- estames -->
+          <circle cx="33" cy="30" r="0.9" fill="#FFF8A0" opacity="0.95"/>
+          <circle cx="37" cy="29" r="0.9" fill="#FFF8A0" opacity="0.95"/>
+          <circle cx="39" cy="32" r="0.8" fill="#FFF8A0" opacity="0.95"/>
+          <circle cx="39" cy="38" r="0.9" fill="#FFF8A0" opacity="0.95"/>
+          <circle cx="36" cy="41" r="0.9" fill="#FFF8A0" opacity="0.95"/>
+          <circle cx="32" cy="40" r="0.8" fill="#FFF8A0" opacity="0.95"/>
+          <circle cx="31" cy="37" r="0.8" fill="#FFF8A0" opacity="0.95"/>
+        </symbol>
+
+        <!-- ════════════════════════════════════
+             SÍMBOLO: FLOR AZUL PEQUENA (~36px)
+        ════════════════════════════════════ -->
+        <symbol id="flowerBlueSm" viewBox="0 0 36 36">
+          <ellipse cx="18" cy="33" rx="8" ry="2.5" fill="#00000015"/>
+          <g filter="url(#fPetal)">
+            <ellipse cx="18" cy="9"  rx="5" ry="8"  fill="url(#gPetalBlue1)" opacity="0.93"/>
+            <ellipse cx="18" cy="27" rx="5" ry="8"  fill="url(#gPetalBlue2)" opacity="0.90"/>
+            <ellipse cx="18" cy="18" rx="8" ry="5"  fill="url(#gPetalBlue1)" opacity="0.93"/>
+            <ellipse cx="18" cy="18" rx="5" ry="8"  transform="rotate(45 18 18)"  fill="url(#gPetalBlue2)" opacity="0.88"/>
+            <ellipse cx="18" cy="18" rx="5" ry="8"  transform="rotate(-45 18 18)" fill="url(#gPetalBlueLight)" opacity="0.88"/>
+            <ellipse cx="18" cy="18" rx="8" ry="5"  transform="rotate(90 18 18)"  fill="url(#gPetalBlue1)" opacity="0.90"/>
+          </g>
+          <line x1="18" y1="14" x2="18" y2="2"  stroke="#AACCEE" stroke-width="0.5" opacity="0.5"/>
+          <line x1="18" y1="22" x2="18" y2="34" stroke="#AACCEE" stroke-width="0.5" opacity="0.5"/>
+          <line x1="14" y1="18" x2="2"  y2="18" stroke="#AACCEE" stroke-width="0.5" opacity="0.5"/>
+          <line x1="22" y1="18" x2="34" y2="18" stroke="#AACCEE" stroke-width="0.5" opacity="0.5"/>
+          <circle cx="18" cy="18" r="4.5" fill="url(#gCenterBlue)"/>
+          <circle cx="18" cy="18" r="2.8" fill="#F0D050"/>
+          <circle cx="18" cy="18" r="1.6" fill="#C09020"/>
+          <circle cx="17" cy="15.5" r="0.6" fill="#FFF8A0" opacity="0.95"/>
+          <circle cx="19" cy="15"   r="0.6" fill="#FFF8A0" opacity="0.95"/>
+          <circle cx="20" cy="17"   r="0.5" fill="#FFF8A0" opacity="0.95"/>
+          <circle cx="20" cy="20"   r="0.6" fill="#FFF8A0" opacity="0.95"/>
+          <circle cx="18" cy="21"   r="0.5" fill="#FFF8A0" opacity="0.95"/>
+          <circle cx="16" cy="20"   r="0.5" fill="#FFF8A0" opacity="0.95"/>
+        </symbol>
+
+        <!-- ════════════════════════════════════
+             SÍMBOLO: FOLHA GRANDE COM VEIA
+        ════════════════════════════════════ -->
+        <symbol id="leafLg" viewBox="0 0 50 80">
+          <g filter="url(#fLeaf)">
+            <!-- corpo da folha -->
+            <path d="M25 78 Q5 55 8 30 Q12 10 25 2 Q38 10 42 30 Q45 55 25 78Z"
+                  fill="url(#gLeaf1)" filter="url(#fShadowLight)"/>
+            <!-- reflexo de luz -->
+            <path d="M25 70 Q12 50 14 30 Q17 15 25 8 Q28 15 28 30 Q27 50 25 70Z"
+                  fill="#5AA870" opacity="0.30"/>
+          </g>
+          <!-- veia central -->
+          <path d="M25 78 Q24 55 25 30 Q25 15 25 2"
+                stroke="#2A6040" stroke-width="0.9" fill="none" opacity="0.6"/>
+          <!-- veias laterais -->
+          <path d="M25 55 Q18 50 10 48" stroke="#2A6040" stroke-width="0.5" fill="none" opacity="0.45"/>
+          <path d="M25 55 Q32 50 40 48" stroke="#2A6040" stroke-width="0.5" fill="none" opacity="0.45"/>
+          <path d="M25 45 Q17 40 11 38" stroke="#2A6040" stroke-width="0.5" fill="none" opacity="0.4"/>
+          <path d="M25 45 Q33 40 39 38" stroke="#2A6040" stroke-width="0.5" fill="none" opacity="0.4"/>
+          <path d="M25 35 Q18 30 14 28" stroke="#2A6040" stroke-width="0.4" fill="none" opacity="0.35"/>
+          <path d="M25 35 Q32 30 36 28" stroke="#2A6040" stroke-width="0.4" fill="none" opacity="0.35"/>
+          <path d="M25 25 Q20 20 17 18" stroke="#2A6040" stroke-width="0.4" fill="none" opacity="0.3"/>
+          <path d="M25 25 Q30 20 33 18" stroke="#2A6040" stroke-width="0.4" fill="none" opacity="0.3"/>
+        </symbol>
+
+        <!-- ════════════════════════════════════
+             SÍMBOLO: FOLHA PEQUENA
+        ════════════════════════════════════ -->
+        <symbol id="leafSm" viewBox="0 0 30 48">
+          <g filter="url(#fLeaf)">
+            <path d="M15 47 Q3 33 5 18 Q8 6 15 1 Q22 6 25 18 Q27 33 15 47Z"
+                  fill="url(#gLeaf2)" filter="url(#fShadowLight)"/>
+            <path d="M15 42 Q7 30 8 18 Q10 9 15 5 Q17 9 17 18 Q16 30 15 42Z"
+                  fill="#5AA870" opacity="0.25"/>
+          </g>
+          <path d="M15 47 Q14 33 15 18 Q15 9 15 1"
+                stroke="#2A6040" stroke-width="0.7" fill="none" opacity="0.55"/>
+          <path d="M15 32 Q10 29 6 27"  stroke="#2A6040" stroke-width="0.4" fill="none" opacity="0.4"/>
+          <path d="M15 32 Q20 29 24 27" stroke="#2A6040" stroke-width="0.4" fill="none" opacity="0.4"/>
+          <path d="M15 22 Q10 19 7 17"  stroke="#2A6040" stroke-width="0.4" fill="none" opacity="0.35"/>
+          <path d="M15 22 Q20 19 23 17" stroke="#2A6040" stroke-width="0.4" fill="none" opacity="0.35"/>
+        </symbol>
+
+        <!-- ════════════════════════════════════
+             SÍMBOLO: FOLHA OVAL (delphinium / hosta)
+        ════════════════════════════════════ -->
+        <symbol id="leafOval" viewBox="0 0 36 56">
+          <g filter="url(#fLeaf)">
+            <path d="M18 54 Q2 38 4 20 Q8 4 18 2 Q28 4 32 20 Q34 38 18 54Z"
+                  fill="url(#gLeafOlive)" filter="url(#fShadowLight)"/>
+            <path d="M18 48 Q8 36 9 20 Q12 8 18 5 Q20 8 20 20 Q19 36 18 48Z"
+                  fill="#8AAA50" opacity="0.25"/>
+          </g>
+          <path d="M18 54 Q17 35 18 18 Q18 8 18 2" stroke="#3A5A18" stroke-width="0.8" fill="none" opacity="0.5"/>
+          <path d="M18 36 Q11 32 5 30"  stroke="#3A5A18" stroke-width="0.45" fill="none" opacity="0.4"/>
+          <path d="M18 36 Q25 32 31 30" stroke="#3A5A18" stroke-width="0.45" fill="none" opacity="0.4"/>
+          <path d="M18 25 Q12 21 8 19"  stroke="#3A5A18" stroke-width="0.4" fill="none" opacity="0.35"/>
+          <path d="M18 25 Q24 21 28 19" stroke="#3A5A18" stroke-width="0.4" fill="none" opacity="0.35"/>
+        </symbol>
+
+        <!-- ════════════════════════════════════
+             SÍMBOLO: BOTÃO FLORAL (flor fechada)
+        ════════════════════════════════════ -->
+        <symbol id="budYellow" viewBox="0 0 24 36">
+          <path d="M12 34 Q4 26 5 16 Q8 6 12 2 Q16 6 19 16 Q20 26 12 34Z"
+                fill="url(#gPetalYellow2)" filter="url(#fShadowLight)"/>
+          <path d="M12 30 Q7 22 8 14 Q10 8 12 5 Q13 8 13 14 Q13 22 12 30Z"
+                fill="#FFF0A0" opacity="0.35"/>
+          <path d="M12 34 Q11 22 12 10 Q12 5 12 2" stroke="#C09020" stroke-width="0.6" fill="none" opacity="0.4"/>
+          <!-- sépalas -->
+          <path d="M12 26 Q6 24 4 20"  stroke="#3A7558" stroke-width="1" fill="none" opacity="0.6"/>
+          <path d="M12 26 Q18 24 20 20" stroke="#3A7558" stroke-width="1" fill="none" opacity="0.6"/>
+          <ellipse cx="5"  cy="19" rx="4" ry="2" transform="rotate(-30 5 19)"  fill="url(#gLeaf2)" opacity="0.8"/>
+          <ellipse cx="19" cy="19" rx="4" ry="2" transform="rotate(30 19 19)"  fill="url(#gLeaf2)" opacity="0.8"/>
+        </symbol>
+
+        <symbol id="budBlue" viewBox="0 0 22 34">
+          <path d="M11 32 Q3 24 4 15 Q7 5 11 2 Q15 5 18 15 Q19 24 11 32Z"
+                fill="url(#gPetalBlue1)" filter="url(#fShadowLight)"/>
+          <path d="M11 28 Q6 21 7 13 Q9 7 11 4 Q12 7 12 13 Q12 21 11 28Z"
+                fill="#CDEAF8" opacity="0.30"/>
+          <path d="M11 32 Q10 21 11 10 Q11 4 11 2" stroke="#4A88B0" stroke-width="0.6" fill="none" opacity="0.35"/>
+          <path d="M11 24 Q5 22 3 18"   stroke="#3A7558" stroke-width="1" fill="none" opacity="0.6"/>
+          <path d="M11 24 Q17 22 19 18" stroke="#3A7558" stroke-width="1" fill="none" opacity="0.6"/>
+          <ellipse cx="4"  cy="17" rx="3.5" ry="1.8" transform="rotate(-28 4 17)"  fill="url(#gLeaf2)" opacity="0.8"/>
+          <ellipse cx="18" cy="17" rx="3.5" ry="1.8" transform="rotate(28 18 17)"  fill="url(#gLeaf2)" opacity="0.8"/>
+        </symbol>
+
+        <!-- ════════════════════════════════════
+             SÍMBOLO: ARRANJO LATERAL COMPLETO (esquerdo)
+             Buquê com haste, folhas, flores grandes e botões
+        ════════════════════════════════════ -->
+        <symbol id="bouquetLeft" viewBox="0 0 200 380">
+          <!-- haste principal -->
+          <path d="M80 380 Q75 320 78 260 Q82 200 90 140 Q96 90 105 40"
+                stroke="url(#gStem)" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+          <!-- haste secundária -->
+          <path d="M80 380 Q85 330 95 280 Q105 230 110 180 Q114 135 118 90"
+                stroke="url(#gStem)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <!-- galho esquerdo alto -->
+          <path d="M90 180 Q65 162 44 152"
+                stroke="url(#gStem)" stroke-width="2" fill="none" stroke-linecap="round"/>
+          <!-- galho direito alto -->
+          <path d="M100 160 Q125 145 148 138"
+                stroke="url(#gStem)" stroke-width="2" fill="none" stroke-linecap="round"/>
+          <!-- galho esquerdo baixo -->
+          <path d="M84 260 Q58 245 36 238"
+                stroke="url(#gStem)" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+          <!-- galho direito baixo -->
+          <path d="M96 240 Q120 228 144 224"
+                stroke="url(#gStem)" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+          <!-- galho botões -->
+          <path d="M93 120 Q74 108 60 100"
+                stroke="url(#gStem)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+          <path d="M105 100 Q124 90 138 84"
+                stroke="url(#gStem)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+
+          <!-- folhas grandes -->
+          <use href="#leafLg" x="4"   y="148" width="40" height="64" transform="rotate(-40 24 180)"/>
+          <use href="#leafLg" x="120" y="130" width="38" height="60" transform="rotate(35 140 160)"/>
+          <use href="#leafLg" x="2"   y="230" width="36" height="58" transform="rotate(-30 20 260)"/>
+          <use href="#leafLg" x="118" y="218" width="36" height="58" transform="rotate(28 136 248)"/>
+
+          <!-- folhas pequenas -->
+          <use href="#leafSm" x="54"  y="96"  width="24" height="38" transform="rotate(-20 66 115)"/>
+          <use href="#leafSm" x="128" y="80"  width="22" height="35" transform="rotate(18 140 98)"/>
+          <use href="#leafSm" x="68"  y="258" width="22" height="35" transform="rotate(-15 79 275)"/>
+          <use href="#leafOval" x="96" y="270" width="26" height="40" transform="rotate(12 109 290)"/>
+
+          <!-- flor amarela grande — ponto focal superior -->
+          <use href="#roseYellowLg" x="65"  y="20"  width="80" height="80"/>
+          <!-- flor azul grande — centro -->
+          <use href="#flowerBlueLg" x="48"  y="120" width="70" height="70"/>
+          <!-- flor amarela média — inferior direita -->
+          <use href="#roseYellowLg" x="100" y="200" width="65" height="65"/>
+          <!-- flor azul — inferior esquerda -->
+          <use href="#flowerBlueLg" x="20"  y="210" width="58" height="58"/>
+          <!-- flor amarela pequena direita alta -->
+          <use href="#roseYellowSm" x="128" y="106" width="44" height="44"/>
+          <!-- botões florais -->
+          <use href="#budYellow" x="44"  y="86"  width="20" height="30"/>
+          <use href="#budBlue"   x="126" y="68"  width="18" height="28"/>
+          <use href="#budYellow" x="72"  y="58"  width="16" height="25"/>
+          <use href="#budBlue"   x="84"  y="290" width="18" height="28"/>
+          <use href="#flowerBlueSm" x="116" y="274" width="36" height="36"/>
+          <use href="#roseYellowSm"  x="34"  y="278" width="34" height="34"/>
+        </symbol>
+
+        <!-- ════════════════════════════════════
+             SÍMBOLO: COROA FLORAL HERO (wide)
+        ════════════════════════════════════ -->
+        <symbol id="heroGarland" viewBox="0 0 520 90">
+          <!-- arcos de haste -->
+          <path d="M20 75 Q130 35 260 25 Q390 35 500 75"
+                stroke="url(#gStem)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <path d="M50 78 Q130 50 260 42 Q390 50 470 78"
+                stroke="url(#gStem)" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.5"/>
+
+          <!-- folhas ao longo do arco -->
+          <use href="#leafSm" x="28"  y="52" width="22" height="34" transform="rotate(-50 39 69)"/>
+          <use href="#leafSm" x="80"  y="36" width="20" height="32" transform="rotate(-30 90 52)"/>
+          <use href="#leafSm" x="155" y="25" width="20" height="32" transform="rotate(-12 165 41)"/>
+          <use href="#leafSm" x="220" y="22" width="20" height="32" transform="rotate(0 230 38)"/>
+          <use href="#leafSm" x="285" y="22" width="20" height="32" transform="rotate(10 295 38)"/>
+          <use href="#leafSm" x="350" y="26" width="20" height="32" transform="rotate(25 360 42)"/>
+          <use href="#leafSm" x="420" y="37" width="20" height="32" transform="rotate(40 430 53)"/>
+          <use href="#leafSm" x="472" y="54" width="22" height="34" transform="rotate(55 483 71)"/>
+          <use href="#leafOval" x="112" y="30" width="24" height="37" transform="rotate(-20 124 49)"/>
+          <use href="#leafOval" x="388" y="30" width="24" height="37" transform="rotate(22 400 49)"/>
+
+          <!-- flores amarelas grandes nos pontos altos -->
+          <use href="#roseYellowLg" x="224" y="0"  width="72" height="72"/>
+          <!-- flores amarelas médias -->
+          <use href="#roseYellowSm" x="110" y="10" width="48" height="48"/>
+          <use href="#roseYellowSm" x="360" y="10" width="48" height="48"/>
+          <!-- flores azuis grandes -->
+          <use href="#flowerBlueLg" x="64"  y="22" width="56" height="56"/>
+          <use href="#flowerBlueLg" x="400" y="22" width="56" height="56"/>
+          <!-- flores azuis pequenas -->
+          <use href="#flowerBlueSm" x="164" y="18" width="38" height="38"/>
+          <use href="#flowerBlueSm" x="320" y="18" width="38" height="38"/>
+          <!-- botões -->
+          <use href="#budYellow" x="30"  y="52" width="18" height="26"/>
+          <use href="#budBlue"   x="52"  y="46" width="16" height="24"/>
+          <use href="#budYellow" x="452" y="52" width="18" height="26"/>
+          <use href="#budBlue"   x="474" y="46" width="16" height="24"/>
+          <use href="#budYellow" x="200" y="14" width="16" height="24"/>
+          <use href="#budBlue"   x="304" y="14" width="16" height="24"/>
+        </symbol>
+
+        <!-- ════════════════════════════════════
+             SÍMBOLO: DIVISOR FLORAL RICO
+        ════════════════════════════════════ -->
+        <symbol id="floralDivider" viewBox="0 0 340 60">
+          <!-- hastes -->
+          <path d="M10 30 Q85 20 170 18 Q255 20 330 30"
+                stroke="url(#gStem)" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+          <path d="M40 30 Q85 24 170 22 Q255 24 300 30"
+                stroke="url(#gStem)" stroke-width="1" fill="none" stroke-linecap="round" opacity="0.4"/>
+          <!-- folhas -->
+          <use href="#leafSm" x="22"  y="16" width="18" height="28" transform="rotate(-40 31 30)"/>
+          <use href="#leafSm" x="295" y="16" width="18" height="28" transform="rotate(40 304 30)"/>
+          <use href="#leafOval" x="68" y="12" width="20" height="30" transform="rotate(-20 78 27)"/>
+          <use href="#leafOval" x="253" y="12" width="20" height="30" transform="rotate(20 263 27)"/>
+          <use href="#leafSm" x="118" y="10" width="17" height="26" transform="rotate(-8 127 23)"/>
+          <use href="#leafSm" x="206" y="10" width="17" height="26" transform="rotate(8 215 23)"/>
+          <!-- flor central amarela -->
+          <use href="#roseYellowLg" x="134" y="0" width="72" height="60"/>
+          <!-- flores azuis -->
+          <use href="#flowerBlueSm" x="82"  y="4" width="40" height="40"/>
+          <use href="#flowerBlueSm" x="218" y="4" width="40" height="40"/>
+          <!-- flores amarelas pequenas -->
+          <use href="#roseYellowSm" x="44"  y="8" width="34" height="34"/>
+          <use href="#roseYellowSm" x="263" y="8" width="34" height="34"/>
+          <!-- botões -->
+          <use href="#budYellow" x="10"  y="16" width="14" height="22"/>
+          <use href="#budBlue"   x="26"  y="14" width="12" height="20"/>
+          <use href="#budYellow" x="310" y="16" width="14" height="22"/>
+          <use href="#budBlue"   x="296" y="14" width="12" height="20"/>
+        </symbol>
+
+        <!-- ════════════════════════════════════
+             SÍMBOLO: VINHETA DE CANTO (canto superior esquerdo)
+        ════════════════════════════════════ -->
+        <symbol id="cornerTL" viewBox="0 0 160 160">
+          <!-- hastes curvas saindo do canto -->
+          <path d="M0 160 Q15 110 35 70 Q55 35 95 10"
+                stroke="url(#gStem)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <path d="M0 160 Q25 120 55 90 Q80 65 120 40"
+                stroke="url(#gStem)" stroke-width="1.8" fill="none" stroke-linecap="round" opacity="0.6"/>
+          <!-- galhos -->
+          <path d="M35 70 Q18 58 5 50"  stroke="url(#gStem)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+          <path d="M55 90 Q38 80 22 75" stroke="url(#gStem)" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+          <path d="M60 55 Q80 45 100 40" stroke="url(#gStem)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+          <!-- folhas -->
+          <use href="#leafSm"   x="2"  y="46" width="20" height="32" transform="rotate(-35 12 62)"/>
+          <use href="#leafSm"   x="16" y="70" width="18" height="28" transform="rotate(-20 25 84)"/>
+          <use href="#leafOval" x="72" y="34" width="22" height="34" transform="rotate(15 83 51)"/>
+          <use href="#leafSm"   x="90" y="14" width="18" height="28" transform="rotate(30 99 28)"/>
+          <!-- flores -->
+          <use href="#roseYellowLg" x="66" y="0"  width="58" height="58"/>
+          <use href="#flowerBlueLg" x="12" y="34" width="50" height="50"/>
+          <use href="#roseYellowSm" x="84" y="42" width="36" height="36"/>
+          <use href="#flowerBlueSm" x="32" y="72" width="30" height="30"/>
+          <!-- botões -->
+          <use href="#budYellow" x="0"  y="38" width="14" height="22"/>
+          <use href="#budBlue"   x="14" y="30" width="12" height="20"/>
+          <use href="#budYellow" x="98" y="38" width="13" height="20"/>
+        </symbol>
+
+        <!-- ════════════════════════════════════
+             SÍMBOLO: VINHETA FOOTER
+        ════════════════════════════════════ -->
+        <symbol id="footerGarland" viewBox="0 0 400 80">
+          <path d="M10 65 Q100 30 200 22 Q300 30 390 65"
+                stroke="#F5C842" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.8"/>
+          <path d="M30 68 Q100 42 200 36 Q300 42 370 68"
+                stroke="#E8D5A0" stroke-width="1.2" fill="none" stroke-linecap="round" opacity="0.5"/>
+          <!-- folhas brancas/douradas -->
+          <use href="#leafSm" x="18"  y="44" width="18" height="28" transform="rotate(-45 27 58)" opacity="0.55"/>
+          <use href="#leafSm" x="364" y="44" width="18" height="28" transform="rotate(45 373 58)" opacity="0.55"/>
+          <use href="#leafOval" x="70"  y="26" width="20" height="30" transform="rotate(-22 80 41)" opacity="0.5"/>
+          <use href="#leafOval" x="310" y="26" width="20" height="30" transform="rotate(22 320 41)" opacity="0.5"/>
+          <use href="#leafSm" x="138" y="18" width="17" height="26" transform="rotate(-8 147 31)"  opacity="0.5"/>
+          <use href="#leafSm" x="245" y="18" width="17" height="26" transform="rotate(8 254 31)"   opacity="0.5"/>
+          <!-- flores — em dourado/branco para o footer escuro -->
+          <use href="#roseYellowLg" x="164" y="0"  width="72" height="60" opacity="0.85"/>
+          <use href="#roseYellowSm" x="90"  y="8"  width="44" height="44" opacity="0.75"/>
+          <use href="#roseYellowSm" x="266" y="8"  width="44" height="44" opacity="0.75"/>
+          <use href="#flowerBlueSm" x="50"  y="14" width="36" height="36" opacity="0.6"/>
+          <use href="#flowerBlueSm" x="314" y="14" width="36" height="36" opacity="0.6"/>
+          <use href="#budYellow" x="12"  y="44" width="16" height="24" opacity="0.7"/>
+          <use href="#budYellow" x="372" y="44" width="16" height="24" opacity="0.7"/>
+          <use href="#budBlue"   x="148" y="12" width="14" height="22" opacity="0.65"/>
+          <use href="#budBlue"   x="238" y="12" width="14" height="22" opacity="0.65"/>
+        </symbol>
+
+      </defs>
+    </svg>

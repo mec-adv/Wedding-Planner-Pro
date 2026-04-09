@@ -38,6 +38,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { Label } from "@/components/ui/label";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { uploadWeddingGiftImage } from "@/lib/upload-wedding-gift-image";
 
 const CATEGORY_LABELS: Record<string, string> = {
   viagem: "Viagem",
@@ -60,21 +61,6 @@ function readStoredViewMode(weddingId: number): GiftsViewMode {
     /* ignore */
   }
   return "grid";
-}
-
-async function uploadGiftImageFile(weddingId: number, file: File): Promise<string> {
-  const body = new FormData();
-  body.append("file", file);
-  const res = await fetch(`/api/weddings/${weddingId}/gifts/upload-image`, {
-    method: "POST",
-    body,
-  });
-  if (!res.ok) {
-    const err = (await res.json().catch(() => ({}))) as { error?: string };
-    throw new Error(err.error ?? "Falha no envio da imagem");
-  }
-  const data = (await res.json()) as { url: string };
-  return data.url;
 }
 
 export default function Gifts() {
@@ -138,7 +124,7 @@ export default function Gifts() {
     if (!file) return;
     setFileUploading(true);
     try {
-      const url = await uploadGiftImageFile(wid, file);
+      const url = await uploadWeddingGiftImage(wid, file);
       setImageUrlValue(url);
       toast({ title: "Imagem enviada" });
     } catch (err) {

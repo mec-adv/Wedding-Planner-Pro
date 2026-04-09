@@ -14,7 +14,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Pencil, Trash2, Star, Palette } from "lucide-react";
+import { Plus, Pencil, Trash2, Star, Palette, Image as ImageIcon, Loader2 } from "lucide-react";
+import { uploadWeddingGiftImage } from "@/lib/upload-wedding-gift-image";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,6 +31,9 @@ import { getListPublicInviteTemplatesQueryKey } from "@workspace/api-client-reac
 import {
   resolvePublicInvitePageConfig,
   type PublicInvitePageConfig,
+  type ResolvedPublicInvitePageConfig,
+  type BotanicoPadrinho,
+  type BotanicoFaqItem,
 } from "./public-invite-page-config";
 
 function ColorField({
@@ -81,9 +85,9 @@ export default function PublicInviteTemplates() {
   const [deleteId, setDeleteId] = useState<number | null>(null);
 
   const [contentTpl, setContentTpl] = useState<PublicInviteTemplate | null>(null);
-  const [pageForm, setPageForm] = useState<PublicInvitePageConfig & ReturnType<typeof resolvePublicInvitePageConfig>>(
-    () => resolvePublicInvitePageConfig({}),
-  );
+  const [pageForm, setPageForm] = useState<ResolvedPublicInvitePageConfig>(() => resolvePublicInvitePageConfig({}));
+  const [heroImageUploading, setHeroImageUploading] = useState(false);
+  const [padrinhoImageUploading, setPadrinhoImageUploading] = useState<number | null>(null);
 
   useEffect(() => {
     if (contentTpl) {
@@ -177,6 +181,92 @@ export default function PublicInviteTemplates() {
     setPageForm((prev) => ({ ...prev, [key]: value }));
   };
 
+  const updatePadrinho = (index: number, field: keyof BotanicoPadrinho, value: string) => {
+    setPageForm((prev) => {
+      const list = [...(prev.padrinhos ?? [])];
+      list[index] = { ...list[index], [field]: value };
+      return { ...prev, padrinhos: list };
+    });
+  };
+
+  const addPadrinho = () => {
+    setPageForm((prev) => ({
+      ...prev,
+      padrinhos: [...(prev.padrinhos ?? []), { name: "", photoUrl: "" }],
+    }));
+  };
+
+  const removePadrinho = (index: number) => {
+    setPageForm((prev) => ({
+      ...prev,
+      padrinhos: (prev.padrinhos ?? []).filter((_, i) => i !== index),
+    }));
+  };
+
+  const updateFaq = (index: number, field: keyof BotanicoFaqItem, value: string) => {
+    setPageForm((prev) => {
+      const list = [...(prev.faqItems ?? [])];
+      list[index] = { ...list[index], [field]: value };
+      return { ...prev, faqItems: list };
+    });
+  };
+
+  const addFaq = () => {
+    setPageForm((prev) => ({
+      ...prev,
+      faqItems: [...(prev.faqItems ?? []), { q: "", a: "" }],
+    }));
+  };
+
+  const removeFaq = (index: number) => {
+    setPageForm((prev) => ({
+      ...prev,
+      faqItems: (prev.faqItems ?? []).filter((_, i) => i !== index),
+    }));
+  };
+
+  const handleHeroPosterFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setHeroImageUploading(true);
+    try {
+      const url = await uploadWeddingGiftImage(wid, file);
+      updateField("heroPosterImageUrl", url);
+      toast({ title: "Imagem enviada" });
+    } catch (err) {
+      toast({
+        variant: "destructive",
+        title: "Erro no upload",
+        description: err instanceof Error ? err.message : "Tente novamente",
+      });
+    } finally {
+      setHeroImageUploading(false);
+    }
+  };
+
+  const handlePadrinhoPhotoFile = async (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setPadrinhoImageUploading(index);
+    try {
+      const url = await uploadWeddingGiftImage(wid, file);
+      updatePadrinho(index, "photoUrl", url);
+      toast({ title: "Imagem enviada" });
+    } catch (err) {
+      toast({
+        variant: "destructive",
+        title: "Erro no upload",
+        description: err instanceof Error ? err.message : "Tente novamente",
+      });
+    } finally {
+      setPadrinhoImageUploading(null);
+    }
+  };
+
+  const pageSaveDisabled = updateMut.isPending || heroImageUploading || padrinhoImageUploading !== null;
+
   if (!Number.isFinite(wid) || wid <= 0) {
     return <p className="text-muted-foreground">Casamento inválido.</p>;
   }
@@ -194,7 +284,7 @@ export default function PublicInviteTemplates() {
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-serif text-foreground">Página do convite</h1>
+          <h1 className="text-3xl font-serif text-foreground">Página do Casamento</h1>
           <p className="text-muted-foreground mt-1 max-w-2xl">
             Edite textos e cores da página pública (RSVP e lista de presentes). O modelo marcado como padrão é usado nos
             links dos convidados que não têm outro modelo atribuído em{" "}
@@ -328,6 +418,24 @@ export default function PublicInviteTemplates() {
                 <ColorField label="Pontos do fundo" value={pageForm.patternDotColor} onChange={(v) => updateField("patternDotColor", v)} />
                 <ColorField label="Texto principal" value={pageForm.textColor} onChange={(v) => updateField("textColor", v)} />
               </div>
+              <div className="grid gap-2 sm:grid-cols-2 border-t pt-4">
+                <div className="sm:col-span-2">
+                  <Label htmlFor="layout-mode">Layout da página pública</Label>
+                  <select
+                    id="layout-mode"
+                    className="mt-1.5 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    value={pageForm.layout}
+                    onChange={(e) => updateField("layout", e.target.value as "classic" | "botanico")}
+                  >
+                    <option value="botanico">Floral (página completa com vídeo, história e padrinhos)</option>
+                    <option value="classic">Simples (uma coluna, texto e RSVP)</option>
+                  </select>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    O layout floral corresponde ao modelo fixo com ornamentos SVG; edite textos e fotos abaixo.
+                  </p>
+                </div>
+              </div>
+
               <label className="flex items-center gap-2">
                 <input
                   type="checkbox"
@@ -336,6 +444,226 @@ export default function PublicInviteTemplates() {
                 />
                 Mostrar contagem regressiva até a cerimônia
               </label>
+
+              {pageForm.layout === "botanico" && (
+                <div className="space-y-4 border rounded-lg p-4 bg-muted/30">
+                  <h3 className="font-semibold text-foreground">Conteúdo do layout floral</h3>
+                  <div className="grid sm:grid-cols-2 gap-3">
+                    <div>
+                      <Label>Iniciais no menu</Label>
+                      <Input className="mt-1" value={pageForm.navInitials} onChange={(e) => updateField("navInitials", e.target.value)} placeholder="R & M" />
+                    </div>
+                    <div>
+                      <Label>Linha acima dos nomes (hero)</Label>
+                      <Input className="mt-1" value={pageForm.heroSubtitle} onChange={(e) => updateField("heroSubtitle", e.target.value)} />
+                    </div>
+                  </div>
+                  <div className="grid sm:grid-cols-2 gap-3">
+                    <div>
+                      <Label>URL do vídeo do hero (MP4)</Label>
+                      <Input className="mt-1 font-mono text-xs" value={pageForm.heroVideoUrl} onChange={(e) => updateField("heroVideoUrl", e.target.value)} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="flex items-center gap-2">
+                        <ImageIcon className="w-4 h-4" /> Imagem de capa / poster (JPG, PNG ou WebP)
+                      </Label>
+                      <Input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
+                        onChange={handleHeroPosterFile}
+                        disabled={heroImageUploading}
+                        className="cursor-pointer"
+                      />
+                      {heroImageUploading && (
+                        <p className="text-xs text-muted-foreground flex items-center gap-2">
+                          <Loader2 className="w-3 h-3 animate-spin" /> Enviando…
+                        </p>
+                      )}
+                      <p className="text-xs text-muted-foreground">Ou informe uma URL externa:</p>
+                      <Input
+                        className="font-mono text-xs"
+                        value={pageForm.heroPosterImageUrl}
+                        onChange={(e) => updateField("heroPosterImageUrl", e.target.value)}
+                        placeholder="https://..."
+                        autoComplete="off"
+                      />
+                      {pageForm.heroPosterImageUrl ? (
+                        <Button type="button" variant="outline" size="sm" onClick={() => updateField("heroPosterImageUrl", "")}>
+                          Remover imagem
+                        </Button>
+                      ) : null}
+                    </div>
+                  </div>
+                  <div>
+                    <Label>Título da história</Label>
+                    <Input className="mt-1" value={pageForm.historiaTitle} onChange={(e) => updateField("historiaTitle", e.target.value)} />
+                  </div>
+                  <div>
+                    <Label>Texto da história</Label>
+                    <Textarea className="mt-1" rows={5} value={pageForm.historiaBody} onChange={(e) => updateField("historiaBody", e.target.value)} />
+                  </div>
+                  <div>
+                    <Label>Linha “desde” (ex.: desde 17/02/2019)</Label>
+                    <Input className="mt-1" value={pageForm.historiaSince} onChange={(e) => updateField("historiaSince", e.target.value)} />
+                  </div>
+                  <div className="grid sm:grid-cols-2 gap-3">
+                    <div>
+                      <Label>Nome do local (cerimônia)</Label>
+                      <Input className="mt-1" value={pageForm.cerimoniaLocalNome} onChange={(e) => updateField("cerimoniaLocalNome", e.target.value)} />
+                    </div>
+                    <div>
+                      <Label>Horário (texto livre, opcional)</Label>
+                      <Input className="mt-1" value={pageForm.horarioCerimoniaText} onChange={(e) => updateField("horarioCerimoniaText", e.target.value)} placeholder="Se vazio, usa o horário do cadastro" />
+                    </div>
+                  </div>
+                  <div>
+                    <Label>Mapa (URL do Google Maps)</Label>
+                    <Input className="mt-1 font-mono text-xs" value={pageForm.mapEmbedUrl} onChange={(e) => updateField("mapEmbedUrl", e.target.value)} placeholder="https://www.google.com/maps/embed?pb=..." />
+                    <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
+                      Para o mapa aparecer na página, use <strong>Incorporar mapa</strong> no Google Maps e cole o link que
+                      começa com <code className="text-[11px] bg-muted px-1 rounded">/maps/embed?</code>. O link normal de
+                      Compartilhar abre em botão &quot;Abrir localização&quot; no convite.
+                    </p>
+                  </div>
+                  <div className="grid sm:grid-cols-2 gap-3">
+                    <div>
+                      <Label>Título bloco dicas</Label>
+                      <Input className="mt-1" value={pageForm.eventoBlocoDicasTitle} onChange={(e) => updateField("eventoBlocoDicasTitle", e.target.value)} />
+                    </div>
+                    <div>
+                      <Label>Título padrinhos</Label>
+                      <Input className="mt-1" value={pageForm.padrinhosTitle} onChange={(e) => updateField("padrinhosTitle", e.target.value)} />
+                    </div>
+                  </div>
+                  <div>
+                    <Label>Traje — título</Label>
+                    <Input className="mt-1" value={pageForm.dicaTrajeTitle} onChange={(e) => updateField("dicaTrajeTitle", e.target.value)} />
+                  </div>
+                  <div>
+                    <Label>Traje — texto</Label>
+                    <Textarea className="mt-1" rows={2} value={pageForm.dicaTrajeBody} onChange={(e) => updateField("dicaTrajeBody", e.target.value)} />
+                  </div>
+                  <div>
+                    <Label>Estacionamento — título</Label>
+                    <Input className="mt-1" value={pageForm.dicaEstacionamentoTitle} onChange={(e) => updateField("dicaEstacionamentoTitle", e.target.value)} />
+                  </div>
+                  <div>
+                    <Label>Estacionamento — texto</Label>
+                    <Textarea className="mt-1" rows={2} value={pageForm.dicaEstacionamentoBody} onChange={(e) => updateField("dicaEstacionamentoBody", e.target.value)} />
+                  </div>
+                  <div>
+                    <Label>Crianças — título</Label>
+                    <Input className="mt-1" value={pageForm.dicaCriancasTitle} onChange={(e) => updateField("dicaCriancasTitle", e.target.value)} />
+                  </div>
+                  <div>
+                    <Label>Crianças — texto</Label>
+                    <Textarea className="mt-1" rows={2} value={pageForm.dicaCriancasBody} onChange={(e) => updateField("dicaCriancasBody", e.target.value)} />
+                  </div>
+                  <div>
+                    <Label>Rótulo dos segundos (contagem)</Label>
+                    <Input className="mt-1" value={pageForm.countdownSecondLabel} onChange={(e) => updateField("countdownSecondLabel", e.target.value)} />
+                  </div>
+                  <div>
+                    <Label>Frase extra na lista de presentes</Label>
+                    <Input className="mt-1" value={pageForm.listaPresentesIntro} onChange={(e) => updateField("listaPresentesIntro", e.target.value)} />
+                  </div>
+                  <div>
+                    <Label>Observação sobre presentes</Label>
+                    <Textarea className="mt-1" rows={2} value={pageForm.giftsPresentesDisclaimer} onChange={(e) => updateField("giftsPresentesDisclaimer", e.target.value)} />
+                  </div>
+                  <div>
+                    <Label>URL da página de presentes (abre em nova aba)</Label>
+                    <Input
+                      className="mt-1 font-mono text-xs"
+                      value={pageForm.giftsExternalPageUrl}
+                      onChange={(e) => updateField("giftsExternalPageUrl", e.target.value)}
+                      placeholder="presentes.html"
+                    />
+                  </div>
+                  <div>
+                    <Label>Título FAQ</Label>
+                    <Input className="mt-1" value={pageForm.faqTitle} onChange={(e) => updateField("faqTitle", e.target.value)} />
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <Label>Padrinhos (nome e foto)</Label>
+                      <Button type="button" variant="outline" size="sm" onClick={addPadrinho}>
+                        Adicionar
+                      </Button>
+                    </div>
+                    {(pageForm.padrinhos ?? []).map((p, i) => (
+                      <div key={i} className="grid sm:grid-cols-2 gap-2 border rounded-md p-3 bg-background">
+                        <div className="sm:col-span-2">
+                          <Label className="text-xs">Nome</Label>
+                          <Input className="mt-1" value={p.name} onChange={(e) => updatePadrinho(i, "name", e.target.value)} />
+                        </div>
+                        <div className="sm:col-span-2 space-y-2">
+                          <Label className="text-xs flex items-center gap-2">
+                            <ImageIcon className="w-3 h-3" /> Foto (JPG, PNG ou WebP)
+                          </Label>
+                          <Input
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
+                            onChange={(e) => void handlePadrinhoPhotoFile(i, e)}
+                            disabled={padrinhoImageUploading === i}
+                            className="cursor-pointer"
+                          />
+                          {padrinhoImageUploading === i && (
+                            <p className="text-xs text-muted-foreground flex items-center gap-2">
+                              <Loader2 className="w-3 h-3 animate-spin" /> Enviando…
+                            </p>
+                          )}
+                          <p className="text-xs text-muted-foreground">Ou informe uma URL externa:</p>
+                          <Input
+                            className="font-mono text-xs"
+                            value={p.photoUrl}
+                            onChange={(e) => updatePadrinho(i, "photoUrl", e.target.value)}
+                            placeholder="https://..."
+                            autoComplete="off"
+                          />
+                          {p.photoUrl ? (
+                            <Button type="button" variant="outline" size="sm" onClick={() => updatePadrinho(i, "photoUrl", "")}>
+                              Remover imagem
+                            </Button>
+                          ) : null}
+                        </div>
+                        <div className="sm:col-span-2 flex justify-end">
+                          <Button type="button" variant="ghost" size="sm" className="text-destructive" onClick={() => removePadrinho(i)}>
+                            Remover
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <Label>FAQ</Label>
+                      <Button type="button" variant="outline" size="sm" onClick={addFaq}>
+                        Adicionar pergunta
+                      </Button>
+                    </div>
+                    {(pageForm.faqItems ?? []).map((item, i) => (
+                      <div key={i} className="space-y-2 border rounded-md p-3 bg-background">
+                        <div>
+                          <Label className="text-xs">Pergunta</Label>
+                          <Input className="mt-1" value={item.q} onChange={(e) => updateFaq(i, "q", e.target.value)} />
+                        </div>
+                        <div>
+                          <Label className="text-xs">Resposta</Label>
+                          <Textarea className="mt-1" rows={2} value={item.a} onChange={(e) => updateFaq(i, "a", e.target.value)} />
+                        </div>
+                        <div className="flex justify-end">
+                          <Button type="button" variant="ghost" size="sm" className="text-destructive" onClick={() => removeFaq(i)}>
+                            Remover
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div className="space-y-3 border-t pt-4">
                 <h3 className="font-semibold text-foreground">Capa</h3>
@@ -430,7 +758,7 @@ export default function PublicInviteTemplates() {
             <Button type="button" variant="outline" onClick={() => setContentTpl(null)}>
               Cancelar
             </Button>
-            <Button type="button" onClick={() => void savePageContent()} disabled={updateMut.isPending}>
+            <Button type="button" onClick={() => void savePageContent()} disabled={pageSaveDisabled}>
               {updateMut.isPending ? "Salvando…" : "Salvar na página publicada"}
             </Button>
           </DialogFooter>

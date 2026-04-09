@@ -26,6 +26,7 @@ import { formatPhoneBrReadOnly, stripPhoneDigits } from "@/lib/phone-br";
 import { PhoneInput } from "@/components/phone-input";
 import { useQueryClient } from "@tanstack/react-query";
 import { resolvePublicInvitePageConfig } from "./public-invite-page-config";
+import { PublicInviteBotanico } from "./PublicInviteBotanico";
 
 type PaymentMethod = "pix" | "boleto" | "credit_card";
 
@@ -148,7 +149,7 @@ export default function PublicInvite() {
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [payResult, setPayResult] = useState<PaymentResultData | null>(null);
 
-  const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, passed: false });
+  const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0, passed: false });
 
   useEffect(() => {
     document.documentElement.classList.add("scroll-smooth");
@@ -166,6 +167,9 @@ export default function PublicInvite() {
           phoneDigits: stripPhoneDigits(c.phone ?? ""),
         })),
       );
+      if (invite.guest.rsvpStatus === "confirmed") {
+        setRsvpSaved(true);
+      }
     }
   }, [invite]);
 
@@ -176,13 +180,14 @@ export default function PublicInvite() {
     const tick = () => {
       const distance = targetMs - Date.now();
       if (distance < 0) {
-        setCountdown({ days: 0, hours: 0, minutes: 0, passed: true });
+        setCountdown({ days: 0, hours: 0, minutes: 0, seconds: 0, passed: true });
         return;
       }
       setCountdown({
         days: Math.floor(distance / (1000 * 60 * 60 * 24)),
         hours: Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
         minutes: Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)),
+        seconds: Math.floor((distance % (1000 * 60)) / 1000),
         passed: false,
       });
     };
@@ -192,6 +197,58 @@ export default function PublicInvite() {
   }, [targetMs]);
 
   const heroDateLine = useMemo(() => formatHeroDateLine(invite?.wedding), [invite?.wedding]);
+
+  const submitBotanicoRsvp = async (data: { mainName: string; mainPhoneDigits: string; mainAge: string }) => {
+    if (!data.mainName.trim()) {
+      toast({ variant: "destructive", title: "Informe seu nome completo." });
+      return;
+    }
+    const phoneDigits = stripPhoneDigits(data.mainPhoneDigits);
+    if (!phoneDigits.trim()) {
+      toast({ variant: "destructive", title: "Informe seu WhatsApp." });
+      return;
+    }
+    const ageNum = Number(data.mainAge);
+    if (!Number.isFinite(ageNum) || ageNum < 0 || ageNum > 120) {
+      toast({ variant: "destructive", title: "Informe uma idade válida." });
+      return;
+    }
+    const companions = companionRows
+      .map((r) => ({
+        name: r.name.trim(),
+        age: Number(r.age),
+        phone: null as string | null,
+      }))
+      .filter((c) => c.name.length > 0);
+    for (const c of companions) {
+      if (!Number.isFinite(c.age) || c.age < 0 || c.age > 120) {
+        toast({ variant: "destructive", title: "Informe idades válidas (0–120) para todos os acompanhantes." });
+        return;
+      }
+    }
+    const dietaryMerged = [`WhatsApp: ${formatPhoneBrReadOnly(phoneDigits)}`, `Idade: ${ageNum}`].join("\n");
+    try {
+      await patchRsvp.mutateAsync({
+        token: t,
+        data: {
+          rsvpStatus: "confirmed",
+          dietaryRestrictions: dietaryMerged,
+          companions: companions.length > 0 ? companions : undefined,
+        },
+      });
+      await queryClient.invalidateQueries({ queryKey: getGetPublicInviteQueryKey(t) });
+      setRsvpSaved(true);
+      toast({ title: "Presença registrada" });
+      setTimeout(() => {
+        document.getElementById("rsvp-success")?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 100);
+    } catch (e: unknown) {
+      toast({
+        variant: "destructive",
+        title: e instanceof Error ? e.message : "Erro ao salvar",
+      });
+    }
+  };
 
   const saveRsvp = async () => {
     if (!lgpdOk) {
@@ -397,6 +454,24 @@ export default function PublicInvite() {
   };
 
   return (
+    <>
+      {cfg.layout === "botanico" ? (
+        <PublicInviteBotanico
+          cfg={cfg}
+          wedding={w}
+          bride={bride}
+          groom={groom}
+          invite={invite}
+          heroDateLine={heroDateLine}
+          targetMs={targetMs}
+          countdown={countdown}
+          companionRows={companionRows}
+          setCompanionRows={setCompanionRows}
+          rsvpSaved={rsvpSaved}
+          submitBotanicoRsvp={submitBotanicoRsvp}
+          patchRsvpPending={patchRsvp.isPending}
+        />
+      ) : (
     <div className="min-h-screen antialiased text-[15px]" style={rootStyle}>
       <section className="min-h-screen flex flex-col justify-center items-center text-center p-6 relative">
         <div className="max-w-2xl p-10 rounded-xl shadow-sm border border-gray-100" style={{ backgroundColor: bg }}>
@@ -718,6 +793,8 @@ export default function PublicInvite() {
         </p>
         <p className="text-sm opacity-70">{cfg.footerLine2}</p>
       </footer>
+    </div>
+      )}
 
       <Dialog open={checkoutOpen} onOpenChange={(open) => { if (!open) resetCheckout(); }}>
         <DialogContent
@@ -941,6 +1018,6 @@ export default function PublicInvite() {
           )}
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
 }

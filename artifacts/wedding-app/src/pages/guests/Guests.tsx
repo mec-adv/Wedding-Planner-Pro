@@ -30,17 +30,23 @@ export default function Guests() {
   const { toast } = useToast();
 
   const [search, setSearch] = useState("");
+  const [rsvpFilter, setRsvpFilter] = useState("");
+  const [invitedByFilter, setInvitedByFilter] = useState("");
+  const [groupIdFilter, setGroupIdFilter] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [editingGuest, setEditingGuest] = useState<Guest | null>(null);
   const [companionGuest, setCompanionGuest] = useState<Guest | null>(null);
 
-  const { data: guests, isLoading } = useListGuests(wid, { search: search || undefined });
+  const { data: guests, isLoading } = useListGuests(wid, {
+    search: search || undefined,
+    status: rsvpFilter ? (rsvpFilter as "pending" | "confirmed" | "declined" | "maybe") : undefined,
+  });
   const { data: wedding } = useGetWedding(wid);
   const { data: guestGroups } = useListGuestGroups(wid, {
     query: {
       queryKey: getListGuestGroupsQueryKey(wid),
-      enabled: (createOpen || editingGuest != null || importOpen) && Number.isFinite(wid),
+      enabled: Number.isFinite(wid) && wid > 0,
     },
   });
 
@@ -118,6 +124,13 @@ export default function Guests() {
         isLoading={isLoading}
         search={search}
         onSearchChange={setSearch}
+        rsvpFilter={rsvpFilter}
+        onRsvpFilterChange={setRsvpFilter}
+        invitedByFilter={invitedByFilter}
+        onInvitedByFilterChange={setInvitedByFilter}
+        groupIdFilter={groupIdFilter}
+        onGroupIdFilterChange={setGroupIdFilter}
+        groups={guestGroups ?? []}
         groomName={wedding?.groomName}
         brideName={wedding?.brideName}
         onEdit={setEditingGuest}

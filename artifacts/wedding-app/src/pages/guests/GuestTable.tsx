@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import {
   useUpdateGuestRsvp,
   useDeleteGuest,
@@ -10,6 +11,13 @@ import { Card, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,6 +41,8 @@ import {
   Pencil,
   Link2,
   KeyRound,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -71,17 +81,31 @@ function buildPublicInviteUrl(guest: Guest): string {
   return `${window.location.origin}${base}${path.replace(/^\//, "")}`;
 }
 
+interface GuestGroup {
+  id: number;
+  name: string;
+}
+
 interface GuestTableProps {
   weddingId: number;
   guests: Guest[] | undefined;
   isLoading: boolean;
   search: string;
   onSearchChange: (value: string) => void;
+  rsvpFilter: string;
+  onRsvpFilterChange: (value: string) => void;
+  invitedByFilter: string;
+  onInvitedByFilterChange: (value: string) => void;
+  groupIdFilter: string;
+  onGroupIdFilterChange: (value: string) => void;
+  groups: GuestGroup[];
   groomName: string | undefined;
   brideName: string | undefined;
   onEdit: (guest: Guest) => void;
   onOpenCompanions: (guest: Guest) => void;
 }
+
+const PAGE_SIZE_OPTIONS = [10, 25, 50];
 
 export function GuestTable({
   weddingId,
@@ -89,6 +113,13 @@ export function GuestTable({
   isLoading,
   search,
   onSearchChange,
+  rsvpFilter,
+  onRsvpFilterChange,
+  invitedByFilter,
+  onInvitedByFilterChange,
+  groupIdFilter,
+  onGroupIdFilterChange,
+  groups,
   groomName,
   brideName,
   onEdit,
@@ -101,8 +132,16 @@ export function GuestTable({
   const sendInviteMutation = useSendGuestInvite();
   const rotateTokenMutation = useRotateGuestInviteToken();
 
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
+
+  // Reset to page 1 whenever any filter changes
+  useEffect(() => {
+    setPage(1);
+  }, [search, rsvpFilter, invitedByFilter, groupIdFilter, pageSize]);
+
   const invalidate = () =>
-    queryClient.invalidateQueries({ queryKey: getListGuestsQueryKey(weddingId, { search: search || undefined }) });
+    queryClient.invalidateQueries({ queryKey: getListGuestsQueryKey(weddingId) });
 
   const handleRsvp = async (id: number, status: "confirmed" | "declined" | "pending") => {
     try {
@@ -162,19 +201,79 @@ export function GuestTable({
     return "—";
   };
 
+  // Client-side filters for invitedBy and groupId (RSVP status is filtered server-side)
+  const filtered = (guests ?? []).filter((g) => {
+    if (invitedByFilter === "groom" && g.invitedBy !== "groom") return false;
+    if (invitedByFilter === "bride" && g.invitedBy !== "bride") return false;
+    if (invitedByFilter === "none" && g.invitedBy != null) return false;
+    if (groupIdFilter && String(g.guestGroupId ?? "") !== groupIdFilter) return false;
+    return true;
+  });
+
+  const total = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const clampedPage = Math.min(page, totalPages);
+  const paginated = filtered.slice((clampedPage - 1) * pageSize, clampedPage * pageSize);
+
+  const rangeStart = total === 0 ? 0 : (clampedPage - 1) * pageSize + 1;
+  const rangeEnd = Math.min(clampedPage * pageSize, total);
+
   return (
     <Card>
-      <CardHeader className="pb-3 flex flex-row items-center justify-between border-b border-border/50">
-        <div className="relative w-full max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar por nome ou grupo..."
-            className="pl-9 bg-secondary/20"
-            value={search}
-            onChange={(e) => onSearchChange(e.target.value)}
-          />
+      <CardHeader className="pb-3 border-b border-border/50">
+        {/* Search + filters */}
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="relative flex-1 min-w-[180px] max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar por nome ou grupo..."
+              className="pl-9 bg-secondary/20"
+              value={search}
+              onChange={(e) => onSearchChange(e.target.value)}
+            />
+          </div>
+
+          <Select value={rsvpFilter || "all"} onValueChange={(v) => onRsvpFilterChange(v === "all" ? "" : v)}>
+            <SelectTrigger className="w-36 shrink-0">
+              <SelectValue placeholder="Status RSVP" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os status</SelectItem>
+              <SelectItem value="pending">Pendente</SelectItem>
+              <SelectItem value="confirmed">Confirmado</SelectItem>
+              <SelectItem value="declined">Declinou</SelectItem>
+              <SelectItem value="maybe">Talvez</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select value={invitedByFilter || "all"} onValueChange={(v) => onInvitedByFilterChange(v === "all" ? "" : v)}>
+            <SelectTrigger className="w-40 shrink-0">
+              <SelectValue placeholder="Convidado por" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
+              {groomName && <SelectItem value="groom">{groomName}</SelectItem>}
+              {brideName && <SelectItem value="bride">{brideName}</SelectItem>}
+              <SelectItem value="none">Não definido</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {groups.length > 0 && (
+            <Select value={groupIdFilter || "all"} onValueChange={(v) => onGroupIdFilterChange(v === "all" ? "" : v)}>
+              <SelectTrigger className="w-40 shrink-0">
+                <SelectValue placeholder="Grupo" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os grupos</SelectItem>
+                {groups.map((g) => (
+                  <SelectItem key={g.id} value={String(g.id)}>{g.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
       </CardHeader>
+
       <div className="overflow-x-auto">
         <table className="w-full text-sm text-left">
           <thead className="text-xs text-muted-foreground uppercase bg-secondary/30">
@@ -195,14 +294,14 @@ export function GuestTable({
                   Carregando...
                 </td>
               </tr>
-            ) : guests?.length === 0 ? (
+            ) : paginated.length === 0 ? (
               <tr>
                 <td colSpan={7} className="p-6 text-center text-muted-foreground">
                   Nenhum convidado encontrado.
                 </td>
               </tr>
             ) : (
-              guests?.map((guest) => (
+              paginated.map((guest) => (
                 <tr
                   key={guest.id}
                   className="border-b border-border/50 hover:bg-secondary/10 transition-colors"
@@ -361,6 +460,55 @@ export function GuestTable({
           </tbody>
         </table>
       </div>
+
+      {/* Pagination footer */}
+      {!isLoading && total > 0 && (
+        <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-3 border-t border-border/50 text-sm text-muted-foreground">
+          <span>
+            Mostrando {rangeStart}–{rangeEnd} de {total} convidado{total !== 1 ? "s" : ""}
+          </span>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs">Por página:</span>
+              <Select value={String(pageSize)} onValueChange={(v) => setPageSize(Number(v))}>
+                <SelectTrigger className="h-7 w-16 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PAGE_SIZE_OPTIONS.map((n) => (
+                    <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center gap-1">
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-7 w-7"
+                disabled={clampedPage <= 1}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                aria-label="Página anterior"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+              <span className="px-2 text-xs">
+                {clampedPage} / {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-7 w-7"
+                disabled={clampedPage >= totalPages}
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                aria-label="Próxima página"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </Card>
   );
 }

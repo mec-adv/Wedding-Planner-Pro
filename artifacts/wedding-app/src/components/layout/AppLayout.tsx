@@ -164,7 +164,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   const onHome = location === "/" || location === "";
 
   return (
-    <div className="min-h-screen bg-background flex flex-col md:flex-row">
+    <div className="h-screen overflow-hidden bg-background flex flex-col md:flex-row">
       <div className="md:hidden flex items-center justify-between p-4 border-b bg-card">
         <div className="flex items-center gap-2 text-primary">
           <Heart className="w-6 h-6 fill-current" />

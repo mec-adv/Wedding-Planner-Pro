@@ -1,0 +1,23 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "API Server",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [".claude/start-api.js"],
+      "port": 8080
+    },
+    {
+      "name": "Wedding App (Frontend)",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [".claude/start-wedding-app.js"],
+      "port": 5173
+    },
+    {
+      "name": "Mockup Sandbox",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [".claude/start-mockup-sandbox.js"],
+      "port": 5174
+    }
+  ]
+}

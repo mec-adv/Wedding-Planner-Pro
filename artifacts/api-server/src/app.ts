@@ -5,7 +5,14 @@ import { getUploadRoot } from "./lib/gift-upload-paths";
 
 const app: Express = express();
 
-app.use(cors());
+const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || "http://localhost:5173";
+
+app.use(
+  cors({
+    origin: ALLOWED_ORIGIN,
+    credentials: true,
+  }),
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 /** Sem corpo JSON, o Express pode deixar req.body undefined; rotas que leem req.body.foo quebram antes do spread. */

@@ -29,24 +29,15 @@ import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
 
+/**
+ * Intercepta todas as chamadas fetch para incluir `credentials: "include"`,
+ * garantindo que o cookie httpOnly de autenticação seja enviado automaticamente
+ * em todas as requisições à API — sem expor o token ao JavaScript.
+ */
 const originalFetch = window.fetch;
 window.fetch = async (...args: Parameters<typeof fetch>) => {
-  const token = localStorage.getItem("auth_token");
-  if (!token) {
-    return originalFetch(...args);
-  }
-
   const [input, init] = args;
-  if (!init) {
-    return originalFetch(input, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-  }
-
-  /** `Headers` não é objeto plano — `{...init.headers}` apaga Content-Type e o Express não parseia JSON. */
-  const headers = new Headers(init.headers);
-  headers.set("Authorization", `Bearer ${token}`);
-  return originalFetch(input, { ...init, headers });
+  return originalFetch(input, { credentials: "include", ...init });
 };
 
 function ProtectedRoute({ component: Component, ...rest }: { component: React.ComponentType<Record<string, unknown>>; [key: string]: unknown }) {

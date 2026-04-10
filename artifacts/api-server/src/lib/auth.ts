@@ -43,15 +43,31 @@ export function verifyToken(token: string): { userId: number; role: string } {
   return jwt.verify(token, getJwtSecret()) as { userId: number; role: string };
 }
 
-export function authMiddleware(req: Request, res: Response, next: NextFunction): void {
+/** Extrai o token JWT do cookie httpOnly ou, como fallback, do header Authorization (para clientes de API externos). */
+function extractToken(req: Request): string | undefined {
+  const cookieHeader = req.headers.cookie;
+  if (cookieHeader) {
+    const match = cookieHeader.split(";").find((c) => c.trim().startsWith("auth_token="));
+    if (match) return match.trim().substring("auth_token=".length);
+  }
+
   const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+  if (authHeader?.startsWith("Bearer ")) {
+    return authHeader.split(" ")[1];
+  }
+
+  return undefined;
+}
+
+export function authMiddleware(req: Request, res: Response, next: NextFunction): void {
+  const token = extractToken(req);
+
+  if (!token) {
     res.status(401).json({ error: "Token de autenticação não fornecido" });
     return;
   }
 
   try {
-    const token = authHeader.split(" ")[1];
     const decoded = verifyToken(token);
     const authReq = req as AuthRequest;
     authReq.userId = decoded.userId;

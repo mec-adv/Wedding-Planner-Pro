@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "wouter";
 import {
   useListGifts,
@@ -32,7 +32,16 @@ import {
   Loader2,
   LayoutGrid,
   List,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
@@ -72,11 +81,18 @@ export default function Gifts() {
   const [fileUploading, setFileUploading] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Gift | null>(null);
   const [viewMode, setViewMode] = useState<GiftsViewMode>(() => readStoredViewMode(wid));
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(12);
   const { toast } = useToast();
 
   useEffect(() => {
     setViewMode(readStoredViewMode(wid));
+    setPage(1);
   }, [wid]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [viewMode, pageSize]);
 
   useEffect(() => {
     try {
@@ -195,6 +211,17 @@ export default function Gifts() {
   };
 
   const saving = createMutation.isPending || updateMutation.isPending;
+
+  const allGifts = gifts ?? [];
+  const totalGifts = allGifts.length;
+  const totalPages = Math.max(1, Math.ceil(totalGifts / pageSize));
+  const clampedPage = Math.min(page, totalPages);
+  const pagedGifts = useMemo(
+    () => allGifts.slice((clampedPage - 1) * pageSize, clampedPage * pageSize),
+    [allGifts, clampedPage, pageSize],
+  );
+  const rangeStart = totalGifts === 0 ? 0 : (clampedPage - 1) * pageSize + 1;
+  const rangeEnd = Math.min(clampedPage * pageSize, totalGifts);
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -352,32 +379,36 @@ export default function Gifts() {
         </Card>
       ) : (
         <div className="space-y-4">
-          <div className="flex flex-wrap items-center justify-end gap-2">
-            <span className="text-sm text-muted-foreground">Visualização</span>
-            <ToggleGroup
-              type="single"
-              value={viewMode}
-              onValueChange={(v) => {
-                if (v === "grid" || v === "list") setViewMode(v);
-              }}
-              variant="outline"
-              className="justify-end"
-              aria-label="Modo de visualização dos presentes"
-            >
-              <ToggleGroupItem value="grid" aria-label="Grade">
-                <LayoutGrid className="h-4 w-4" />
-                <span className="ml-1.5 hidden sm:inline">Grade</span>
-              </ToggleGroupItem>
-              <ToggleGroupItem value="list" aria-label="Lista">
-                <List className="h-4 w-4" />
-                <span className="ml-1.5 hidden sm:inline">Lista</span>
-              </ToggleGroupItem>
-            </ToggleGroup>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className="text-sm text-muted-foreground">
+              {totalGifts > 0 && `${rangeStart}–${rangeEnd} de ${totalGifts} presente${totalGifts !== 1 ? "s" : ""}`}
+            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Visualização</span>
+              <ToggleGroup
+                type="single"
+                value={viewMode}
+                onValueChange={(v) => {
+                  if (v === "grid" || v === "list") setViewMode(v);
+                }}
+                variant="outline"
+                aria-label="Modo de visualização dos presentes"
+              >
+                <ToggleGroupItem value="grid" aria-label="Grade">
+                  <LayoutGrid className="h-4 w-4" />
+                  <span className="ml-1.5 hidden sm:inline">Grade</span>
+                </ToggleGroupItem>
+                <ToggleGroupItem value="list" aria-label="Lista">
+                  <List className="h-4 w-4" />
+                  <span className="ml-1.5 hidden sm:inline">Lista</span>
+                </ToggleGroupItem>
+              </ToggleGroup>
+            </div>
           </div>
 
           {viewMode === "grid" ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {gifts?.map((gift) => (
+              {pagedGifts.map((gift) => (
                 <Card
                   key={gift.id}
                   className="overflow-hidden hover:-translate-y-1 hover:shadow-xl transition-all duration-300 group"
@@ -448,33 +479,33 @@ export default function Gifts() {
             </div>
           ) : (
             <ul className="flex flex-col gap-3 list-none p-0 m-0" role="list">
-              {gifts?.map((gift) => (
+              {pagedGifts.map((gift) => (
                 <li key={gift.id}>
                   <Card className="overflow-hidden transition-shadow hover:shadow-md">
-                    <div className="flex flex-col sm:flex-row sm:items-stretch">
-                      <div className="relative h-40 sm:h-auto sm:w-40 shrink-0 bg-secondary border-b sm:border-b-0 sm:border-r border-border/60">
+                    <div className="flex flex-col sm:flex-row sm:items-stretch min-h-[7rem]">
+                      <div className="relative h-36 sm:h-auto sm:w-36 shrink-0 bg-secondary border-b sm:border-b-0 sm:border-r border-border/60">
                         {gift.imageUrl ? (
                           <img
                             src={gift.imageUrl}
                             alt={gift.name}
-                            className="h-full w-full object-cover sm:min-h-[7rem]"
+                            className="h-full w-full object-cover"
                           />
                         ) : (
-                          <div className="h-full w-full min-h-[10rem] sm:min-h-[7rem] flex items-center justify-center bg-primary/5 text-primary/40">
+                          <div className="h-full w-full flex items-center justify-center bg-primary/5 text-primary/40">
                             <GiftIcon className="w-10 h-10" />
                           </div>
                         )}
                       </div>
-                      <CardContent className="flex flex-1 flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                      <CardContent className="flex flex-1 flex-col gap-2 p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                         <div className="min-w-0 flex-1 space-y-1">
-                          <h3 className="font-serif text-lg font-semibold text-foreground">{gift.name}</h3>
+                          <h3 className="font-serif text-lg font-semibold text-foreground line-clamp-1">{gift.name}</h3>
                           <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">
                             {formatGiftCategory(gift.category)}
                           </p>
                           {gift.humorTag ? (
-                            <p className="text-sm text-muted-foreground line-clamp-2 flex items-start gap-2 pt-1">
+                            <p className="text-sm flex items-start gap-2 pt-0.5">
                               <Sparkles className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                              <span className="italic text-foreground">{gift.humorTag}</span>
+                              <span className="italic text-foreground line-clamp-1">{gift.humorTag}</span>
                             </p>
                           ) : null}
                         </div>
@@ -517,6 +548,47 @@ export default function Gifts() {
                 </li>
               ))}
             </ul>
+          )}
+
+          {/* Pagination */}
+          {totalGifts > 0 && (
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-2 text-sm text-muted-foreground">
+              <span>{rangeStart}–{rangeEnd} de {totalGifts} presente{totalGifts !== 1 ? "s" : ""}</span>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs">Por página:</span>
+                  <Select value={String(pageSize)} onValueChange={(v) => setPageSize(Number(v))}>
+                    <SelectTrigger className="h-7 w-16 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[8, 12, 24, 48].map((n) => (
+                        <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="outline" size="icon" className="h-7 w-7"
+                    disabled={clampedPage <= 1}
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    aria-label="Página anterior"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </Button>
+                  <span className="px-2 text-xs">{clampedPage} / {totalPages}</span>
+                  <Button
+                    variant="outline" size="icon" className="h-7 w-7"
+                    disabled={clampedPage >= totalPages}
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    aria-label="Próxima página"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
           )}
         </div>
       )}

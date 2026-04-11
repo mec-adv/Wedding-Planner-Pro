@@ -41,9 +41,11 @@ html { scroll-behavior: smooth; }
   100% { opacity: 0;   transform: translateY(110vh) rotate(560deg) translateX(-40px); }
 }
 nav.botanico-nav {
-  background: transparent;
-  box-shadow: none;
-  border-bottom: 1.5px solid rgba(201,150,42,0.3);
+  background: rgba(10, 18, 38, 0.96);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 2px 20px rgba(0,0,0,0.4);
+  border-bottom: 1.5px solid rgba(201,150,42,0.45);
 }
 .hero-stack { position: relative; z-index: 0; }
 .countdown-card { transition: transform 0.2s; }
@@ -187,7 +189,7 @@ export function PublicInviteBotanico({
   return (
     <div className="text-[#2E3A42] font-sans antialiased min-h-screen" style={rootStyle}>
       <style dangerouslySetInnerHTML={{ __html: BOTANICO_STYLE }} />
-      <div dangerouslySetInnerHTML={{ __html: floralDefs }} />
+      <div style={{ lineHeight: 0, fontSize: 0 }} dangerouslySetInnerHTML={{ __html: floralDefs }} />
 
       <div className="bg-pattern" />
 

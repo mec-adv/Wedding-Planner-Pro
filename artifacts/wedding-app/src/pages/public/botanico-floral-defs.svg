@@ -5,76 +5,76 @@
 
         <!-- Rosa amarela: pétala com luz central e sombra nas bordas -->
         <radialGradient id="gPetalYellow1" cx="45%" cy="35%" r="60%">
-          <stop offset="0%"   stop-color="#FFF0A0"/>
-          <stop offset="40%"  stop-color="#F7D444"/>
-          <stop offset="75%"  stop-color="#E8B820"/>
-          <stop offset="100%" stop-color="#C9880A"/>
+          <stop offset="0%"   stop-color="#FFF4C2"/>
+          <stop offset="40%"  stop-color="#F0C030"/>
+          <stop offset="75%"  stop-color="#D4A017"/>
+          <stop offset="100%" stop-color="#9B6B00"/>
         </radialGradient>
         <radialGradient id="gPetalYellow2" cx="55%" cy="30%" r="65%">
-          <stop offset="0%"   stop-color="#FFFACC"/>
-          <stop offset="35%"  stop-color="#F5C842"/>
-          <stop offset="70%"  stop-color="#D9A00E"/>
-          <stop offset="100%" stop-color="#A97200"/>
+          <stop offset="0%"   stop-color="#FFFDE8"/>
+          <stop offset="35%"  stop-color="#E8A820"/>
+          <stop offset="70%"  stop-color="#C07800"/>
+          <stop offset="100%" stop-color="#7A4C00"/>
         </radialGradient>
         <radialGradient id="gPetalYellowInner" cx="50%" cy="40%" r="55%">
-          <stop offset="0%"   stop-color="#FFF8D0"/>
-          <stop offset="50%"  stop-color="#F2C030"/>
-          <stop offset="100%" stop-color="#C08010"/>
+          <stop offset="0%"   stop-color="#FFF4C2"/>
+          <stop offset="50%"  stop-color="#E8A820"/>
+          <stop offset="100%" stop-color="#9B6B00"/>
         </radialGradient>
 
         <!-- Flor azul: pétala com brilho e profundidade -->
         <radialGradient id="gPetalBlue1" cx="40%" cy="30%" r="65%">
-          <stop offset="0%"   stop-color="#CDEAF8"/>
-          <stop offset="40%"  stop-color="#7FB3D3"/>
-          <stop offset="75%"  stop-color="#4A88B0"/>
-          <stop offset="100%" stop-color="#2C5F7A"/>
+          <stop offset="0%"   stop-color="#D0E8F8"/>
+          <stop offset="40%"  stop-color="#4A7FC1"/>
+          <stop offset="75%"  stop-color="#2952A3"/>
+          <stop offset="100%" stop-color="#1A2F6E"/>
         </radialGradient>
         <radialGradient id="gPetalBlue2" cx="50%" cy="25%" r="70%">
-          <stop offset="0%"   stop-color="#E8F5FF"/>
-          <stop offset="45%"  stop-color="#90C0DC"/>
-          <stop offset="80%"  stop-color="#5490B8"/>
-          <stop offset="100%" stop-color="#1E4F6A"/>
+          <stop offset="0%"   stop-color="#E8F2FF"/>
+          <stop offset="45%"  stop-color="#6BAED6"/>
+          <stop offset="80%"  stop-color="#2952A3"/>
+          <stop offset="100%" stop-color="#1A2F6E"/>
         </radialGradient>
         <radialGradient id="gPetalBlueLight" cx="45%" cy="35%" r="60%">
-          <stop offset="0%"   stop-color="#F0F8FF"/>
-          <stop offset="50%"  stop-color="#A8C9E0"/>
-          <stop offset="100%" stop-color="#5080A0"/>
+          <stop offset="0%"   stop-color="#EEF6FF"/>
+          <stop offset="50%"  stop-color="#A0CDE0"/>
+          <stop offset="100%" stop-color="#4A7FC1"/>
         </radialGradient>
 
         <!-- Folha: verde-azulado com veia iluminada -->
         <linearGradient id="gLeaf1" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%"   stop-color="#4A8C6A"/>
-          <stop offset="40%"  stop-color="#3A7558"/>
-          <stop offset="100%" stop-color="#1E4E38"/>
+          <stop offset="0%"   stop-color="#3D8060"/>
+          <stop offset="40%"  stop-color="#2A5C42"/>
+          <stop offset="100%" stop-color="#163828"/>
         </linearGradient>
         <linearGradient id="gLeaf2" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%"   stop-color="#5A9E78"/>
-          <stop offset="50%"  stop-color="#3D7A5C"/>
-          <stop offset="100%" stop-color="#1A4030"/>
+          <stop offset="0%"   stop-color="#5AA070"/>
+          <stop offset="50%"  stop-color="#2A5C42"/>
+          <stop offset="100%" stop-color="#0F2C1E"/>
         </linearGradient>
         <linearGradient id="gLeafOlive" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%"   stop-color="#8FA860"/>
-          <stop offset="50%"  stop-color="#6A8840"/>
-          <stop offset="100%" stop-color="#445C22"/>
+          <stop offset="0%"   stop-color="#7A9850"/>
+          <stop offset="50%"  stop-color="#557038"/>
+          <stop offset="100%" stop-color="#334818"/>
         </linearGradient>
 
         <!-- Miolo/estame amarelo-dourado -->
         <radialGradient id="gCenter" cx="50%" cy="40%" r="60%">
-          <stop offset="0%"   stop-color="#FFF5A0"/>
-          <stop offset="50%"  stop-color="#E8A800"/>
-          <stop offset="100%" stop-color="#9A6000"/>
+          <stop offset="0%"   stop-color="#FFF4C2"/>
+          <stop offset="50%"  stop-color="#D4A017"/>
+          <stop offset="100%" stop-color="#7A4C00"/>
         </radialGradient>
         <radialGradient id="gCenterBlue" cx="50%" cy="45%" r="55%">
-          <stop offset="0%"   stop-color="#FFFAEE"/>
-          <stop offset="50%"  stop-color="#F0D060"/>
-          <stop offset="100%" stop-color="#A07010"/>
+          <stop offset="0%"   stop-color="#FFFDE8"/>
+          <stop offset="50%"  stop-color="#D4A017"/>
+          <stop offset="100%" stop-color="#7A4C00"/>
         </radialGradient>
 
         <!-- Haste verde -->
         <linearGradient id="gStem" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%"   stop-color="#1E4E38"/>
-          <stop offset="40%"  stop-color="#3A7558"/>
-          <stop offset="100%" stop-color="#1A3828"/>
+          <stop offset="0%"   stop-color="#163828"/>
+          <stop offset="40%"  stop-color="#2A5C42"/>
+          <stop offset="100%" stop-color="#0F2C1E"/>
         </linearGradient>
 
         <!-- Filtro de sombra suave -->

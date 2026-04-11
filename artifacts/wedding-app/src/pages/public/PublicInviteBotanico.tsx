@@ -14,6 +14,7 @@ export function primeiroNome(nomeCompleto: string): string {
 }
 
 const BOTANICO_STYLE = `
+html, body { margin: 0; padding: 0; background-color: #0D1B2A; }
 html { scroll-behavior: smooth; }
 .bg-pattern {
   background-color: #F4F9FD;
@@ -31,12 +32,13 @@ html { scroll-behavior: smooth; }
   object-fit: cover; filter: brightness(0.4);
 }
 .petals-container { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 1; }
-.petal { position: absolute; animation: floatPetal linear infinite; opacity: 0; }
+.petal { position: absolute; animation: floatPetal linear infinite; opacity: 0; will-change: transform, opacity; }
 @keyframes floatPetal {
-  0%   { opacity: 0;   transform: translateY(-20px) rotate(0deg); }
-  10%  { opacity: 0.55; }
-  90%  { opacity: 0.35; }
-  100% { opacity: 0;   transform: translateY(110vh) rotate(520deg) translateX(50px); }
+  0%   { opacity: 0;   transform: translateY(-20px) rotate(0deg) translateX(0px); }
+  8%   { opacity: 0.65; }
+  50%  { transform: translateY(55vh) rotate(260deg) translateX(20px); }
+  92%  { opacity: 0.40; }
+  100% { opacity: 0;   transform: translateY(110vh) rotate(560deg) translateX(-40px); }
 }
 nav.botanico-nav {
   background: transparent;
@@ -154,14 +156,16 @@ export function PublicInviteBotanico({
     if (!container) return;
     container.innerHTML = "";
     const shapes = [
-      { w: 10, h: 7, r: "80% 0 80% 0", color: "#F7D444" },
-      { w: 8, h: 5, r: "70% 30% 70% 30%", color: "#E8B820" },
-      { w: 9, h: 6, r: "60% 40% 80% 20%", color: "#7FB3D3" },
-      { w: 7, h: 5, r: "50% 50% 70% 30%", color: "#A8C9E0" },
-      { w: 11, h: 7, r: "80% 20% 80% 20%", color: "#D9EAF3" },
-      { w: 8, h: 6, r: "40% 60% 40% 60%", color: "#E8D5A0" },
+      { w: 17, h: 11, r: "80% 0 80% 0",     color: "linear-gradient(135deg, #4A7FC1 0%, #1A2F6E 100%)" },
+      { w: 16, h: 10, r: "70% 30% 70% 30%", color: "linear-gradient(135deg, #F0C030 0%, #9B6B00 100%)" },
+      { w: 14, h: 9,  r: "60% 40% 80% 20%", color: "linear-gradient(120deg, #A0CDE0 0%, #4A7FC1 100%)" },
+      { w: 13, h: 8,  r: "50% 50% 70% 30%", color: "linear-gradient(120deg, #F7D444 0%, #D4A017 100%)" },
+      { w: 18, h: 11, r: "80% 20% 80% 20%", color: "linear-gradient(150deg, #6BAED6 0%, #2952A3 100%)" },
+      { w: 12, h: 8,  r: "40% 60% 40% 60%", color: "linear-gradient(135deg, #FFF4C2 0%, #E8A820 100%)" },
+      { w: 14, h: 10, r: "60% 60% 40% 40%", color: "linear-gradient(180deg, #4A7FC1 0%, #1A2F6E 100%)" },
+      { w: 11, h: 7,  r: "50% 50% 60% 40%", color: "linear-gradient(135deg, #D0E8F8 0%, #6BAED6 100%)" },
     ];
-    for (let i = 0; i < 24; i++) {
+    for (let i = 0; i < 36; i++) {
       const s = shapes[Math.floor(Math.random() * shapes.length)];
       const petal = document.createElement("div");
       petal.className = "petal";
@@ -170,8 +174,8 @@ export function PublicInviteBotanico({
         background:${s.color};
         border-radius:${s.r};
         left:${Math.random() * 100}vw;
-        animation-duration:${8 + Math.random() * 10}s;
-        animation-delay:${Math.random() * 14}s;
+        animation-duration:${12 + Math.random() * 10}s;
+        animation-delay:${Math.random() * 18}s;
         box-shadow: inset -1px -1px 2px rgba(0,0,0,0.15), inset 1px 1px 2px rgba(255,255,255,0.3);
       `;
       container.appendChild(petal);
@@ -189,15 +193,29 @@ export function PublicInviteBotanico({
 
       <nav className="botanico-nav fixed top-0 left-0 right-0 z-50 w-full">
         <div className="max-w-6xl mx-auto w-full px-6 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <svg width="34" height="34" viewBox="0 0 80 80" aria-hidden className="drop-shadow-md">
-              <use href="#roseYellowSm" x="0" y="0" width="40" height="40" />
-              <use href="#leafSm" x="24" y="14" width="18" height="28" transform="rotate(30 33 28)" />
-              <use href="#leafSm" x="-2" y="14" width="18" height="28" transform="rotate(-30 7 28)" />
+          {/* Monograma botânico */}
+          <div className="relative flex items-center justify-center drop-shadow-lg" style={{ width: 82, height: 58 }}>
+            <svg width="82" height="58" viewBox="0 0 82 58" fill="none" aria-hidden className="absolute inset-0">
+              {/* Rosas laterais */}
+              <use href="#roseYellowSm" x="0" y="19" width="22" height="22" opacity="0.95"/>
+              <use href="#roseYellowSm" x="60" y="19" width="22" height="22" opacity="0.95"/>
+              {/* Folhas */}
+              <use href="#leafSm" x="3" y="6" width="15" height="22" transform="rotate(-22 10 17)" opacity="0.9"/>
+              <use href="#leafSm" x="64" y="6" width="15" height="22" transform="rotate(22 71 17)" opacity="0.9"/>
+              {/* Oval externo */}
+              <ellipse cx="41" cy="29" rx="24" ry="19" stroke="rgba(201,150,42,0.90)" strokeWidth="1.4" fill="rgba(0,0,0,0.28)"/>
+              {/* Oval interno */}
+              <ellipse cx="41" cy="29" rx="20.5" ry="15.5" stroke="rgba(201,150,42,0.42)" strokeWidth="0.7" fill="none"/>
+              {/* Ornamento superior */}
+              <path d="M36 11 Q41 9 46 11" stroke="rgba(201,150,42,0.85)" strokeWidth="1.2" fill="none" strokeLinecap="round"/>
+              <circle cx="41" cy="9.5" r="1.6" fill="rgba(201,150,42,0.90)"/>
+              {/* Ornamento inferior */}
+              <path d="M36 47 Q41 49 46 47" stroke="rgba(201,150,42,0.85)" strokeWidth="1.2" fill="none" strokeLinecap="round"/>
+              <circle cx="41" cy="48.5" r="1.6" fill="rgba(201,150,42,0.90)"/>
             </svg>
             <span
-              className="text-xl font-bold tracking-widest text-white drop-shadow-md"
-              style={{ fontFamily: "'Cormorant Garamond', serif" }}
+              className="relative text-[14px] font-semibold tracking-[0.13em] text-white"
+              style={{ fontFamily: "'Cormorant Garamond', serif", textShadow: '0 1px 4px rgba(0,0,0,0.65)', zIndex: 1 }}
             >
               {cfg.navInitials}
             </span>

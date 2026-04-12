@@ -195,33 +195,47 @@ export function PublicInviteBotanico({
 
       <nav className="botanico-nav fixed top-0 left-0 right-0 z-50 w-full">
         <div className="max-w-6xl mx-auto w-full px-6 py-4 flex justify-between items-center">
-          {/* Monograma botânico */}
-          <div className="relative flex items-center justify-center drop-shadow-lg" style={{ width: 82, height: 58 }}>
-            <svg width="82" height="58" viewBox="0 0 82 58" fill="none" aria-hidden className="absolute inset-0">
-              {/* Rosas laterais */}
-              <use href="#roseYellowSm" x="0" y="19" width="22" height="22" opacity="0.95"/>
-              <use href="#roseYellowSm" x="60" y="19" width="22" height="22" opacity="0.95"/>
-              {/* Folhas */}
-              <use href="#leafSm" x="3" y="6" width="15" height="22" transform="rotate(-22 10 17)" opacity="0.9"/>
-              <use href="#leafSm" x="64" y="6" width="15" height="22" transform="rotate(22 71 17)" opacity="0.9"/>
-              {/* Oval externo */}
-              <ellipse cx="41" cy="29" rx="24" ry="19" stroke="rgba(201,150,42,0.90)" strokeWidth="1.4" fill="rgba(0,0,0,0.28)"/>
-              {/* Oval interno */}
-              <ellipse cx="41" cy="29" rx="20.5" ry="15.5" stroke="rgba(201,150,42,0.42)" strokeWidth="0.7" fill="none"/>
-              {/* Ornamento superior */}
-              <path d="M36 11 Q41 9 46 11" stroke="rgba(201,150,42,0.85)" strokeWidth="1.2" fill="none" strokeLinecap="round"/>
-              <circle cx="41" cy="9.5" r="1.6" fill="rgba(201,150,42,0.90)"/>
-              {/* Ornamento inferior */}
-              <path d="M36 47 Q41 49 46 47" stroke="rgba(201,150,42,0.85)" strokeWidth="1.2" fill="none" strokeLinecap="round"/>
-              <circle cx="41" cy="48.5" r="1.6" fill="rgba(201,150,42,0.90)"/>
-            </svg>
-            <span
-              className="relative text-[14px] font-semibold tracking-[0.13em] text-white"
-              style={{ fontFamily: "'Cormorant Garamond', serif", textShadow: '0 1px 4px rgba(0,0,0,0.65)', zIndex: 1 }}
+          {/* Monograma / logo do casal */}
+          {cfg.navLogoUrl ? (
+            <div
+              className="flex items-center justify-center"
+              style={{
+                height: 56,
+                width: "auto",
+                borderRadius: 8,
+                overflow: "hidden",
+                background: "rgba(255,255,255,0.10)",
+                padding: "2px 4px",
+              }}
             >
-              {cfg.navInitials}
-            </span>
-          </div>
+              <img
+                src={cfg.navLogoUrl}
+                alt={cfg.navInitials ?? "monograma"}
+                style={{ height: 50, width: "auto", objectFit: "contain", display: "block" }}
+              />
+            </div>
+          ) : (
+            <div className="relative flex items-center justify-center drop-shadow-lg" style={{ width: 82, height: 58 }}>
+              <svg width="82" height="58" viewBox="0 0 82 58" fill="none" aria-hidden className="absolute inset-0">
+                <use href="#roseYellowSm" x="0" y="19" width="22" height="22" opacity="0.95"/>
+                <use href="#roseYellowSm" x="60" y="19" width="22" height="22" opacity="0.95"/>
+                <use href="#leafSm" x="3" y="6" width="15" height="22" transform="rotate(-22 10 17)" opacity="0.9"/>
+                <use href="#leafSm" x="64" y="6" width="15" height="22" transform="rotate(22 71 17)" opacity="0.9"/>
+                <ellipse cx="41" cy="29" rx="24" ry="19" stroke="rgba(201,150,42,0.90)" strokeWidth="1.4" fill="rgba(0,0,0,0.28)"/>
+                <ellipse cx="41" cy="29" rx="20.5" ry="15.5" stroke="rgba(201,150,42,0.42)" strokeWidth="0.7" fill="none"/>
+                <path d="M36 11 Q41 9 46 11" stroke="rgba(201,150,42,0.85)" strokeWidth="1.2" fill="none" strokeLinecap="round"/>
+                <circle cx="41" cy="9.5" r="1.6" fill="rgba(201,150,42,0.90)"/>
+                <path d="M36 47 Q41 49 46 47" stroke="rgba(201,150,42,0.85)" strokeWidth="1.2" fill="none" strokeLinecap="round"/>
+                <circle cx="41" cy="48.5" r="1.6" fill="rgba(201,150,42,0.90)"/>
+              </svg>
+              <span
+                className="relative text-[14px] font-semibold tracking-[0.13em] text-white"
+                style={{ fontFamily: "'Cormorant Garamond', serif", textShadow: '0 1px 4px rgba(0,0,0,0.65)', zIndex: 1 }}
+              >
+                {cfg.navInitials}
+              </span>
+            </div>
+          )}
           <div className="hidden md:flex space-x-6 text-xs uppercase tracking-widest font-bold">
             <a href="#inicio" className="text-white drop-shadow-md transition hover:text-[#C9962A]">
               Início

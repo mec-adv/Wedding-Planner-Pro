@@ -12,6 +12,8 @@ export type PublicInvitePageConfig = {
   layout?: PublicInviteLayout;
   /** Iniciais no menu (ex.: R & M) */
   navInitials?: string;
+  /** URL da imagem de logo/monograma no nav. Se preenchida, substitui o ícone SVG e o texto de iniciais. */
+  navLogoUrl?: string;
   historiaTitle?: string;
   historiaBody?: string;
   historiaSince?: string;
@@ -162,6 +164,7 @@ export const DEFAULT_PUBLIC_INVITE_PAGE_CONFIG: Required<
 export const DEFAULT_BOTANICO_PAGE_CONFIG = {
   layout: "botanico" as const,
   navInitials: "R & M",
+  navLogoUrl: "/api/uploads/users/1/casamento-rodrigo-e-millena-w3/gifts/Monograma.png",
   historiaTitle: "Nossa História",
   historiaBody:
     '"Num instante em que o peso do world fazia o sentido da vida parecer frágil e distante, os caminhos de Rodrigo e Millena se cruzaram. Não foi apenas um esbarrão do destino, mas o encontro de duas almas que, cansadas de caminhar no vazio, finalmente encontraram um porto seguro no olhar uma da outra. Naquele abraço, o desânimo deu lugar ao despertar: eles redescobriram a capacidade de amar e, com a coragem de quem já muito esperou, decidiram transformar esse encontro na mais linda e concreta realidade."',

@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__Claude_Preview__preview_start",
+      "Bash(curl -s http://localhost:8080/api/weddings)",
+      "Bash(curl -s http://localhost:8080/api/public/invite/f8bf6be2773566ae9602942e3a897df7d57f82b24beafbd695a87436f043398a)",
+      "Bash(npx --yes pnpm@9 --filter @workspace/api-server run dev)",
+      "Bash(curl -s http://localhost:8080/api/public/invite/test)"
+    ]
+  }
+}

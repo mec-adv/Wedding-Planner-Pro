@@ -5,7 +5,7 @@ const path = require("path");
 const fs = require("fs");
 
 const root = path.resolve(__dirname, "..");
-const env = { ...process.env, PORT: "5173", BASE_PATH: "/" };
+const env = { ...process.env, PORT: "5175", BASE_PATH: "/" };
 
 // Instala dependências se node_modules não existir
 const nm = path.join(root, "artifacts", "wedding-app", "node_modules");

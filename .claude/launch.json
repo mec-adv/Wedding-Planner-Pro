@@ -11,7 +11,7 @@
       "name": "Wedding App (Frontend)",
       "runtimeExecutable": "node",
       "runtimeArgs": [".claude/start-wedding-app.js"],
-      "port": 5173
+      "port": 5175
     },
     {
       "name": "Mockup Sandbox",

@@ -83,6 +83,14 @@ export type PublicInvitePageConfig = {
   backgroundColor?: string;
   patternDotColor?: string;
   textColor?: string;
+  /** Decorativos raster opcionais (layout botânico); vazio = SVG embutido. */
+  botanicoDividerUrl?: string;
+  botanicoHeroGarlandUrl?: string;
+  botanicoColumnFloralUrl?: string;
+  botanicoCornerFloralUrl?: string;
+  botanicoFooterGarlandUrl?: string;
+  botanicoBgTextureUrl?: string;
+  botanicoPadrinhoFlourishUrl?: string;
 };
 
 export const DEFAULT_PUBLIC_INVITE_PAGE_CONFIG: Required<
@@ -164,7 +172,7 @@ export const DEFAULT_PUBLIC_INVITE_PAGE_CONFIG: Required<
 export const DEFAULT_BOTANICO_PAGE_CONFIG = {
   layout: "botanico" as const,
   navInitials: "R & M",
-  navLogoUrl: "/api/uploads/users/1/casamento-rodrigo-e-millena-w3/gifts/Monograma_Claro.png",
+  navLogoUrl: `${import.meta.env.BASE_URL}api/uploads/users/1/casamento-rodrigo-e-millena-w3/gifts/Monograma_Escuro.png`,
   historiaTitle: "Nossa História",
   historiaBody:
     '"Num instante em que o peso do world fazia o sentido da vida parecer frágil e distante, os caminhos de Rodrigo e Millena se cruzaram. Não foi apenas um esbarrão do destino, mas o encontro de duas almas que, cansadas de caminhar no vazio, finalmente encontraram um porto seguro no olhar uma da outra. Naquele abraço, o desânimo deu lugar ao despertar: eles redescobriram a capacidade de amar e, com a coragem de quem já muito esperou, decidiram transformar esse encontro na mais linda e concreta realidade."',
@@ -242,6 +250,13 @@ export const DEFAULT_BOTANICO_PAGE_CONFIG = {
   heroTagline: "Vamos nos casar",
   giftsTagline: "Sua presença é o nosso maior presente!",
   adicionarAcompanhanteLabel: "+ Adicionar Acompanhante",
+  botanicoDividerUrl: "",
+  botanicoHeroGarlandUrl: "",
+  botanicoColumnFloralUrl: "",
+  botanicoCornerFloralUrl: "",
+  botanicoFooterGarlandUrl: "",
+  botanicoBgTextureUrl: "",
+  botanicoPadrinhoFlourishUrl: "",
 } satisfies Partial<PublicInvitePageConfig> & { layout: PublicInviteLayout; padrinhos: BotanicoPadrinho[]; faqItems: BotanicoFaqItem[] };
 
 function isPlainObject(v: unknown): v is Record<string, unknown> {
@@ -308,7 +323,7 @@ export function resolvePublicInvitePageConfig(raw: unknown): ResolvedPublicInvit
   }
 
   if (raw.layout === "classic" || raw.layout === "botanico") {
-    base.layout = raw.layout;
+    (base as Record<string, unknown>).layout = raw.layout;
   }
 
   if (isPadrinhoList(raw.padrinhos)) {

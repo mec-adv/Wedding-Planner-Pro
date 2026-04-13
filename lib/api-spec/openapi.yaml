@@ -5,7 +5,9 @@ info:
   description: Wedding Management API
 servers:
   - url: /api
-    description: Base API path
+    description: Base API path (desenvolvimento e raiz sem prefixo)
+  - url: /casamento360/api
+    description: Produção no subcaminho casamento360 (alinhado a APP_BASE_PATH e VITE_API_BASE)
 tags:
   - name: health
     description: Health operations

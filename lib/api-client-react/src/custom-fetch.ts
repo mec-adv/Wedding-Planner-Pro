@@ -31,6 +31,38 @@ function resolveUrl(input: RequestInfo | URL): string {
   return input.url;
 }
 
+/** Prefixo da API no cliente (Vite: `VITE_API_BASE`). Default `/api`. */
+function getBrowserApiBase(): string {
+  if (typeof import.meta !== "undefined" && import.meta.env?.VITE_API_BASE) {
+    const raw = import.meta.env.VITE_API_BASE as string;
+    if (raw.length > 0) return raw.replace(/\/$/, "");
+  }
+  return "/api";
+}
+
+function rewriteApiUrl(input: RequestInfo | URL): RequestInfo | URL {
+  const base = getBrowserApiBase();
+  if (base === "/api") return input;
+
+  if (typeof input === "string") {
+    if (input === "/api" || input.startsWith("/api/")) {
+      return `${base}${input.slice("/api".length)}`;
+    }
+    return input;
+  }
+
+  if (isUrl(input)) {
+    if (input.pathname === "/api" || input.pathname.startsWith("/api/")) {
+      const next = new URL(input.href);
+      next.pathname = `${base}${input.pathname.slice("/api".length)}`;
+      return next;
+    }
+    return input;
+  }
+
+  return input;
+}
+
 function mergeHeaders(...sources: Array<HeadersInit | undefined>): Headers {
   const headers = new Headers();
 
@@ -318,9 +350,10 @@ export async function customFetch<T = unknown>(
     headers.set("accept", DEFAULT_JSON_ACCEPT);
   }
 
-  const requestInfo = { method, url: resolveUrl(input) };
+  const resolvedInput = rewriteApiUrl(input);
+  const requestInfo = { method, url: resolveUrl(resolvedInput) };
 
-  const response = await fetch(input, { ...init, method, headers });
+  const response = await fetch(resolvedInput, { ...init, method, headers });
 
   if (!response.ok) {
     const errorData = await parseErrorBody(response, method);

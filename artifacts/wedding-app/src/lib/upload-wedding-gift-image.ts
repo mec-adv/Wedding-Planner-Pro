@@ -1,3 +1,5 @@
+import { apiFetchPath } from "@/lib/api-url";
+
 /**
  * Envia imagem para o armazenamento do casamento (mesmo endpoint dos presentes).
  * Retorna a URL pública para usar em config da página ou em `imageUrl` de presentes.
@@ -5,7 +7,7 @@
 export async function uploadWeddingGiftImage(weddingId: number, file: File): Promise<string> {
   const body = new FormData();
   body.append("file", file);
-  const res = await fetch(`/api/weddings/${weddingId}/gifts/upload-image`, {
+  const res = await fetch(apiFetchPath(`/weddings/${weddingId}/gifts/upload-image`), {
     method: "POST",
     body,
   });

@@ -2,7 +2,18 @@ import path from "path";
 import fs from "fs/promises";
 import fsSync from "fs";
 
-export const PUBLIC_UPLOAD_URL_PREFIX = "/api/uploads";
+export function normalizeAppBasePath(raw: string | undefined): string {
+  if (!raw?.trim()) return "";
+  const trimmed = raw.trim();
+  if (trimmed === "/") return "";
+  return trimmed.replace(/\/+$/, "");
+}
+
+/** Prefixo público para arquivos (ex.: `/api/uploads` ou `/casamento360/api/uploads`). */
+export function getPublicUploadUrlPrefix(): string {
+  const base = normalizeAppBasePath(process.env.APP_BASE_PATH);
+  return base ? `${base}/api/uploads` : "/api/uploads";
+}
 
 export function getUploadRoot(): string {
   const fromEnv = process.env.UPLOAD_ROOT?.trim();
@@ -37,22 +48,32 @@ export function getWeddingGiftDirAbsolute(weddingId: number, createdById: number
 
 export function getPublicUrlForRelativeKey(relativePath: string): string {
   const normalized = relativePath.split(path.sep).join("/");
-  return `${PUBLIC_UPLOAD_URL_PREFIX}/${normalized}`;
+  return `${getPublicUploadUrlPrefix()}/${normalized}`;
+}
+
+const LEGACY_UPLOAD_PREFIX = "/api/uploads";
+
+function uploadKeyAfterPrefix(withoutQuery: string): string | null {
+  const prefixes = [getPublicUploadUrlPrefix(), LEGACY_UPLOAD_PREFIX];
+  for (const prefix of prefixes) {
+    const mark = `${prefix}/`;
+    if (withoutQuery.startsWith(mark)) {
+      return withoutQuery.slice(mark.length);
+    }
+  }
+  return null;
 }
 
 export function isManagedGiftImageUrl(url: string | null | undefined): boolean {
   if (!url || typeof url !== "string") return false;
-  const u = url.trim();
-  return u.startsWith(`${PUBLIC_UPLOAD_URL_PREFIX}/`);
+  const u = (url.split("?")[0] ?? "").trim();
+  return uploadKeyAfterPrefix(u) != null;
 }
 
 export function managedUrlToAbsoluteFilePath(url: string): string | null {
   if (!isManagedGiftImageUrl(url)) return null;
   const withoutQuery = (url.split("?")[0] ?? "").trim();
-  const prefix = `${PUBLIC_UPLOAD_URL_PREFIX}/`;
-  const idx = withoutQuery.indexOf(prefix);
-  if (idx === -1) return null;
-  const after = withoutQuery.slice(idx + prefix.length);
+  const after = uploadKeyAfterPrefix(withoutQuery);
   if (!after || after.includes("..")) return null;
   return path.join(getUploadRoot(), ...after.split("/"));
 }

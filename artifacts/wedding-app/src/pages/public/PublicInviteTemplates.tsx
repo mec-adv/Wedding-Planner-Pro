@@ -431,7 +431,7 @@ export default function PublicInviteTemplates() {
                     <option value="classic">Simples (uma coluna, texto e RSVP)</option>
                   </select>
                   <p className="text-xs text-muted-foreground mt-1">
-                    O layout floral corresponde ao modelo fixo com ornamentos SVG; edite textos e fotos abaixo.
+                    O layout floral usa fundo claro suave, azul e dourado e ornamentos (SVG ou imagens opcionais). Edite textos e fotos abaixo.
                   </p>
                 </div>
               </div>
@@ -492,6 +492,71 @@ export default function PublicInviteTemplates() {
                           Remover imagem
                         </Button>
                       ) : null}
+                    </div>
+                  </div>
+                  <div className="space-y-3 border-t pt-4">
+                    <p className="text-sm font-medium">Imagens decorativas (opcional)</p>
+                    <p className="text-xs text-muted-foreground">
+                      Se preenchidas, substituem os ornamentos SVG embutidos. Use URLs absolutas (PNG/WebP).
+                    </p>
+                    <div className="grid sm:grid-cols-2 gap-2">
+                      <div className="sm:col-span-2">
+                        <Label className="text-xs">Textura de fundo (full-bleed)</Label>
+                        <Input
+                          className="mt-1 font-mono text-xs"
+                          value={pageForm.botanicoBgTextureUrl}
+                          onChange={(e) => updateField("botanicoBgTextureUrl", e.target.value)}
+                          placeholder="https://…"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Guirlanda do hero</Label>
+                        <Input
+                          className="mt-1 font-mono text-xs"
+                          value={pageForm.botanicoHeroGarlandUrl}
+                          onChange={(e) => updateField("botanicoHeroGarlandUrl", e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Divisores (seções)</Label>
+                        <Input
+                          className="mt-1 font-mono text-xs"
+                          value={pageForm.botanicoDividerUrl}
+                          onChange={(e) => updateField("botanicoDividerUrl", e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Ramos laterais / coluna</Label>
+                        <Input
+                          className="mt-1 font-mono text-xs"
+                          value={pageForm.botanicoColumnFloralUrl}
+                          onChange={(e) => updateField("botanicoColumnFloralUrl", e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Cantos</Label>
+                        <Input
+                          className="mt-1 font-mono text-xs"
+                          value={pageForm.botanicoCornerFloralUrl}
+                          onChange={(e) => updateField("botanicoCornerFloralUrl", e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Rodapé (guirlanda)</Label>
+                        <Input
+                          className="mt-1 font-mono text-xs"
+                          value={pageForm.botanicoFooterGarlandUrl}
+                          onChange={(e) => updateField("botanicoFooterGarlandUrl", e.target.value)}
+                        />
+                      </div>
+                      <div className="sm:col-span-2">
+                        <Label className="text-xs">Floreio acima dos padrinhos</Label>
+                        <Input
+                          className="mt-1 font-mono text-xs"
+                          value={pageForm.botanicoPadrinhoFlourishUrl}
+                          onChange={(e) => updateField("botanicoPadrinhoFlourishUrl", e.target.value)}
+                        />
+                      </div>
                     </div>
                   </div>
                   <div>

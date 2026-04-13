@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { useGetMe, useLogin, useRegister, type LoginInput, type RegisterInput, type User } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
+import { apiFetchPath } from '@/lib/api-url';
 
 /**
  * Verifica se o cookie de presença `auth_present` existe.
@@ -18,9 +19,12 @@ interface AuthState {
 export const useAuthStore = create<AuthState>(() => ({
   logout: async () => {
     // Invalida o cookie httpOnly no servidor e limpa o indicador de presença
-    await fetch('/api/auth/logout', { method: 'POST' }).catch(() => null);
+    await fetch(apiFetchPath('/auth/logout'), { method: 'POST' }).catch(() => null);
     document.cookie = 'auth_present=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-    window.location.href = '/login';
+    const base = import.meta.env.BASE_URL.endsWith('/')
+      ? import.meta.env.BASE_URL
+      : `${import.meta.env.BASE_URL}/`;
+    window.location.href = `${base}login`;
   },
 }));
 

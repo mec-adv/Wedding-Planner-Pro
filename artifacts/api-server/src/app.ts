@@ -1,9 +1,14 @@
 import express, { type Express, type NextFunction, type Request, type Response } from "express";
+import path from "path";
 import cors from "cors";
 import router from "./routes";
-import { getUploadRoot } from "./lib/gift-upload-paths";
+import { getUploadRoot, normalizeAppBasePath } from "./lib/gift-upload-paths";
 
 const app: Express = express();
+
+if (process.env.NODE_ENV === "production") {
+  app.set("trust proxy", 1);
+}
 
 const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || "http://localhost:5173";
 
@@ -23,8 +28,34 @@ app.use((req, _res, next) => {
   next();
 });
 
-app.use("/api/uploads", express.static(getUploadRoot()));
-app.use("/api", router);
+const appBase = normalizeAppBasePath(process.env.APP_BASE_PATH);
+const apiRoot = appBase ? `${appBase}/api` : "/api";
+const uploadsMount = appBase ? `${appBase}/api/uploads` : "/api/uploads";
+
+app.use(uploadsMount, express.static(getUploadRoot()));
+app.use(apiRoot, router);
+
+if (appBase && process.env.NODE_ENV === "production") {
+  /** Raiz do monorepo = `process.cwd()` (ex.: systemd `WorkingDirectory=/opt/app`). */
+  const publicDir = path.join(process.cwd(), "artifacts", "wedding-app", "dist", "public");
+  const indexHtml = path.join(publicDir, "index.html");
+
+  app.use(
+    appBase,
+    express.static(publicDir, {
+      index: false,
+    }),
+  );
+  app.use(appBase, (req: Request, res: Response, next: NextFunction) => {
+    if (req.method !== "GET" && req.method !== "HEAD") {
+      next();
+      return;
+    }
+    res.sendFile(indexHtml, (err) => {
+      if (err) next(err);
+    });
+  });
+}
 
 app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
   if (res.headersSent) return;

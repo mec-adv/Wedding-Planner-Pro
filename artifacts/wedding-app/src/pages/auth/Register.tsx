@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { getSpaBaseHref } from "@/lib/api-url";
 
 const registerSchema = z.object({
   name: z.string().min(2, "Nome é obrigatório"),
@@ -29,7 +30,7 @@ export default function Register() {
   const onSubmit = async (data: RegisterForm) => {
     try {
       await registerUser({ data });
-      window.location.href = "/";
+      window.location.href = getSpaBaseHref();
     } catch (error: unknown) {
       toast({
         variant: "destructive",

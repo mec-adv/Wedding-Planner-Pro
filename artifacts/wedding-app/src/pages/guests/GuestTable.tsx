@@ -47,6 +47,7 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { formatPhoneBrReadOnly } from "@/lib/phone-br";
+import { copyTextToClipboard } from "@/lib/clipboard";
 
 const RSVP_COLORS: Record<string, "warning" | "success" | "destructive" | "info"> = {
   pending: "warning",
@@ -188,10 +189,14 @@ export function GuestTable({
 
   const copyLink = async (guest: Guest) => {
     try {
-      await navigator.clipboard.writeText(buildPublicInviteUrl(guest));
+      await copyTextToClipboard(buildPublicInviteUrl(guest));
       toast({ title: "Link da página pública copiado" });
     } catch {
-      toast({ variant: "destructive", title: "Não foi possível copiar" });
+      toast({
+        variant: "destructive",
+        title: "Não foi possível copiar",
+        description: "Copie manualmente o link na barra de endereço ao abrir a pré-visualização.",
+      });
     }
   };
 

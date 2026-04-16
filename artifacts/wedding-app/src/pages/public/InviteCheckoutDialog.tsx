@@ -6,6 +6,7 @@ import { PhoneInput } from "@/components/phone-input";
 import { QrCode, FileText, CreditCard, CheckCircle, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { copyTextToClipboard } from "@/lib/clipboard";
 import type { CheckoutState, PaymentResultData } from "./public-invite-types";
 
 interface InviteCheckoutDialogProps {
@@ -273,9 +274,13 @@ export function InviteCheckoutDialog({
                   variant="outline"
                   size="sm"
                   className="w-full"
-                  onClick={() => {
-                    void navigator.clipboard.writeText(payResult.pixCopyPaste ?? "");
-                    toast({ title: "Copiado" });
+                  onClick={async () => {
+                    try {
+                      await copyTextToClipboard(payResult.pixCopyPaste ?? "");
+                      toast({ title: "Copiado" });
+                    } catch {
+                      toast({ variant: "destructive", title: "Não foi possível copiar" });
+                    }
                   }}
                 >
                   Copiar PIX

@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { getSpaBaseHref } from "@/lib/api-url";
 
 const loginSchema = z.object({
   email: z.string().email("E-mail inválido"),
@@ -27,7 +28,7 @@ export default function Login() {
   const onSubmit = async (data: LoginForm) => {
     try {
       await login({ data });
-      window.location.href = "/";
+      window.location.href = getSpaBaseHref();
     } catch (error: unknown) {
       toast({
         variant: "destructive",

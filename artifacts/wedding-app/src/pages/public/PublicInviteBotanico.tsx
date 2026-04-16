@@ -6,6 +6,7 @@ import { BOTANICO_FLORAL_DEFS_RAW } from "@/assets/invite-botanico-assets";
 import { BotanicoDeco } from "./botanico-deco";
 import { PadrinhoFloralTop } from "./padrinho-floral-top";
 import { resolveMapDisplay } from "./map-embed-url";
+import { getSpaBaseHref, resolveMediaUrl } from "@/lib/api-url";
 
 /** Primeiro nome para o hero/rodapé (ex.: "Millena Vieira Martins" → "Millena"). */
 export function primeiroNome(nomeCompleto: string): string {
@@ -156,6 +157,7 @@ export function PublicInviteBotanico({
   const noivaPrimeiro = primeiroNome(bride);
   const noivoPrimeiro = primeiroNome(groom);
   const heroNomesLinha = `${noivoPrimeiro} & ${noivaPrimeiro}`;
+  const giftsSoonHref = `${getSpaBaseHref()}presentes-em-breve.html`;
 
   const [mainName, setMainName] = useState("");
   const [mainPhone, setMainPhone] = useState("");
@@ -176,7 +178,7 @@ export function PublicInviteBotanico({
     fontFamily: "'Lato', sans-serif",
   };
 
-  const bgTexture = (cfg.botanicoBgTextureUrl ?? "").trim();
+  const bgTexture = resolveMediaUrl((cfg.botanicoBgTextureUrl ?? "").trim());
 
   useEffect(() => {
     document.title = heroNomesLinha || "Casamento";
@@ -219,7 +221,7 @@ export function PublicInviteBotanico({
               }}
             >
               <img
-                src={cfg.navLogoUrl}
+                src={resolveMediaUrl(cfg.navLogoUrl)}
                 alt={cfg.navInitials ?? "monograma"}
                 style={{ height: 50, width: "auto", objectFit: "contain", display: "block" }}
               />
@@ -270,17 +272,27 @@ export function PublicInviteBotanico({
             </a>
           </div>
         </div>
+        <div className="md:hidden border-t border-[#D9EAF3]/80 px-3 py-2 bg-white/95">
+          <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[10px] uppercase tracking-widest font-bold text-[#3d5260]">
+            <a href="#inicio" className="transition hover:text-[#2C5F7A]">Início</a>
+            <a href="#historia" className="transition hover:text-[#2C5F7A]">História</a>
+            <a href="#evento" className="transition hover:text-[#2C5F7A]">O Evento</a>
+            <a href="#padrinhos" className="transition hover:text-[#2C5F7A]">Padrinhos</a>
+            <a href="#presentes" className="transition hover:text-[#2C5F7A]">Presentes</a>
+            <a href="#rsvp" className="transition hover:text-[#2C5F7A]">RSVP</a>
+          </div>
+        </div>
       </nav>
 
       <section
         id="inicio"
-        className="hero-stack hero-compact-tight relative min-h-[100dvh] flex flex-col items-center justify-center text-center px-4 pt-[4.5rem] pb-6 sm:pt-24 sm:pb-8 md:pt-24 md:pb-9"
+        className="hero-stack hero-compact-tight relative min-h-[100dvh] flex flex-col items-center justify-center text-center px-4 pt-[7.5rem] pb-6 sm:pt-24 sm:pb-8 md:pt-24 md:pb-9"
       >
         <div
           className="hero-video-container"
           style={{
             backgroundImage: (() => {
-              const u = (cfg.heroPosterImageUrl || wedding?.coverImageUrl || "").trim();
+              const u = resolveMediaUrl((cfg.heroPosterImageUrl || wedding?.coverImageUrl || "").trim());
               const grad = "linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.45))";
               return u ? `${grad}, url(${u})` : "linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.55))";
             })(),
@@ -289,8 +301,16 @@ export function PublicInviteBotanico({
           }}
         >
           {(cfg.heroVideoUrl ?? "").trim() ? (
-            <video autoPlay muted loop playsInline poster={cfg.heroPosterImageUrl || wedding?.coverImageUrl || undefined}>
-              <source src={cfg.heroVideoUrl} type="video/mp4" />
+            <video
+              autoPlay
+              muted
+              loop
+              playsInline
+              poster={
+                resolveMediaUrl((cfg.heroPosterImageUrl || wedding?.coverImageUrl || "").trim()) || undefined
+              }
+            >
+              <source src={resolveMediaUrl((cfg.heroVideoUrl ?? "").trim())} type="video/mp4" />
             </video>
           ) : null}
         </div>
@@ -563,7 +583,11 @@ export function PublicInviteBotanico({
                   className="avatar-ring w-56 h-56 rounded-full overflow-hidden border-4 shadow-xl mx-auto mb-4"
                   style={{ borderColor: "#C9962A", backgroundColor: "#D9EAF3" }}
                 >
-                  <img src={p.photoUrl} alt={p.name} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition duration-500 transform group-hover:scale-110" />
+                  <img
+                    src={resolveMediaUrl(p.photoUrl)}
+                    alt={p.name}
+                    className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition duration-500 transform group-hover:scale-110"
+                  />
                 </div>
                 <h3 className="font-serif text-2xl font-bold" style={{ color: primary, fontFamily: "'Cormorant Garamond', serif" }}>
                   {p.name}
@@ -756,7 +780,7 @@ export function PublicInviteBotanico({
           <p className="text-xl mb-4 text-gray-700">{cfg.giftsTagline}</p>
           <p className="mb-8 text-gray-500 italic">{cfg.giftsPresentesDisclaimer}</p>
           <a
-            href={(cfg.giftsExternalPageUrl ?? "presentes.html").trim() || "presentes.html"}
+            href={giftsSoonHref}
             target="_blank"
             rel="noreferrer"
             className="inline-flex items-center text-white px-10 py-5 rounded-2xl text-xl font-bold uppercase tracking-widest transition shadow-lg transform hover:-translate-y-1 hover:brightness-110"

@@ -12,6 +12,35 @@ import { authMiddleware, requireWeddingRole } from "../lib/auth";
 
 const router: IRouter = Router();
 
+/** Drizzle encapsula o erro do `pg` em `cause`; o código 23505 = violação de UNIQUE. */
+function pgErrorTextChain(err: unknown): { code?: string; text: string } {
+  const parts: string[] = [];
+  let code: string | undefined;
+  let cur: unknown = err;
+  for (let i = 0; i < 8 && cur; i++) {
+    if (typeof cur === "object" && cur !== null) {
+      const o = cur as Record<string, unknown>;
+      if (typeof o.code === "string") code = o.code;
+      if (typeof o.message === "string") parts.push(o.message);
+      if (typeof o.detail === "string") parts.push(o.detail);
+      cur = o.cause;
+    } else {
+      break;
+    }
+  }
+  if (parts.length === 0 && err instanceof Error) parts.push(err.message);
+  return { code, text: parts.join(" ") };
+}
+
+function isGuestGroupUniqueViolation(err: unknown): boolean {
+  const { code, text } = pgErrorTextChain(err);
+  return (
+    code === "23505" ||
+    text.includes("guest_groups_wedding_id_name_unique") ||
+    text.includes("duplicate key")
+  );
+}
+
 router.get("/weddings/:weddingId/guest-groups", authMiddleware, requireWeddingRole("admin", "planner", "coordinator"), async (req, res): Promise<void> => {
   const params = ListGuestGroupsParams.safeParse(req.params);
   if (!params.success) {
@@ -34,7 +63,7 @@ router.get("/weddings/:weddingId/guest-groups", authMiddleware, requireWeddingRo
         { weddingId: wid, name: "Trabalho" },
         { weddingId: wid, name: "Família" },
       ])
-      .onConflictDoNothing();
+      .onConflictDoNothing({ target: [guestGroupsTable.weddingId, guestGroupsTable.name] });
     rows = await db
       .select()
       .from(guestGroupsTable)
@@ -97,13 +126,8 @@ router.post("/weddings/:weddingId/guest-groups", authMiddleware, requireWeddingR
       createdAt: created.createdAt.toISOString(),
     });
   } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : String(e);
-    if (msg.includes("guest_groups_wedding_id_name_unique") || msg.includes("duplicate key")) {
+    if (isGuestGroupUniqueViolation(e)) {
       res.status(409).json({ error: "Já existe um grupo com esse nome neste casamento." });
-      return;
-    }
-    if (msg.includes('Failed query: insert into "guest_groups"')) {
-      res.status(409).json({ error: "Já existe um grupo com o mesmo nome." });
       return;
     }
     throw e;
@@ -153,8 +177,7 @@ router.patch("/weddings/:weddingId/guest-groups/:id", authMiddleware, requireWed
       createdAt: updated.createdAt.toISOString(),
     });
   } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : String(e);
-    if (msg.includes("guest_groups_wedding_id_name_unique") || msg.includes("duplicate key")) {
+    if (isGuestGroupUniqueViolation(e)) {
       res.status(409).json({ error: "Já existe um grupo com esse nome neste casamento." });
       return;
     }

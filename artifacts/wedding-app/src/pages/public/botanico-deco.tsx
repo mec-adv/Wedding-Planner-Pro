@@ -1,4 +1,5 @@
 import type { ResolvedPublicInvitePageConfig } from "./public-invite-page-config";
+import { resolveMediaUrl } from "@/lib/api-url";
 
 type BotanicoDecoProps = {
   cfg: ResolvedPublicInvitePageConfig;
@@ -27,7 +28,7 @@ export function BotanicoDeco({
   imgClassName,
   loading = "lazy",
 }: BotanicoDecoProps) {
-  const url = (cfg[rasterKey] as string | undefined)?.trim();
+  const url = resolveMediaUrl((cfg[rasterKey] as string | undefined)?.trim());
   if (url) {
     return (
       <img

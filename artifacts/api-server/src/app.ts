@@ -35,26 +35,44 @@ const uploadsMount = appBase ? `${appBase}/api/uploads` : "/api/uploads";
 app.use(uploadsMount, express.static(getUploadRoot()));
 app.use(apiRoot, router);
 
-if (appBase && process.env.NODE_ENV === "production") {
+if (process.env.NODE_ENV === "production") {
   /** Raiz do monorepo = `process.cwd()` (ex.: systemd `WorkingDirectory=/opt/app`). */
   const publicDir = path.join(process.cwd(), "artifacts", "wedding-app", "dist", "public");
   const indexHtml = path.join(publicDir, "index.html");
 
-  app.use(
-    appBase,
-    express.static(publicDir, {
-      index: false,
-    }),
-  );
-  app.use(appBase, (req: Request, res: Response, next: NextFunction) => {
-    if (req.method !== "GET" && req.method !== "HEAD") {
-      next();
-      return;
-    }
-    res.sendFile(indexHtml, (err) => {
-      if (err) next(err);
+  if (appBase) {
+    app.use(
+      appBase,
+      express.static(publicDir, {
+        index: false,
+      }),
+    );
+    app.use(appBase, (req: Request, res: Response, next: NextFunction) => {
+      if (req.method !== "GET" && req.method !== "HEAD") {
+        next();
+        return;
+      }
+      res.sendFile(indexHtml, (err) => {
+        if (err) next(err);
+      });
     });
-  });
+  } else {
+    /** Homologação/produção na raiz (sem `APP_BASE_PATH`): API já está em `/api`. */
+    app.use(express.static(publicDir, { index: false }));
+    app.use((req: Request, res: Response, next: NextFunction) => {
+      if (req.method !== "GET" && req.method !== "HEAD") {
+        next();
+        return;
+      }
+      if (req.path.startsWith("/api")) {
+        next();
+        return;
+      }
+      res.sendFile(indexHtml, (err) => {
+        if (err) next(err);
+      });
+    });
+  }
 }
 
 app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {

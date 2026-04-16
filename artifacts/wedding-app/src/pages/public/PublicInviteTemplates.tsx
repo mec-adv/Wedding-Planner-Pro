@@ -86,6 +86,7 @@ export default function PublicInviteTemplates() {
 
   const [contentTpl, setContentTpl] = useState<PublicInviteTemplate | null>(null);
   const [pageForm, setPageForm] = useState<ResolvedPublicInvitePageConfig>(() => resolvePublicInvitePageConfig({}));
+  const [navLogoUploading, setNavLogoUploading] = useState(false);
   const [heroImageUploading, setHeroImageUploading] = useState(false);
   const [padrinhoImageUploading, setPadrinhoImageUploading] = useState<number | null>(null);
 
@@ -245,6 +246,26 @@ export default function PublicInviteTemplates() {
     }
   };
 
+  const handleNavLogoFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setNavLogoUploading(true);
+    try {
+      const url = await uploadWeddingGiftImage(wid, file);
+      updateField("navLogoUrl", url);
+      toast({ title: "Monograma enviado" });
+    } catch (err) {
+      toast({
+        variant: "destructive",
+        title: "Erro no upload",
+        description: err instanceof Error ? err.message : "Tente novamente",
+      });
+    } finally {
+      setNavLogoUploading(false);
+    }
+  };
+
   const handlePadrinhoPhotoFile = async (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = "";
@@ -265,7 +286,8 @@ export default function PublicInviteTemplates() {
     }
   };
 
-  const pageSaveDisabled = updateMut.isPending || heroImageUploading || padrinhoImageUploading !== null;
+  const pageSaveDisabled =
+    updateMut.isPending || navLogoUploading || heroImageUploading || padrinhoImageUploading !== null;
 
   if (!Number.isFinite(wid) || wid <= 0) {
     return <p className="text-muted-foreground">Casamento inválido.</p>;
@@ -452,6 +474,36 @@ export default function PublicInviteTemplates() {
                     <div>
                       <Label>Iniciais no menu</Label>
                       <Input className="mt-1" value={pageForm.navInitials} onChange={(e) => updateField("navInitials", e.target.value)} placeholder="R & M" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="flex items-center gap-2">
+                        <ImageIcon className="w-4 h-4" /> Monograma no cabeçalho (JPG, PNG ou WebP)
+                      </Label>
+                      <Input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
+                        onChange={handleNavLogoFile}
+                        disabled={navLogoUploading}
+                        className="cursor-pointer"
+                      />
+                      {navLogoUploading && (
+                        <p className="text-xs text-muted-foreground flex items-center gap-2">
+                          <Loader2 className="w-3 h-3 animate-spin" /> Enviando…
+                        </p>
+                      )}
+                      <p className="text-xs text-muted-foreground">Ou informe uma URL externa:</p>
+                      <Input
+                        className="font-mono text-xs"
+                        value={pageForm.navLogoUrl}
+                        onChange={(e) => updateField("navLogoUrl", e.target.value)}
+                        placeholder="https://..."
+                        autoComplete="off"
+                      />
+                      {pageForm.navLogoUrl ? (
+                        <Button type="button" variant="outline" size="sm" onClick={() => updateField("navLogoUrl", "")}>
+                          Remover imagem
+                        </Button>
+                      ) : null}
                     </div>
                     <div>
                       <Label>Linha acima dos nomes (hero)</Label>

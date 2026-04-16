@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Scale, Church, Copy } from "lucide-react";
+import { copyTextToClipboard } from "@/lib/clipboard";
 
 /** Valor para input datetime-local no fuso local */
 function isoToDatetimeLocal(iso: string | null | undefined): string {
@@ -105,7 +106,7 @@ export default function EditWedding() {
               size="sm"
               className="h-8 bg-background/90 text-foreground hover:bg-background"
               onClick={() => {
-                void navigator.clipboard.writeText(full);
+                void copyTextToClipboard(full);
               }}
             >
               <Copy className="w-3.5 h-3.5 mr-1.5" />

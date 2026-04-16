@@ -1,4 +1,4 @@
-import { Router, type IRouter, type Response } from "express";
+import { Router, type IRouter, type NextFunction, type Response } from "express";
 import { db, usersTable, eq } from "@workspace/db";
 import { RegisterBody, LoginBody } from "@workspace/api-zod";
 import { hashPassword, comparePassword, generateToken, authMiddleware } from "../lib/auth";
@@ -96,38 +96,42 @@ router.post("/auth/register", registerLimiter, async (req, res): Promise<void> =
   });
 });
 
-router.post("/auth/login", loginLimiter, async (req, res): Promise<void> => {
-  const parsed = LoginBody.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.message });
-    return;
+router.post("/auth/login", loginLimiter, async (req, res, next): Promise<void> => {
+  try {
+    const parsed = LoginBody.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.message });
+      return;
+    }
+
+    const [user] = await db.select().from(usersTable).where(eq(usersTable.email, parsed.data.email));
+    if (!user) {
+      res.status(401).json({ error: "Email ou senha inválidos" });
+      return;
+    }
+
+    const valid = await comparePassword(parsed.data.password, user.passwordHash);
+    if (!valid) {
+      res.status(401).json({ error: "Email ou senha inválidos" });
+      return;
+    }
+
+    const token = generateToken(user.id, user.role);
+    setAuthCookies(res, token);
+
+    res.json({
+      token,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        createdAt: user.createdAt.toISOString(),
+      },
+    });
+  } catch (err) {
+    next(err);
   }
-
-  const [user] = await db.select().from(usersTable).where(eq(usersTable.email, parsed.data.email));
-  if (!user) {
-    res.status(401).json({ error: "Email ou senha inválidos" });
-    return;
-  }
-
-  const valid = await comparePassword(parsed.data.password, user.passwordHash);
-  if (!valid) {
-    res.status(401).json({ error: "Email ou senha inválidos" });
-    return;
-  }
-
-  const token = generateToken(user.id, user.role);
-  setAuthCookies(res, token);
-
-  res.json({
-    token,
-    user: {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      createdAt: user.createdAt.toISOString(),
-    },
-  });
 });
 
 router.post("/auth/logout", (_req, res): void => {

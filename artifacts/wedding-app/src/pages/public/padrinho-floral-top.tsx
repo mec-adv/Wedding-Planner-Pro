@@ -1,5 +1,7 @@
 /** Decoração acima de cada avatar de padrinho: imagem opcional ou divisor floral SVG (símbolos em `botanico-floral-defs`). */
 
+import { resolveMediaUrl } from "@/lib/api-url";
+
 export function PadrinhoFloralTop({
   variant,
   flourishUrl,
@@ -7,7 +9,7 @@ export function PadrinhoFloralTop({
   variant: number;
   flourishUrl?: string;
 }) {
-  const u = flourishUrl?.trim();
+  const u = resolveMediaUrl(flourishUrl?.trim());
   if (u) {
     return (
       <div className="flex justify-center mb-2 h-11">

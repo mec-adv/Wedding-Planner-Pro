@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Gift, QrCode, FileText, CreditCard, CheckCircle, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { copyTextToClipboard } from "@/lib/clipboard";
 
 type PaymentMethod = "pix" | "boleto" | "credit_card";
 
@@ -438,7 +439,14 @@ export default function Checkout() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => { navigator.clipboard.writeText(result.pixCopyPaste || ""); toast({ title: "Código copiado!" }); }}
+                          onClick={async () => {
+                            try {
+                              await copyTextToClipboard(result.pixCopyPaste || "");
+                              toast({ title: "Código copiado!" });
+                            } catch {
+                              toast({ variant: "destructive", title: "Não foi possível copiar" });
+                            }
+                          }}
                         >
                           Copiar
                         </Button>

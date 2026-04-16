@@ -2,6 +2,17 @@ import path from "path";
 import fs from "fs/promises";
 import fsSync from "fs";
 
+function findWorkspaceRoot(startDir: string): string {
+  let current = path.resolve(startDir);
+  for (;;) {
+    const marker = path.join(current, "pnpm-workspace.yaml");
+    if (fsSync.existsSync(marker)) return current;
+    const parent = path.dirname(current);
+    if (parent === current) return path.resolve(startDir);
+    current = parent;
+  }
+}
+
 export function normalizeAppBasePath(raw: string | undefined): string {
   if (!raw?.trim()) return "";
   const trimmed = raw.trim();
@@ -18,7 +29,8 @@ export function getPublicUploadUrlPrefix(): string {
 export function getUploadRoot(): string {
   const fromEnv = process.env.UPLOAD_ROOT?.trim();
   if (fromEnv) return path.resolve(fromEnv);
-  return path.resolve(process.cwd(), "../../uploads");
+  const workspaceRoot = findWorkspaceRoot(process.cwd());
+  return path.join(workspaceRoot, "uploads");
 }
 
 export function slugifyTitle(title: string, maxLen = 80): string {

@@ -45,6 +45,7 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
+import { resolveMediaUrl } from "@/lib/api-url";
 import { Label } from "@/components/ui/label";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { uploadWeddingGiftImage } from "@/lib/upload-wedding-gift-image";
@@ -416,7 +417,7 @@ export default function Gifts() {
                   <div className="aspect-video bg-secondary relative overflow-hidden">
                     {gift.imageUrl ? (
                       <img
-                        src={gift.imageUrl}
+                        src={resolveMediaUrl(gift.imageUrl)}
                         alt={gift.name}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
@@ -486,7 +487,7 @@ export default function Gifts() {
                       <div className="relative h-36 sm:h-auto sm:w-36 shrink-0 bg-secondary border-b sm:border-b-0 sm:border-r border-border/60">
                         {gift.imageUrl ? (
                           <img
-                            src={gift.imageUrl}
+                            src={resolveMediaUrl(gift.imageUrl)}
                             alt={gift.name}
                             className="h-full w-full object-cover"
                           />

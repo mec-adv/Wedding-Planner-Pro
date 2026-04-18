@@ -178,6 +178,8 @@ export default function Gifts() {
     const humorTag = humorRaw || null;
     const finalImageUrl = imageUrlValue.trim() || null;
 
+    const isHoneymoonFund = (fd.get("isHoneymoonFund") as string) === "on";
+
     const payload = {
       name,
       category,
@@ -185,6 +187,7 @@ export default function Gifts() {
       humorTag,
       imageUrl: finalImageUrl,
       isActive: true,
+      isHoneymoonFund,
     };
 
     try {
@@ -310,6 +313,16 @@ export default function Gifts() {
                   placeholder="Ex: Uma lembrança para o casal"
                   defaultValue={editingGift?.humorTag ?? ""}
                 />
+              </div>
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  id="isHoneymoonFund"
+                  name="isHoneymoonFund"
+                  className="w-4 h-4"
+                  defaultChecked={editingGift ? Boolean((editingGift as Record<string, unknown>).isHoneymoonFund) : false}
+                />
+                <label htmlFor="isHoneymoonFund" className="text-sm font-medium">Cota de Lua de Mel (valor livre)</label>
               </div>
               <div className="space-y-2">
                 <Label className="flex items-center gap-2">

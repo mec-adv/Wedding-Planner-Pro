@@ -13,6 +13,9 @@ import EditWedding from "@/pages/weddings/EditWedding";
 import Dashboard from "@/pages/dashboard/Dashboard";
 import Guests from "@/pages/guests/Guests";
 import Gifts from "@/pages/gifts/Gifts";
+import Orders from "@/pages/gifts/Orders";
+import Mural from "@/pages/gifts/Mural";
+import GiftCategories from "@/pages/gifts/GiftCategories";
 import Extract from "@/pages/gifts/Extract";
 import Tasks from "@/pages/tasks/Tasks";
 import Budget from "@/pages/budget/Budget";
@@ -24,6 +27,7 @@ import Settings from "@/pages/settings/Settings";
 import Seating from "@/pages/seating/Seating";
 import Checkout from "@/pages/checkout/Checkout";
 import PublicInvite from "@/pages/public/PublicInvite";
+import ShopOrderHistory from "@/pages/public/shop/ShopOrderHistory";
 import PublicInviteTemplates from "@/pages/public/PublicInviteTemplates";
 import NotFound from "@/pages/not-found";
 
@@ -58,6 +62,7 @@ function Router() {
     <Switch>
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
+      <Route path="/p/convite/:token/pedidos" component={ShopOrderHistory} />
       <Route path="/p/convite/:token" component={PublicInvite} />
 
       <Route path="/" component={() => <ProtectedRoute component={SelectWedding} />} />
@@ -65,6 +70,9 @@ function Router() {
       <Route path="/weddings/:weddingId/edit" component={() => <ProtectedRoute component={EditWedding} />} />
       <Route path="/weddings/:weddingId/guests" component={() => <ProtectedRoute component={Guests} />} />
       <Route path="/weddings/:weddingId/gifts" component={() => <ProtectedRoute component={Gifts} />} />
+      <Route path="/weddings/:weddingId/orders" component={() => <ProtectedRoute component={Orders} />} />
+      <Route path="/weddings/:weddingId/mural" component={() => <ProtectedRoute component={Mural} />} />
+      <Route path="/weddings/:weddingId/gift-categories" component={() => <ProtectedRoute component={GiftCategories} />} />
       <Route path="/weddings/:weddingId/extract" component={() => <ProtectedRoute component={Extract} />} />
       <Route path="/weddings/:weddingId/tasks" component={() => <ProtectedRoute component={Tasks} />} />
       <Route path="/weddings/:weddingId/budget" component={() => <ProtectedRoute component={Budget} />} />

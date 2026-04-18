@@ -1,12 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import type { CSSProperties } from "react";
-import { useParams } from "wouter";
+import { useParams, Link } from "wouter";
 import {
   useGetPublicInvite,
-  useListPublicInviteGifts,
   usePatchPublicInviteRsvp,
   getGetPublicInviteQueryKey,
-  getListPublicInviteGiftsQueryKey,
 } from "@workspace/api-client-react";
 import type { GuestCompanion, PublicInviteWedding } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
@@ -17,9 +15,10 @@ import { resolvePublicInvitePageConfig } from "./public-invite-page-config";
 import { PublicInviteBotanico } from "./PublicInviteBotanico";
 import { InviteHeroSection } from "./InviteHeroSection";
 import { InviteRsvpSection } from "./InviteRsvpSection";
-import { InviteGiftsSection } from "./InviteGiftsSection";
-import { InviteCheckoutDialog } from "./InviteCheckoutDialog";
-import { usePublicInviteCheckout } from "./usePublicInviteCheckout";
+import { ShopSection } from "./shop/ShopSection";
+import { CartDrawer } from "./shop/CartDrawer";
+import { ShopCheckoutDialog } from "./shop/ShopCheckoutDialog";
+import { useCart } from "./shop/use-cart";
 
 const oliva = "#708238";
 const creme = "#FDFCF8";
@@ -56,9 +55,6 @@ export default function PublicInvite() {
   const { data: invite, isLoading, isError, error } = useGetPublicInvite(t, {
     query: { enabled: !!t && t.length >= 32, queryKey: getGetPublicInviteQueryKey(t) },
   });
-  const { data: gifts, isLoading: giftsLoading } = useListPublicInviteGifts(t, {
-    query: { enabled: !!t && t.length >= 32, queryKey: getListPublicInviteGiftsQueryKey(t) },
-  });
 
   const patchRsvp = usePatchPublicInviteRsvp();
 
@@ -69,7 +65,8 @@ export default function PublicInvite() {
   const [rsvpSaved, setRsvpSaved] = useState(false);
   const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0, passed: false });
 
-  const checkout = usePublicInviteCheckout(t);
+  const cart = useCart();
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
 
   useEffect(() => { document.documentElement.classList.add("scroll-smooth"); return () => { document.documentElement.classList.remove("scroll-smooth"); }; }, []);
 
@@ -158,12 +155,19 @@ export default function PublicInvite() {
   const inputFieldClass = cn("w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-1 bg-white text-[#333] placeholder:text-gray-400", "focus:ring-[color:var(--invite-primary)] focus:border-[color:var(--invite-primary)]");
   const rootStyle: CSSProperties = { backgroundImage: `radial-gradient(${cfg.patternDotColor} 0.5px, transparent 0.5px)`, backgroundSize: "20px 20px", backgroundColor: bg, color: cfg.textColor, fontFamily: "'Lato', sans-serif", ["--invite-primary" as string]: primary };
 
+  const weddingId = w?.id ?? 0;
+
   // Layout alternativo: Botânico
   if (cfg.layout === "botanico") {
     return (
       <>
         <PublicInviteBotanico cfg={cfg} wedding={w} bride={bride} groom={groom} invite={invite} heroDateLine={heroDateLine} targetMs={targetMs} countdown={countdown} companionRows={companionRows} setCompanionRows={setCompanionRows} rsvpSaved={rsvpSaved} submitBotanicoRsvp={submitBotanicoRsvp} patchRsvpPending={patchRsvp.isPending} />
-        <InviteCheckoutDialog open={checkout.checkoutOpen} onClose={checkout.resetCheckout} checkout={checkout.checkout} onChange={(patch) => checkout.setCheckout((prev) => ({ ...prev, ...patch }))} payResult={checkout.payResult} primaryColor={primary} onContinue={() => void checkout.handlePayment()} onCardPayment={() => void checkout.handleCardPayment()} />
+        {weddingId > 0 && (
+          <>
+            <ShopSection cfg={cfg} primaryColor={primary} weddingId={weddingId} guestToken={t} guestName={invite.guest?.name ?? ""} onAddItem={cart.addItem}  />
+            <ShopCheckoutDialog open={checkoutOpen} onClose={() => setCheckoutOpen(false)} items={cart.items} totalAmount={cart.totalAmount} guestToken={t} guestName={invite.guest?.name ?? ""} primaryColor={primary} onSuccess={() => { cart.reset(); setCheckoutOpen(false); }} />
+          </>
+        )}
       </>
     );
   }
@@ -172,6 +176,7 @@ export default function PublicInvite() {
   return (
     <>
       <div className="min-h-screen antialiased text-[15px]" style={rootStyle}>
+
         <InviteHeroSection cfg={cfg} bride={bride} groom={groom} heroDateLine={heroDateLine} targetMs={targetMs} countdown={countdown} primaryColor={primary} backgroundColor={bg} />
 
         {/* Seção: O Grande Dia */}
@@ -193,7 +198,16 @@ export default function PublicInvite() {
 
         <InviteRsvpSection cfg={cfg} primaryColor={primary} backgroundColor={bg} textColor={cfg.textColor} inputFieldClass={inputFieldClass} guestName={invite.guest?.name} lgpdNotice={invite.lgpdNotice} rsvpStatus={rsvpStatus} onRsvpStatusChange={setRsvpStatus} dietary={dietary} onDietaryChange={setDietary} companionRows={companionRows} onCompanionRowsChange={setCompanionRows} lgpdOk={lgpdOk} onLgpdOkChange={setLgpdOk} rsvpSaved={rsvpSaved} isPending={patchRsvp.isPending} onSave={() => void saveRsvp()} />
 
-        <InviteGiftsSection cfg={cfg} primaryColor={primary} gifts={gifts} giftsLoading={giftsLoading} onSelectGift={(gift) => checkout.selectGift(gift, invite.guest?.name ?? "")} />
+        {weddingId > 0 && (
+          <ShopSection cfg={cfg} primaryColor={primary} weddingId={weddingId} guestToken={t} guestName={invite.guest?.name ?? ""} onAddItem={cart.addItem}  />
+        )}
+
+        {/* Link para histórico de pedidos */}
+        <div className="text-center py-4 border-t border-gray-100">
+          <Link href={`/p/convite/${t}/pedidos`}>
+            <span className="text-sm underline cursor-pointer" style={{ color: primary }}>Ver meus pedidos</span>
+          </Link>
+        </div>
 
         <footer className="text-white text-center py-8" style={{ backgroundColor: grafite }}>
           <p className="text-2xl mb-2" style={{ fontFamily: "'Cormorant Garamond', serif" }}>{bride} & {groom}</p>
@@ -201,7 +215,12 @@ export default function PublicInvite() {
         </footer>
       </div>
 
-      <InviteCheckoutDialog open={checkout.checkoutOpen} onClose={checkout.resetCheckout} checkout={checkout.checkout} onChange={(patch) => checkout.setCheckout((prev) => ({ ...prev, ...patch }))} payResult={checkout.payResult} primaryColor={primary} onContinue={() => void checkout.handlePayment()} onCardPayment={() => void checkout.handleCardPayment()} />
+      {/* Cart drawer (always rendered, visibility via Sheet) */}
+      <div className="fixed top-4 right-4 z-50">
+        <CartDrawer items={cart.items} totalAmount={cart.totalAmount} totalItems={cart.totalItems} primaryColor={primary} onUpdateQuantity={cart.updateQuantity} onRemoveItem={cart.removeItem} onCheckout={() => setCheckoutOpen(true)} />
+      </div>
+
+      <ShopCheckoutDialog open={checkoutOpen} onClose={() => setCheckoutOpen(false)} items={cart.items} totalAmount={cart.totalAmount} guestToken={t} guestName={invite.guest?.name ?? ""} primaryColor={primary} onSuccess={() => { cart.reset(); setCheckoutOpen(false); }} />
     </>
   );
 }

@@ -15,3 +15,5 @@ export * from "./budget";
 export * from "./seating";
 export * from "./messages";
 export * from "./settings";
+export * from "./gift_categories";
+export * from "./orders";

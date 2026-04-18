@@ -7,6 +7,8 @@ if (!process.env.DATABASE_URL) {
 export default defineConfig({
   schema: [
     "./src/schema/budget.ts",
+    "./src/schema/gift_categories.ts",
+    "./src/schema/orders.ts",
     "./src/schema/coordinators.ts",
     "./src/schema/gifts.ts",
     "./src/schema/guest_groups.ts",

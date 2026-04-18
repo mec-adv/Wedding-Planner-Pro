@@ -5,7 +5,18 @@
       "Bash(curl -s http://localhost:8080/api/weddings)",
       "Bash(curl -s http://localhost:8080/api/public/invite/f8bf6be2773566ae9602942e3a897df7d57f82b24beafbd695a87436f043398a)",
       "Bash(npx --yes pnpm@9 --filter @workspace/api-server run dev)",
-      "Bash(curl -s http://localhost:8080/api/public/invite/test)"
+      "Bash(curl -s http://localhost:8080/api/public/invite/test)",
+      "Bash(DATABASE_URL=\"postgresql://postgres:P027gre2ql%4025@10.1.1.92:5432/wedding_dev\" npx drizzle-kit push --config ./drizzle.config.ts)",
+      "Bash(PGPASSWORD=\"P027gre2ql@25\" psql -h 10.1.1.92 -U postgres -d wedding_dev -c \"\\\\dt orders order_items mural_messages gift_categories\")",
+      "Bash(DATABASE_URL=\"postgresql://postgres:P027gre2ql%4025@10.1.1.92:5432/wedding_dev\" node --input-type=module)",
+      "Bash(pnpm add *)",
+      "Bash(npx tsc *)",
+      "Bash(DATABASE_URL=\"postgresql://postgres:P027gre2ql%4025@10.1.1.92:5432/wedding_dev\" NODE_ENV=development node --import tsx/esm src/index.ts)",
+      "Bash(curl -s http://localhost:8080/health)",
+      "Bash(kill %1)",
+      "Bash(DATABASE_URL=\"postgresql://postgres:P027gre2ql%4025@10.1.1.92:5432/wedding_dev\" NODE_ENV=development npx tsx ./src/index.ts)",
+      "Bash(curl -s \"http://localhost:8080/public/weddings/1/gifts\")",
+      "Bash(curl -s \"http://localhost:8080/api/public/weddings/1/gifts\")"
     ]
   }
 }

@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, varchar, integer, boolean, numeric } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, varchar, integer, boolean, numeric, smallint } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { weddingsTable } from "./weddings";
@@ -14,6 +14,7 @@ export const giftsTable = pgTable("gifts", {
   imageUrl: text("image_url"),
   humorTag: text("humor_tag"),
   isActive: boolean("is_active").notNull().default(true),
+  isHoneymoonFund: boolean("is_honeymoon_fund").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

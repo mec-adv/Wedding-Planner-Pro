@@ -20,17 +20,21 @@ import webhooksRouter from "./webhooks";
 import invitationsRouter from "./invitations";
 import remindersRouter from "./reminders";
 import publicInviteTemplatesRouter from "./public-invite-templates";
+import shopRouter from "./shop";
+import shopAdminRouter from "./shop-admin";
 
 const router: IRouter = Router();
 
 router.use(healthRouter);
 router.use(authRouter);
 router.use(publicInviteRouter);
+router.use(shopRouter);
 router.use(weddingsRouter);
 router.use("/weddings/:weddingId", authMiddleware, verifyWeddingAccess);
 router.use(guestGroupsRouter);
 router.use(guestsRouter);
 router.use(giftsRouter);
+router.use(shopAdminRouter);
 router.use(publicInviteTemplatesRouter);
 router.use(tasksRouter);
 router.use(vendorsRouter);

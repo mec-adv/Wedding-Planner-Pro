@@ -24,6 +24,7 @@ import Settings from "@/pages/settings/Settings";
 import Seating from "@/pages/seating/Seating";
 import Checkout from "@/pages/checkout/Checkout";
 import PublicInvite from "@/pages/public/PublicInvite";
+import ShopOrderHistory from "@/pages/public/shop/ShopOrderHistory";
 import PublicInviteTemplates from "@/pages/public/PublicInviteTemplates";
 import NotFound from "@/pages/not-found";
 
@@ -58,6 +59,7 @@ function Router() {
     <Switch>
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
+      <Route path="/p/convite/:token/pedidos" component={ShopOrderHistory} />
       <Route path="/p/convite/:token" component={PublicInvite} />
 
       <Route path="/" component={() => <ProtectedRoute component={SelectWedding} />} />

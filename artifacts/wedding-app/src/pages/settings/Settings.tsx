@@ -12,12 +12,13 @@ import {
   getListGuestGroupsQueryKey,
   ApiError,
 } from "@workspace/api-client-react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { MessageCircle, CreditCard, Loader2, Users, Pencil, Trash2, Check, X } from "lucide-react";
+import { MessageCircle, CreditCard, Loader2, Users, Pencil, Trash2, Check, X, ShoppingBag } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { fetchAdminShopSettings, updateAdminShopSettings } from "@/lib/shop-admin-api";
 
 export default function Settings() {
   const { weddingId } = useParams();
@@ -33,6 +34,45 @@ export default function Settings() {
   const createGuestGroup = useCreateGuestGroup();
   const updateGuestGroup = useUpdateGuestGroup();
   const deleteGuestGroup = useDeleteGuestGroup();
+
+  const { data: shopSettings } = useQuery({
+    queryKey: ["admin-shop-settings", wid],
+    queryFn: () => fetchAdminShopSettings(wid),
+    enabled: !!wid,
+  });
+
+  const updateShopMutation = useMutation({
+    mutationFn: (data: Parameters<typeof updateAdminShopSettings>[1]) => updateAdminShopSettings(wid, data),
+    onSuccess: () => {
+      toast({ title: "Configurações da loja salvas" });
+      void queryClient.invalidateQueries({ queryKey: ["admin-shop-settings", wid] });
+    },
+    onError: () => toast({ variant: "destructive", title: "Erro ao salvar" }),
+  });
+
+  const [shopForm, setShopForm] = useState({
+    showProgressBar: false,
+    progressGoal: "",
+    thankYouMessage: "",
+  });
+
+  useEffect(() => {
+    if (shopSettings) {
+      setShopForm({
+        showProgressBar: shopSettings.showProgressBar ?? false,
+        progressGoal: shopSettings.progressGoal != null ? String(shopSettings.progressGoal) : "",
+        thankYouMessage: shopSettings.thankYouMessage ?? "",
+      });
+    }
+  }, [shopSettings]);
+
+  const handleSaveShop = () => {
+    updateShopMutation.mutate({
+      showProgressBar: shopForm.showProgressBar,
+      progressGoal: shopForm.progressGoal ? parseFloat(shopForm.progressGoal) : null,
+      thankYouMessage: shopForm.thankYouMessage.trim() || null,
+    });
+  };
 
   const [form, setForm] = useState({
     evolutionApiUrl: "",
@@ -372,6 +412,58 @@ export default function Settings() {
                 )}
               </tbody>
             </table>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Shop settings */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <ShoppingBag className="w-5 h-5" />
+            Loja de Presentes
+          </CardTitle>
+          <CardDescription>Configure a barra de progresso e a mensagem de agradecimento</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center gap-3">
+            <input
+              type="checkbox"
+              id="showProgressBar"
+              checked={shopForm.showProgressBar}
+              onChange={(e) => setShopForm((prev) => ({ ...prev, showProgressBar: e.target.checked }))}
+              className="w-4 h-4"
+            />
+            <label htmlFor="showProgressBar" className="text-sm font-medium">Exibir barra de progresso na loja</label>
+          </div>
+          {shopForm.showProgressBar && (
+            <div>
+              <label className="text-sm font-medium block mb-1">Meta (R$)</label>
+              <Input
+                type="number"
+                min={0}
+                step="100"
+                value={shopForm.progressGoal}
+                onChange={(e) => setShopForm((prev) => ({ ...prev, progressGoal: e.target.value }))}
+                placeholder="Ex.: 5000"
+              />
+            </div>
+          )}
+          <div>
+            <label className="text-sm font-medium block mb-1">Mensagem de agradecimento dos noivos</label>
+            <textarea
+              className="w-full border border-input rounded-md px-3 py-2 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-ring"
+              rows={3}
+              value={shopForm.thankYouMessage}
+              onChange={(e) => setShopForm((prev) => ({ ...prev, thankYouMessage: e.target.value }))}
+              placeholder="Uma mensagem especial para aparecer na notificação de confirmação de compra…"
+              maxLength={500}
+            />
+          </div>
+          <div className="flex justify-end">
+            <Button onClick={handleSaveShop} disabled={updateShopMutation.isPending} size="sm">
+              {updateShopMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Salvando…</> : "Salvar configurações da loja"}
+            </Button>
           </div>
         </CardContent>
       </Card>

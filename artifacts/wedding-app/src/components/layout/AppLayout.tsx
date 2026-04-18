@@ -75,6 +75,8 @@ function getNavItems(wId: number): NavItem[] {
     { href: `/weddings/${wId}/edit`, label: "Dados do casamento", icon: PencilLine, allowedRoles: ["admin", "planner"] },
     { href: `/weddings/${wId}/guests`, label: "Convidados", icon: Users, allowedRoles: ["admin", "planner", "coordinator"] },
     { href: `/weddings/${wId}/gifts`, label: "Presentes", icon: Gift, allowedRoles: ["admin", "planner", "coordinator", "couple"] },
+    { href: `/weddings/${wId}/orders`, label: "Pedidos da Loja", icon: ShoppingCart, allowedRoles: ["admin", "planner", "coordinator"] },
+    { href: `/weddings/${wId}/mural`, label: "Mural de Mensagens", icon: MessageSquare, allowedRoles: ["admin", "planner", "coordinator"] },
     { href: `/weddings/${wId}/public-invite-templates`, label: "Página do Casamento", icon: LayoutTemplate, allowedRoles: ["admin", "planner", "coordinator", "couple"] },
     { href: `/weddings/${wId}/extract`, label: "Extrato", icon: Receipt, allowedRoles: ["admin", "planner"] },
     { href: `/weddings/${wId}/tasks`, label: "Tarefas", icon: CheckSquare, allowedRoles: ["admin", "planner", "coordinator"] },

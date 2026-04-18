@@ -13,6 +13,8 @@ import EditWedding from "@/pages/weddings/EditWedding";
 import Dashboard from "@/pages/dashboard/Dashboard";
 import Guests from "@/pages/guests/Guests";
 import Gifts from "@/pages/gifts/Gifts";
+import Orders from "@/pages/gifts/Orders";
+import Mural from "@/pages/gifts/Mural";
 import Extract from "@/pages/gifts/Extract";
 import Tasks from "@/pages/tasks/Tasks";
 import Budget from "@/pages/budget/Budget";
@@ -67,6 +69,8 @@ function Router() {
       <Route path="/weddings/:weddingId/edit" component={() => <ProtectedRoute component={EditWedding} />} />
       <Route path="/weddings/:weddingId/guests" component={() => <ProtectedRoute component={Guests} />} />
       <Route path="/weddings/:weddingId/gifts" component={() => <ProtectedRoute component={Gifts} />} />
+      <Route path="/weddings/:weddingId/orders" component={() => <ProtectedRoute component={Orders} />} />
+      <Route path="/weddings/:weddingId/mural" component={() => <ProtectedRoute component={Mural} />} />
       <Route path="/weddings/:weddingId/extract" component={() => <ProtectedRoute component={Extract} />} />
       <Route path="/weddings/:weddingId/tasks" component={() => <ProtectedRoute component={Tasks} />} />
       <Route path="/weddings/:weddingId/budget" component={() => <ProtectedRoute component={Budget} />} />

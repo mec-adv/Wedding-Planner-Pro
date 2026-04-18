@@ -7,6 +7,8 @@ import {
   useDeleteGift,
   type Gift,
 } from "@workspace/api-client-react";
+import { useMutation } from "@tanstack/react-query";
+import { toggleGiftActive } from "@/lib/shop-admin-api";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,6 +36,8 @@ import {
   List,
   ChevronLeft,
   ChevronRight,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import {
   Select,
@@ -109,6 +113,15 @@ export default function Gifts() {
   const createMutation = useCreateGift();
   const updateMutation = useUpdateGift();
   const deleteMutation = useDeleteGift();
+
+  const toggleActiveMutation = useMutation({
+    mutationFn: ({ giftId, isActive }: { giftId: number; isActive: boolean }) =>
+      toggleGiftActive(wid, giftId, isActive),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/weddings/${wid}/gifts`] });
+    },
+    onError: () => toast({ variant: "destructive", title: "Erro ao alterar status do presente" }),
+  });
 
   const canEditGift =
     user?.role === "admin" || user?.role === "planner" || user?.role === "coordinator";
@@ -412,7 +425,7 @@ export default function Gifts() {
               {pagedGifts.map((gift) => (
                 <Card
                   key={gift.id}
-                  className="overflow-hidden hover:-translate-y-1 hover:shadow-xl transition-all duration-300 group"
+                  className={`overflow-hidden hover:-translate-y-1 hover:shadow-xl transition-all duration-300 group ${!gift.isActive ? "opacity-50" : ""}`}
                 >
                   <div className="aspect-video bg-secondary relative overflow-hidden">
                     {gift.imageUrl ? (
@@ -428,6 +441,18 @@ export default function Gifts() {
                     )}
                     {(canEditGift || canDeleteGift) ? (
                       <div className="absolute top-3 right-3 flex gap-1">
+                        {canEditGift ? (
+                          <Button
+                            type="button"
+                            size="icon"
+                            variant="secondary"
+                            className="h-8 w-8 rounded-full bg-background/90 shadow-sm"
+                            title={gift.isActive ? "Desativar" : "Ativar"}
+                            onClick={() => toggleActiveMutation.mutate({ giftId: gift.id, isActive: !gift.isActive })}
+                          >
+                            {gift.isActive ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4 text-muted-foreground" />}
+                          </Button>
+                        ) : null}
                         {canEditGift ? (
                           <Button
                             type="button"

@@ -54,8 +54,30 @@ export function getWeddingEventAbsolutePath(weddingId: number, createdById: numb
   return path.join(getUploadRoot(), getWeddingEventRelativePath(weddingId, createdById, title));
 }
 
+/** Subpastas por tipo de mídia (dentro de `users/.../slug-w{id}/`). */
+export const WEDDING_MEDIA_SUBDIR = {
+  /** Fotos de presentes no catálogo */
+  gift: "gift",
+  /** Fotos dos padrinhos no convite */
+  padrinhos: "padrinhos",
+  /** Hero (poster), logo/monograma no nav — artes principais */
+  branding: "branding",
+} as const;
+
+export type WeddingMediaSubdir = (typeof WEDDING_MEDIA_SUBDIR)[keyof typeof WEDDING_MEDIA_SUBDIR];
+
+export function getWeddingMediaDirAbsolute(
+  weddingId: number,
+  createdById: number,
+  title: string,
+  subdir: WeddingMediaSubdir,
+): string {
+  return path.join(getWeddingEventAbsolutePath(weddingId, createdById, title), subdir);
+}
+
+/** @deprecated nome antigo; use `getWeddingMediaDirAbsolute(..., WEDDING_MEDIA_SUBDIR.gift)`. */
 export function getWeddingGiftDirAbsolute(weddingId: number, createdById: number, title: string): string {
-  return path.join(getWeddingEventAbsolutePath(weddingId, createdById, title), "gifts");
+  return getWeddingMediaDirAbsolute(weddingId, createdById, title, WEDDING_MEDIA_SUBDIR.gift);
 }
 
 export function getPublicUrlForRelativeKey(relativePath: string): string {

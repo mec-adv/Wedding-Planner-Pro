@@ -25,6 +25,7 @@ export default defineConfig({
     "./src/schema/users.ts",
     "./src/schema/vendors.ts",
     "./src/schema/weddings.ts",
+    "./src/schema/whatsapp_connections.ts",
   ],
   dialect: "postgresql",
   dbCredentials: {

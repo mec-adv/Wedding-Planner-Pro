@@ -89,15 +89,62 @@ export function fetchAdminOrders(weddingId: number, params?: { status?: string; 
   if (params?.method) q.set("paymentMethod", params.method);
   if (params?.page) q.set("page", String(params.page));
   const qs = q.toString() ? `?${q.toString()}` : "";
-  return adminFetch<{ orders: AdminOrder[]; total: number; page: number; totalPages: number }>(`/weddings/${weddingId}/orders${qs}`);
+  return adminFetch<{ orders: AdminOrder[]; total: number; page: number; totalPages?: number; pages?: number }>(`/weddings/${weddingId}/orders${qs}`)
+    .then((payload) => ({
+      orders: (payload.orders ?? []).map((order) => ({
+        ...order,
+        items: Array.isArray(order.items) ? order.items : [],
+      })),
+      total: payload.total,
+      page: payload.page,
+      totalPages: payload.totalPages ?? payload.pages ?? 1,
+    }));
 }
 
 export function fetchOrderSummary(weddingId: number) {
-  return adminFetch<OrderSummary>(`/weddings/${weddingId}/orders/summary`);
+  return adminFetch<{
+    totalPaid: number;
+    totalPending: number;
+    totalRefunded?: number;
+    countPaid: number;
+    countPending?: number;
+    averageTicket?: number;
+    avgTicket?: number;
+  }>(`/weddings/${weddingId}/orders/summary`)
+    .then((payload) => ({
+      totalPaid: payload.totalPaid ?? 0,
+      totalPending: payload.totalPending ?? 0,
+      totalRefunded: payload.totalRefunded ?? 0,
+      countPaid: payload.countPaid ?? 0,
+      countPending: payload.countPending ?? 0,
+      averageTicket: payload.averageTicket ?? payload.avgTicket ?? 0,
+    }));
 }
 
+export interface AdminOrderDetailGuest {
+  name: string;
+  email: string | null;
+  phone: string | null;
+}
+
+/** Resposta de GET /weddings/:id/orders/:orderId — itens vêm em `items`, não embutidos em `order`. */
 export function fetchAdminOrderDetail(weddingId: number, orderId: number) {
-  return adminFetch<{ order: AdminOrder }>(`/weddings/${weddingId}/orders/${orderId}`);
+  return adminFetch<{ order: AdminOrder; items: AdminOrderItem[]; guest: AdminOrderDetailGuest | null }>(
+    `/weddings/${weddingId}/orders/${orderId}`,
+  ).then((payload) => {
+    const items = (payload.items ?? []).map((row) => ({
+      id: row.id,
+      giftNameSnapshot: row.giftNameSnapshot,
+      quantity: Number(row.quantity),
+      unitPriceSnapshot: parseFloat(String(row.unitPriceSnapshot)),
+      subtotal: parseFloat(String(row.subtotal)),
+    }));
+    return {
+      order: payload.order,
+      items,
+      guest: payload.guest ?? null,
+    };
+  });
 }
 
 export function cancelOrder(weddingId: number, orderId: number) {

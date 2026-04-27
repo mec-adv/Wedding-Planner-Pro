@@ -16,7 +16,8 @@
       "Bash(kill %1)",
       "Bash(DATABASE_URL=\"postgresql://postgres:P027gre2ql%4025@10.1.1.92:5432/wedding_dev\" NODE_ENV=development npx tsx ./src/index.ts)",
       "Bash(curl -s \"http://localhost:8080/public/weddings/1/gifts\")",
-      "Bash(curl -s \"http://localhost:8080/api/public/weddings/1/gifts\")"
+      "Bash(curl -s \"http://localhost:8080/api/public/weddings/1/gifts\")",
+      "Bash(pnpm db:push)"
     ]
   }
 }

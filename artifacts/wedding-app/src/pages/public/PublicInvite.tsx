@@ -11,14 +11,12 @@ import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { formatPhoneBrReadOnly, stripPhoneDigits } from "@/lib/phone-br";
-import { resolvePublicInvitePageConfig } from "./public-invite-page-config";
+import { resolvePublicInvitePageConfig, resolvePublicPresentesHref } from "./public-invite-page-config";
 import { PublicInviteBotanico } from "./PublicInviteBotanico";
 import { InviteHeroSection } from "./InviteHeroSection";
 import { InviteRsvpSection } from "./InviteRsvpSection";
-import { ShopSection } from "./shop/ShopSection";
-import { CartDrawer } from "./shop/CartDrawer";
-import { ShopCheckoutDialog } from "./shop/ShopCheckoutDialog";
-import { useCart } from "./shop/use-cart";
+import { InviteMuralSection } from "./InviteMuralSection";
+import { InvitePhotoCarouselSection } from "./InvitePhotoCarouselSection";
 
 const oliva = "#708238";
 const creme = "#FDFCF8";
@@ -64,9 +62,6 @@ export default function PublicInvite() {
   const [lgpdOk, setLgpdOk] = useState(false);
   const [rsvpSaved, setRsvpSaved] = useState(false);
   const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0, passed: false });
-
-  const cart = useCart();
-  const [checkoutOpen, setCheckoutOpen] = useState(false);
 
   useEffect(() => { document.documentElement.classList.add("scroll-smooth"); return () => { document.documentElement.classList.remove("scroll-smooth"); }; }, []);
 
@@ -156,18 +151,13 @@ export default function PublicInvite() {
   const rootStyle: CSSProperties = { backgroundImage: `radial-gradient(${cfg.patternDotColor} 0.5px, transparent 0.5px)`, backgroundSize: "20px 20px", backgroundColor: bg, color: cfg.textColor, fontFamily: "'Lato', sans-serif", ["--invite-primary" as string]: primary };
 
   const weddingId = w?.id ?? 0;
+  const presentesTarget = resolvePublicPresentesHref(cfg, t);
 
   // Layout alternativo: Botânico
   if (cfg.layout === "botanico") {
     return (
       <>
-        <PublicInviteBotanico cfg={cfg} wedding={w} bride={bride} groom={groom} invite={invite} heroDateLine={heroDateLine} targetMs={targetMs} countdown={countdown} companionRows={companionRows} setCompanionRows={setCompanionRows} rsvpSaved={rsvpSaved} submitBotanicoRsvp={submitBotanicoRsvp} patchRsvpPending={patchRsvp.isPending} />
-        {weddingId > 0 && (
-          <>
-            <ShopSection cfg={cfg} primaryColor={primary} weddingId={weddingId} guestToken={t} guestName={invite.guest?.name ?? ""} onAddItem={cart.addItem}  />
-            <ShopCheckoutDialog open={checkoutOpen} onClose={() => setCheckoutOpen(false)} items={cart.items} totalAmount={cart.totalAmount} guestToken={t} guestName={invite.guest?.name ?? ""} primaryColor={primary} onSuccess={() => { cart.reset(); setCheckoutOpen(false); }} />
-          </>
-        )}
+        <PublicInviteBotanico cfg={cfg} wedding={w} bride={bride} groom={groom} invite={invite} inviteToken={t} heroDateLine={heroDateLine} targetMs={targetMs} countdown={countdown} companionRows={companionRows} setCompanionRows={setCompanionRows} rsvpSaved={rsvpSaved} submitBotanicoRsvp={submitBotanicoRsvp} patchRsvpPending={patchRsvp.isPending} />
       </>
     );
   }
@@ -178,6 +168,12 @@ export default function PublicInvite() {
       <div className="min-h-screen antialiased text-[15px]" style={rootStyle}>
 
         <InviteHeroSection cfg={cfg} bride={bride} groom={groom} heroDateLine={heroDateLine} targetMs={targetMs} countdown={countdown} primaryColor={primary} backgroundColor={bg} />
+
+        <InvitePhotoCarouselSection
+          imageUrls={cfg.weddingCarouselImageUrls}
+          primaryColor={primary}
+          layout="classic"
+        />
 
         {/* Seção: O Grande Dia */}
         <section className="py-20 px-6 max-w-4xl mx-auto text-center border-t border-gray-200">
@@ -199,11 +195,58 @@ export default function PublicInvite() {
         <InviteRsvpSection cfg={cfg} primaryColor={primary} backgroundColor={bg} textColor={cfg.textColor} inputFieldClass={inputFieldClass} guestName={invite.guest?.name} lgpdNotice={invite.lgpdNotice} rsvpStatus={rsvpStatus} onRsvpStatusChange={setRsvpStatus} dietary={dietary} onDietaryChange={setDietary} companionRows={companionRows} onCompanionRowsChange={setCompanionRows} lgpdOk={lgpdOk} onLgpdOkChange={setLgpdOk} rsvpSaved={rsvpSaved} isPending={patchRsvp.isPending} onSave={() => void saveRsvp()} />
 
         {weddingId > 0 && (
-          <ShopSection cfg={cfg} primaryColor={primary} weddingId={weddingId} guestToken={t} guestName={invite.guest?.name ?? ""} onAddItem={cart.addItem}  />
+          <section id="presentes" className="py-16 px-6 max-w-4xl mx-auto text-center border-t border-gray-200">
+            <h2 className="text-4xl mb-4" style={{ fontFamily: "'Cormorant Garamond', serif", color: primary }}>{cfg.giftsSectionTitle}</h2>
+            <p className="text-lg mb-2">{cfg.giftsTagline}</p>
+            {(cfg.listaPresentesIntro ?? "").trim() !== "" && (
+              <p className="text-gray-600 mb-2">{cfg.listaPresentesIntro}</p>
+            )}
+            {(cfg.giftsPresentesDisclaimer ?? "").trim() !== "" && (
+              <p className="text-gray-500 italic mb-8">{cfg.giftsPresentesDisclaimer}</p>
+            )}
+            {presentesTarget.external ? (
+              <a
+                href={presentesTarget.href}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center justify-center text-white px-8 py-4 rounded-full text-lg font-semibold uppercase tracking-widest transition shadow-md hover:brightness-110"
+                style={{ backgroundColor: primary }}
+              >
+                {cfg.giftsVerPresentesButton ?? "Ver presentes"}
+              </a>
+            ) : (
+              <Link href={presentesTarget.href}>
+                <span
+                  className="inline-flex items-center justify-center text-white px-8 py-4 rounded-full text-lg font-semibold uppercase tracking-widest transition shadow-md hover:brightness-110 cursor-pointer"
+                  style={{ backgroundColor: primary }}
+                >
+                  {cfg.giftsVerPresentesButton ?? "Ver presentes"}
+                </span>
+              </Link>
+            )}
+          </section>
+        )}
+
+        {weddingId > 0 && (
+          <InviteMuralSection
+            layout="classic"
+            primaryColor={primary}
+            guestToken={t}
+            guestName={invite.guest?.name ?? ""}
+          />
         )}
 
         {/* Link para histórico de pedidos */}
-        <div className="text-center py-4 border-t border-gray-100">
+        <div className="text-center py-4 border-t border-gray-100 flex flex-wrap justify-center gap-x-6 gap-y-2">
+          {presentesTarget.external ? (
+            <a href={presentesTarget.href} target="_blank" rel="noreferrer" className="text-sm underline" style={{ color: primary }}>
+              Lista de presentes
+            </a>
+          ) : (
+            <Link href={presentesTarget.href}>
+              <span className="text-sm underline cursor-pointer" style={{ color: primary }}>Lista de presentes</span>
+            </Link>
+          )}
           <Link href={`/p/convite/${t}/pedidos`}>
             <span className="text-sm underline cursor-pointer" style={{ color: primary }}>Ver meus pedidos</span>
           </Link>
@@ -215,12 +258,6 @@ export default function PublicInvite() {
         </footer>
       </div>
 
-      {/* Cart drawer (always rendered, visibility via Sheet) */}
-      <div className="fixed top-4 right-4 z-50">
-        <CartDrawer items={cart.items} totalAmount={cart.totalAmount} totalItems={cart.totalItems} primaryColor={primary} onUpdateQuantity={cart.updateQuantity} onRemoveItem={cart.removeItem} onCheckout={() => setCheckoutOpen(true)} />
-      </div>
-
-      <ShopCheckoutDialog open={checkoutOpen} onClose={() => setCheckoutOpen(false)} items={cart.items} totalAmount={cart.totalAmount} guestToken={t} guestName={invite.guest?.name ?? ""} primaryColor={primary} onSuccess={() => { cart.reset(); setCheckoutOpen(false); }} />
     </>
   );
 }

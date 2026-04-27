@@ -130,7 +130,7 @@ export default function ShopOrderHistory() {
         {!isLoading && !isError && orders.length === 0 && (
           <div className="text-center py-16">
             <p className="text-gray-400 italic">Você ainda não fez nenhum pedido.</p>
-            <Link href={`/p/convite/${token}`}>
+            <Link href={`/p/convite/${token}/presentes`}>
               <Button className="mt-4 text-white rounded-full" style={{ backgroundColor: primaryColor }}>
                 Ver lista de presentes
               </Button>

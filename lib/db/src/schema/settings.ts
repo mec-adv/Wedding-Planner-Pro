@@ -12,6 +12,8 @@ export const integrationSettingsTable = pgTable("integration_settings", {
   asaasApiKey: text("asaas_api_key"),
   asaasEnvironment: varchar("asaas_environment", { length: 20 }).notNull().default("sandbox"),
   asaasWebhookToken: text("asaas_webhook_token"),
+  asaasPublicKey: text("asaas_public_key"),
+  activePaymentGateway: varchar("active_payment_gateway", { length: 30 }).notNull().default("asaas"),
 });
 
 export const insertIntegrationSettingsSchema = createInsertSchema(integrationSettingsTable).omit({ id: true });

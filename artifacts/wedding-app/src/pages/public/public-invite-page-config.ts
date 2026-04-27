@@ -77,6 +77,10 @@ export type PublicInvitePageConfig = {
   giftsSectionTitle?: string;
   giftsTagline?: string;
   giftsEmptyMessage?: string;
+  /** URLs de fotos (até 10) para a seção de carrossel na página pública do casamento. */
+  weddingCarouselImageUrls?: string[];
+  /** URLs de fotos dos noivos (até 3) para o carrossel no topo da página da loja (`/presentes`). */
+  shopCarouselImageUrls?: string[];
   footerLine2?: string;
   showCountdown?: boolean;
   primaryColor?: string;
@@ -172,7 +176,7 @@ export const DEFAULT_PUBLIC_INVITE_PAGE_CONFIG: Required<
 export const DEFAULT_BOTANICO_PAGE_CONFIG = {
   layout: "botanico" as const,
   navInitials: "R & M",
-  navLogoUrl: `${import.meta.env.BASE_URL}api/uploads/users/1/casamento-rodrigo-e-millena-w3/gifts/Monograma_Claro.png`,
+  navLogoUrl: `${import.meta.env.BASE_URL}api/uploads/users/1/casamento-rodrigo-e-millena-w3/branding/Monograma_Claro.png`,
   historiaTitle: "Nossa História",
   historiaBody:
     '"Num instante em que o peso do world fazia o sentido da vida parecer frágil e distante, os caminhos de Rodrigo e Millena se cruzaram. Não foi apenas um esbarrão do destino, mas o encontro de duas almas que, cansadas de caminhar no vazio, finalmente encontraram um porto seguro no olhar uma da outra. Naquele abraço, o desânimo deu lugar ao despertar: eles redescobriram a capacidade de amar e, com a coragem de quem já muito esperou, decidiram transformar esse encontro na mais linda e concreta realidade."',
@@ -333,5 +337,38 @@ export function resolvePublicInvitePageConfig(raw: unknown): ResolvedPublicInvit
     base.faqItems = raw.faqItems;
   }
 
+  if (Array.isArray(raw.shopCarouselImageUrls)) {
+    const urls: string[] = [];
+    for (const item of raw.shopCarouselImageUrls) {
+      if (typeof item === "string" && item.trim() !== "") urls.push(item.trim());
+      if (urls.length >= 3) break;
+    }
+    if (urls.length > 0) base.shopCarouselImageUrls = urls;
+  }
+
+  if (Array.isArray(raw.weddingCarouselImageUrls)) {
+    const urls: string[] = [];
+    for (const item of raw.weddingCarouselImageUrls) {
+      if (typeof item === "string" && item.trim() !== "") urls.push(item.trim());
+      if (urls.length >= 10) break;
+    }
+    if (urls.length > 0) base.weddingCarouselImageUrls = urls;
+  }
+
   return base;
+}
+
+/**
+ * Link do botão "Ver presentes". URLs `http(s)://…` em `giftsExternalPageUrl` abrem em nova aba;
+ * demais valores (ou vazio) usam a loja interna do app em `/p/convite/:token/presentes`.
+ */
+export function resolvePublicPresentesHref(
+  cfg: Pick<PublicInvitePageConfig, "giftsExternalPageUrl">,
+  token: string,
+): { href: string; external: boolean } {
+  const ext = (cfg.giftsExternalPageUrl ?? "").trim();
+  if (/^https?:\/\//i.test(ext)) {
+    return { href: ext, external: true };
+  }
+  return { href: `/p/convite/${token}/presentes`, external: false };
 }

@@ -8,6 +8,8 @@ export interface ShopGift {
   id: number;
   name: string;
   description: string | null;
+  /** Comentário opcional do casal (cadastro: humorTag). */
+  humorTag: string | null;
   price: string;
   imageUrl: string | null;
   category: string | null;
@@ -40,15 +42,16 @@ export interface CartItem {
 export interface CreateOrderPayload {
   guestToken: string;
   buyerName: string;
+  /** Quem paga (obrigatório; pode ser acompanhante). */
+  buyerPhone: string;
+  /** CPF do pagador — obrigatório para PIX; para cartão usa-se holderCpf. */
+  buyerCpf?: string;
+  /** Cotas extras de lua de mel no checkout; cada uma = R$ 50,00. */
+  honeymoonQuotaUnits?: number;
   muralMessage?: string | null;
   paymentMethod: "pix" | "credit_card";
-  // Card fields (one of token or raw)
+  // Credit card: token only (never raw card numbers)
   creditCardToken?: string;
-  cardNumber?: string;
-  cardHolderName?: string;
-  cardExpiryMonth?: string;
-  cardExpiryYear?: string;
-  cardCcv?: string;
   holderName?: string;
   holderCpf?: string;
   holderEmail?: string;
@@ -61,6 +64,12 @@ export interface CreateOrderPayload {
     quantity: number;
     customPrice?: number;
   }>;
+}
+
+export interface PaymentConfig {
+  gatewayName: string;
+  asaasPublicKey: string | null;
+  asaasEnvironment: "sandbox" | "production";
 }
 
 export interface CreateOrderResult {
@@ -76,7 +85,7 @@ export interface CreateOrderResult {
 export interface OrderStatusResult {
   orderId: number;
   status: string;
-  asaasStatus: string | null;
+  gatewayStatus: string | null;
 }
 
 export interface GuestOrder {
@@ -88,7 +97,7 @@ export interface GuestOrder {
   buyerName: string;
   createdAt: string;
   paidAt: string | null;
-  asaasPaymentId: string | null;
+  gatewayPaymentId: string | null;
   items: Array<{
     id: number;
     giftNameSnapshot: string;
@@ -137,11 +146,19 @@ export function fetchShopSettings(weddingId: number) {
   return shopFetch<ShopSettings>(`/public/weddings/${weddingId}/shop-settings`);
 }
 
-export function createOrder(payload: CreateOrderPayload) {
+export function createOrder(payload: CreateOrderPayload, idempotencyKey?: string) {
   return shopFetch<CreateOrderResult>("/public/orders", {
     method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(idempotencyKey ? { "Idempotency-Key": idempotencyKey } : {}),
+    },
     body: JSON.stringify(payload),
   });
+}
+
+export function fetchPaymentConfig(weddingId: number) {
+  return shopFetch<PaymentConfig>(`/public/weddings/${weddingId}/payment-config`);
 }
 
 export function fetchOrderStatus(orderId: number, guestToken: string) {

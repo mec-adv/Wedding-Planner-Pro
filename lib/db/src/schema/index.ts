@@ -17,3 +17,4 @@ export * from "./messages";
 export * from "./settings";
 export * from "./gift_categories";
 export * from "./orders";
+export * from "./whatsapp_connections";

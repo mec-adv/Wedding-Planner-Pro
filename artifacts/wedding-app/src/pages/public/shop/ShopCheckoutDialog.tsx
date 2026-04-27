@@ -1,14 +1,32 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import type { CSSProperties } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { QrCode, CreditCard, CheckCircle, AlertCircle, Copy, Clock } from "lucide-react";
+import { QrCode, CreditCard, CheckCircle, AlertCircle, Copy, Clock, Heart } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { copyTextToClipboard } from "@/lib/clipboard";
-import { createOrder, fetchOrderStatus } from "@/lib/shop-api";
+import { createOrder, fetchOrderStatus, fetchPaymentConfig } from "@/lib/shop-api";
 import type { CartItem, CreateOrderResult } from "@/lib/shop-api";
+import { displayPhoneBr, stripPhoneDigits } from "@/lib/phone-br";
+
+const HONEYMOON_QUOTA_UNIT = 50;
+
+// Asaas.js global type declaration
+declare global {
+  interface Window {
+    AsaasJs?: {
+      tokenizeCreditCard(params: {
+        holderName: string;
+        number: string;
+        expiryMonth: string;
+        expiryYear: string;
+        cvv: string;
+      }): Promise<{ creditCardToken: string }>;
+    };
+  }
+}
 
 interface Props {
   open: boolean;
@@ -17,6 +35,10 @@ interface Props {
   totalAmount: number;
   guestToken: string;
   guestName: string;
+  /** ID do casamento — necessário para carregar config de tokenização. */
+  weddingId: number;
+  /** Telefone do convidado dono do link (pré-preenchimento; editável). */
+  guestPhone?: string | null;
   primaryColor: string;
   onSuccess: () => void;
 }
@@ -37,6 +59,21 @@ function pixTimeRemaining(expiresAt: string | null | undefined): string {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
+function generateIdempotencyKey(): string {
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
+}
+
+function loadAsaasScript(src: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (document.querySelector(`script[src="${src}"]`)) { resolve(); return; }
+    const script = document.createElement("script");
+    script.src = src;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error("Falha ao carregar Asaas.js"));
+    document.head.appendChild(script);
+  });
+}
+
 export function ShopCheckoutDialog({
   open,
   onClose,
@@ -44,6 +81,8 @@ export function ShopCheckoutDialog({
   totalAmount,
   guestToken,
   guestName,
+  weddingId,
+  guestPhone,
   primaryColor,
   onSuccess,
 }: Props) {
@@ -52,40 +91,83 @@ export function ShopCheckoutDialog({
 
   const [step, setStep] = useState<Step>("details");
   const [buyerName, setBuyerName] = useState(guestName);
+  const [buyerPhone, setBuyerPhone] = useState("");
+  const [buyerCpf, setBuyerCpf] = useState("");
+  const [honeymoonQuotaUnits, setHoneymoonQuotaUnits] = useState(0);
   const [muralMessage, setMuralMessage] = useState("");
   const [payMethod, setPayMethod] = useState<PayMethod>("pix");
   const [errorMsg, setErrorMsg] = useState("");
 
-  // Card fields
-  const [cardNumber, setCardNumber] = useState("");
-  const [cardHolder, setCardHolder] = useState("");
-  const [cardExpiry, setCardExpiry] = useState("");
-  const [cardCvv, setCardCvv] = useState("");
+  // Card holder non-sensitive fields (safe to store in state)
   const [holderCpf, setHolderCpf] = useState("");
   const [holderPhone, setHolderPhone] = useState("");
   const [holderPostalCode, setHolderPostalCode] = useState("");
   const [holderAddressNumber, setHolderAddressNumber] = useState("");
   const [installments, setInstallments] = useState(1);
 
+  // Card sensitive fields — uncontrolled refs; never stored in React state
+  const cardNumberRef = useRef<HTMLInputElement>(null);
+  const cardHolderRef = useRef<HTMLInputElement>(null);
+  const cardExpiryRef = useRef<HTMLInputElement>(null);
+  const cardCvvRef = useRef<HTMLInputElement>(null);
+
   // PIX result
   const [orderResult, setOrderResult] = useState<CreateOrderResult | null>(null);
   const [pixTimer, setPixTimer] = useState("");
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Idempotency key — generated once per dialog open
+  const idempotencyKeyRef = useRef<string>("");
+
+  // Payment config — public key for Asaas.js tokenization
+  const [asaasScriptLoaded, setAsaasScriptLoaded] = useState(false);
+  const [asaasPublicKey, setAsaasPublicKey] = useState<string | null>(null);
+  const [asaasEnvironment, setAsaasEnvironment] = useState<"sandbox" | "production">("sandbox");
+
+  const quotaAmount = honeymoonQuotaUnits * HONEYMOON_QUOTA_UNIT;
+  const checkoutTotal = useMemo(() => totalAmount + quotaAmount, [totalAmount, quotaAmount]);
+
+  // Load payment config once
+  useEffect(() => {
+    if (!weddingId) return;
+    fetchPaymentConfig(weddingId).then((cfg) => {
+      if (!cfg) return;
+      setAsaasPublicKey(cfg.asaasPublicKey ?? null);
+      setAsaasEnvironment(cfg.asaasEnvironment as "sandbox" | "production");
+    }).catch(() => { /* non-critical */ });
+  }, [weddingId]);
+
+  // Load Asaas.js when config is available and payment method is credit_card
+  const loadAsaasJs = useCallback(async () => {
+    if (asaasScriptLoaded || !asaasPublicKey) return;
+    try {
+      const baseUrl = asaasEnvironment === "production"
+        ? "https://api.asaas.com"
+        : "https://sandbox.asaas.com";
+      await loadAsaasScript(`${baseUrl}/api/v3/payments/paymentForm.js`);
+      setAsaasScriptLoaded(true);
+    } catch {
+      // Script load failure — will surface as error on submit
+    }
+  }, [asaasScriptLoaded, asaasPublicKey, asaasEnvironment]);
 
   // Reset on open
   useEffect(() => {
     if (open) {
       setStep("details");
       setBuyerName(guestName);
+      setBuyerPhone(guestPhone ? displayPhoneBr(stripPhoneDigits(guestPhone)) : "");
+      setHoneymoonQuotaUnits(0);
       setMuralMessage("");
       setPayMethod("pix");
       setErrorMsg("");
       setOrderResult(null);
-      setCardNumber(""); setCardHolder(""); setCardExpiry(""); setCardCvv(""); setHolderCpf("");
-      setHolderPhone(""); setHolderPostalCode(""); setHolderAddressNumber(""); setInstallments(1);
+      setBuyerCpf("");
+      setHolderCpf(""); setHolderPhone(""); setHolderPostalCode(""); setHolderAddressNumber(""); setInstallments(1);
+      idempotencyKeyRef.current = generateIdempotencyKey();
     }
     return () => { if (pollingRef.current) clearInterval(pollingRef.current); };
-  }, [open, guestName]);
+  }, [open, guestName, guestPhone]);
 
   // PIX timer
   useEffect(() => {
@@ -123,25 +205,98 @@ export function ShopCheckoutDialog({
 
   async function handleContinue() {
     if (!buyerName.trim()) { toast({ variant: "destructive", title: "Informe seu nome" }); return; }
-    if (payMethod === "credit_card") { setStep("card"); return; }
+    const phoneDigits = stripPhoneDigits(buyerPhone);
+    if (phoneDigits.length < 10) {
+      toast({ variant: "destructive", title: "Informe um telefone válido com DDD" });
+      return;
+    }
+    if (buyerCpf.replace(/\D/g, "").length !== 11) {
+      toast({ variant: "destructive", title: "Informe um CPF válido (11 dígitos)" });
+      return;
+    }
+    if (payMethod === "credit_card") {
+      await loadAsaasJs();
+      setStep("card");
+      return;
+    }
     await submitOrder();
   }
 
   async function handleCardSubmit() {
-    const [expMonth, expYear] = cardExpiry.split("/");
-    if (!cardNumber || !cardHolder || !expMonth || !expYear || !cardCvv || !holderCpf) {
+    const number = cardNumberRef.current?.value?.replace(/\s/g, "") ?? "";
+    const holderName = cardHolderRef.current?.value ?? "";
+    const expiry = cardExpiryRef.current?.value ?? "";
+    const cvv = cardCvvRef.current?.value ?? "";
+
+    if (!number || !holderName || !expiry || !cvv || !holderCpf) {
       toast({ variant: "destructive", title: "Preencha todos os dados do cartão e CPF do titular" });
       return;
     }
-    await submitOrder({ cardNumber, cardHolder, expMonth: expMonth.trim(), expYear: expYear.trim(), cardCvv, holderCpf, holderPhone, holderPostalCode, holderAddressNumber, installments });
+
+    const [expMonth, expYearRaw] = expiry.split("/");
+    const expYear = expYearRaw?.trim().length === 2 ? `20${expYearRaw.trim()}` : expYearRaw?.trim();
+
+    if (!expMonth || !expYear) {
+      toast({ variant: "destructive", title: "Validade inválida. Use o formato MM/AA" });
+      return;
+    }
+
+    if (!window.AsaasJs) {
+      toast({ variant: "destructive", title: "Módulo de segurança do cartão não carregado. Recarregue a página e tente novamente." });
+      return;
+    }
+
+    setStep("processing");
+
+    try {
+      // Tokenize via Asaas.js — raw card data never leaves the browser as-is
+      const { creditCardToken } = await window.AsaasJs.tokenizeCreditCard({
+        holderName,
+        number,
+        expiryMonth: expMonth.trim(),
+        expiryYear: expYear,
+        cvv,
+      });
+
+      // Clear sensitive field values immediately after tokenization
+      if (cardNumberRef.current) cardNumberRef.current.value = "";
+      if (cardCvvRef.current) cardCvvRef.current.value = "";
+
+      await submitOrder({
+        creditCardToken,
+        holderName,
+        holderCpf: holderCpf.replace(/\D/g, ""),
+        holderPhone,
+        holderPostalCode,
+        holderAddressNumber,
+        installments,
+      });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Erro ao processar dados do cartão.";
+      setErrorMsg(msg);
+      setStep("error");
+    }
   }
 
-  async function submitOrder(card?: { cardNumber: string; cardHolder: string; expMonth: string; expYear: string; cardCvv: string; holderCpf: string; holderPhone: string; holderPostalCode: string; holderAddressNumber: string; installments: number }) {
-    setStep("processing");
+  interface CardTokenPayload {
+    creditCardToken: string;
+    holderName: string;
+    holderCpf: string;
+    holderPhone: string;
+    holderPostalCode: string;
+    holderAddressNumber: string;
+    installments: number;
+  }
+
+  async function submitOrder(card?: CardTokenPayload) {
+    if (step !== "processing") setStep("processing");
     try {
       const payload = {
         guestToken,
         buyerName: buyerName.trim(),
+        buyerPhone: stripPhoneDigits(buyerPhone),
+        buyerCpf: buyerCpf.replace(/\D/g, "") || undefined,
+        honeymoonQuotaUnits: honeymoonQuotaUnits > 0 ? honeymoonQuotaUnits : undefined,
         muralMessage: muralMessage.trim() || null,
         paymentMethod: payMethod,
         items: items.map((item) => ({
@@ -150,13 +305,9 @@ export function ShopCheckoutDialog({
           customPrice: item.isHoneymoonFund ? (item.customPrice ?? item.unitPrice) : undefined,
         })),
         ...(card ? {
-          cardNumber: card.cardNumber.replace(/\s/g, ""),
-          cardHolderName: card.cardHolder,
-          cardExpiryMonth: card.expMonth,
-          cardExpiryYear: card.expYear.length === 2 ? `20${card.expYear}` : card.expYear,
-          cardCcv: card.cardCvv,
-          holderName: card.cardHolder,
-          holderCpf: card.holderCpf.replace(/\D/g, ""),
+          creditCardToken: card.creditCardToken,
+          holderName: card.holderName,
+          holderCpf: card.holderCpf,
           holderPhone: card.holderPhone,
           holderPostalCode: card.holderPostalCode,
           holderAddressNumber: card.holderAddressNumber,
@@ -164,7 +315,7 @@ export function ShopCheckoutDialog({
         } : {}),
       };
 
-      const result = await createOrder(payload);
+      const result = await createOrder(payload, idempotencyKeyRef.current);
       setOrderResult(result);
 
       if (payMethod === "pix") {
@@ -187,7 +338,7 @@ export function ShopCheckoutDialog({
     }
   }
 
-  const installmentValue = installments > 1 ? totalAmount / installments : totalAmount;
+  const installmentValue = installments > 1 ? checkoutTotal / installments : checkoutTotal;
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
@@ -209,6 +360,33 @@ export function ShopCheckoutDialog({
         {/* Step: details */}
         {step === "details" && (
           <div className="space-y-4">
+            <div
+              className="rounded-lg border border-dashed p-3 space-y-2"
+              style={{ borderColor: `${primaryColor}88`, backgroundColor: `${primaryColor}08` }}
+            >
+              <div className="flex items-center gap-2">
+                <Heart className="w-4 h-4 shrink-0" style={{ color: primaryColor }} aria-hidden />
+                <p className="text-sm font-semibold" style={{ color: primaryColor }}>
+                  Quota para a lua de mel (opcional)
+                </p>
+              </div>
+              <p className="text-xs text-gray-600 leading-snug">
+                Cada cota equivale a {fmtBrl(HONEYMOON_QUOTA_UNIT)}. Você pode somar à compra para os noivos; o valor entra neste mesmo pagamento.
+              </p>
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <Button type="button" variant="outline" size="sm" className="h-9 w-9 p-0" aria-label="Menos uma cota"
+                    onClick={() => setHoneymoonQuotaUnits((n) => Math.max(0, n - 1))}>−</Button>
+                  <span className="w-8 text-center tabular-nums font-medium text-sm">{honeymoonQuotaUnits}</span>
+                  <Button type="button" variant="outline" size="sm" className="h-9 w-9 p-0" aria-label="Mais uma cota"
+                    onClick={() => setHoneymoonQuotaUnits((n) => Math.min(100, n + 1))}>+</Button>
+                </div>
+                <span className="text-sm text-gray-700">
+                  {honeymoonQuotaUnits === 0 ? "Nenhuma cota extra" : `${fmtBrl(quotaAmount)} (${honeymoonQuotaUnits} × ${fmtBrl(HONEYMOON_QUOTA_UNIT)})`}
+                </span>
+              </div>
+            </div>
+
             {/* Order summary */}
             <div className="rounded-lg border border-gray-100 bg-white p-3 space-y-1">
               {items.map((item, i) => {
@@ -220,26 +398,56 @@ export function ShopCheckoutDialog({
                   </div>
                 );
               })}
+              {honeymoonQuotaUnits > 0 && (
+                <div className="flex justify-between text-sm text-gray-700">
+                  <span>Cotas lua de mel ×{honeymoonQuotaUnits}</span>
+                  <span className="font-medium">{fmtBrl(quotaAmount)}</span>
+                </div>
+              )}
               <div className="border-t pt-1 mt-1 flex justify-between font-semibold">
                 <span>Total</span>
-                <span style={{ color: primaryColor }}>{fmtBrl(totalAmount)}</span>
+                <span style={{ color: primaryColor }}>{fmtBrl(checkoutTotal)}</span>
               </div>
             </div>
 
             <div>
-              <label className="text-sm font-semibold">Seu nome *</label>
-              <Input className={inputClass} value={buyerName} onChange={(e) => setBuyerName(e.target.value)} />
+              <label className="text-sm font-semibold">Nome de quem está pagando *</label>
+              <Input className={inputClass} value={buyerName} onChange={(e) => setBuyerName(e.target.value)} placeholder="Nome completo" autoComplete="name" />
+              <p className="text-xs text-gray-500 mt-1">Use o nome de quem efetua o pagamento (pode ser diferente do convidado do convite).</p>
+            </div>
+
+            <div>
+              <label className="text-sm font-semibold">Telefone (WhatsApp) *</label>
+              <Input className={inputClass} value={buyerPhone}
+                onChange={(e) => setBuyerPhone(displayPhoneBr(stripPhoneDigits(e.target.value)))}
+                placeholder="(00) 00000-0000" inputMode="tel" autoComplete="tel" />
+              <p className="text-xs text-gray-500 mt-1">Obrigatório para contato e confirmação; edite se outra pessoa for pagar.</p>
+            </div>
+
+            <div>
+              <label className="text-sm font-semibold">CPF *</label>
+              <Input
+                className={inputClass}
+                value={buyerCpf}
+                onChange={(e) => {
+                  const digits = e.target.value.replace(/\D/g, "").slice(0, 11);
+                  const fmt = digits.length <= 3 ? digits
+                    : digits.length <= 6 ? `${digits.slice(0, 3)}.${digits.slice(3)}`
+                    : digits.length <= 9 ? `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`
+                    : `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
+                  setBuyerCpf(fmt);
+                }}
+                placeholder="000.000.000-00"
+                inputMode="numeric"
+                autoComplete="off"
+              />
+              <p className="text-xs text-gray-500 mt-1">Obrigatório para emissão do comprovante de pagamento.</p>
             </div>
 
             <div>
               <label className="text-sm font-semibold">Mensagem para o Mural (opcional)</label>
-              <textarea
-                className={`${inputClass} min-h-[80px] resize-none`}
-                value={muralMessage}
-                onChange={(e) => setMuralMessage(e.target.value)}
-                maxLength={500}
-                placeholder="Uma mensagem para os noivos…"
-              />
+              <textarea className={`${inputClass} min-h-[80px] resize-none`} value={muralMessage}
+                onChange={(e) => setMuralMessage(e.target.value)} maxLength={500} placeholder="Uma mensagem para os noivos…" />
               <p className="text-xs text-gray-400 text-right">{muralMessage.length}/500</p>
             </div>
 
@@ -250,13 +458,9 @@ export function ShopCheckoutDialog({
                   { id: "pix" as const, label: "PIX", icon: <QrCode className="w-5 h-5" />, desc: "Pagamento instantâneo" },
                   { id: "credit_card" as const, label: "Cartão de Crédito", icon: <CreditCard className="w-5 h-5" />, desc: "Até 12x" },
                 ] as const).map((pm) => (
-                  <button
-                    key={pm.id}
-                    type="button"
-                    onClick={() => setPayMethod(pm.id)}
+                  <button key={pm.id} type="button" onClick={() => setPayMethod(pm.id)}
                     className={cn("flex items-center gap-3 p-3 rounded-lg border text-left transition-colors", payMethod === pm.id ? "bg-black/[0.03]" : "border-gray-200")}
-                    style={payMethod === pm.id ? { borderColor: primaryColor } : {}}
-                  >
+                    style={payMethod === pm.id ? { borderColor: primaryColor } : {}}>
                     {pm.icon}
                     <div>
                       <div className="font-medium text-sm">{pm.label}</div>
@@ -273,25 +477,29 @@ export function ShopCheckoutDialog({
           </div>
         )}
 
-        {/* Step: card */}
+        {/* Step: card — sensitive fields use uncontrolled refs (never stored in React state) */}
         {step === "card" && (
           <div className="space-y-3">
+            <p className="text-xs text-gray-500 bg-gray-50 rounded p-2 border">
+              🔒 Seus dados de cartão são criptografados e tokenizados localmente antes de qualquer envio.
+            </p>
             <div>
               <label className="text-sm font-semibold">Número do cartão</label>
-              <Input className={inputClass} value={cardNumber} onChange={(e) => setCardNumber(e.target.value)} placeholder="0000 0000 0000 0000" maxLength={19} />
+              <input ref={cardNumberRef} className={inputClass} placeholder="0000 0000 0000 0000" maxLength={19}
+                autoComplete="cc-number" inputMode="numeric" />
             </div>
             <div>
               <label className="text-sm font-semibold">Nome no cartão</label>
-              <Input className={inputClass} value={cardHolder} onChange={(e) => setCardHolder(e.target.value)} />
+              <input ref={cardHolderRef} className={inputClass} autoComplete="cc-name" />
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <label className="text-sm font-semibold">Validade (MM/AA)</label>
-                <Input className={inputClass} value={cardExpiry} onChange={(e) => setCardExpiry(e.target.value)} placeholder="MM/AA" maxLength={5} />
+                <input ref={cardExpiryRef} className={inputClass} placeholder="MM/AA" maxLength={5} autoComplete="cc-exp" />
               </div>
               <div>
                 <label className="text-sm font-semibold">CVV</label>
-                <Input className={inputClass} value={cardCvv} onChange={(e) => setCardCvv(e.target.value)} maxLength={4} />
+                <input ref={cardCvvRef} className={inputClass} maxLength={4} autoComplete="cc-csc" />
               </div>
             </div>
             <div>
@@ -312,7 +520,7 @@ export function ShopCheckoutDialog({
               <label className="text-sm font-semibold">Parcelas</label>
               <select className={`${inputClass} mt-1`} value={installments} onChange={(e) => setInstallments(Number(e.target.value))}>
                 {Array.from({ length: 12 }, (_, i) => i + 1).map((n) => (
-                  <option key={n} value={n}>{n}x de {fmtBrl(totalAmount / n)}</option>
+                  <option key={n} value={n}>{n}x de {fmtBrl(checkoutTotal / n)}</option>
                 ))}
               </select>
             </div>
@@ -321,7 +529,9 @@ export function ShopCheckoutDialog({
             )}
             <div className="flex gap-2">
               <Button variant="outline" className="flex-1" onClick={() => setStep("details")}>Voltar</Button>
-              <Button className="flex-1 text-white" style={{ backgroundColor: primaryColor }} onClick={() => void handleCardSubmit()}>Pagar {fmtBrl(totalAmount)}</Button>
+              <Button className="flex-1 text-white" style={{ backgroundColor: primaryColor }} onClick={() => void handleCardSubmit()}>
+                Pagar {fmtBrl(checkoutTotal)}
+              </Button>
             </div>
           </div>
         )}
@@ -348,15 +558,11 @@ export function ShopCheckoutDialog({
             {orderResult.pixCopyPaste && (
               <div className="space-y-2">
                 <div className="text-xs break-all p-2 bg-white rounded border border-gray-200 max-h-20 overflow-hidden">{orderResult.pixCopyPaste}</div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full gap-2"
+                <Button variant="outline" size="sm" className="w-full gap-2"
                   onClick={async () => {
                     try { await copyTextToClipboard(orderResult.pixCopyPaste!); toast({ title: "Código PIX copiado!" }); }
                     catch { toast({ variant: "destructive", title: "Não foi possível copiar" }); }
-                  }}
-                >
+                  }}>
                   <Copy className="w-4 h-4" /> Copiar código PIX
                 </Button>
               </div>

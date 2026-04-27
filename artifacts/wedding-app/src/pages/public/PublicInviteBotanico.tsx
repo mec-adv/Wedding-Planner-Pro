@@ -6,7 +6,11 @@ import { BOTANICO_FLORAL_DEFS_RAW } from "@/assets/invite-botanico-assets";
 import { BotanicoDeco } from "./botanico-deco";
 import { PadrinhoFloralTop } from "./padrinho-floral-top";
 import { resolveMapDisplay } from "./map-embed-url";
-import { getSpaBaseHref, resolveMediaUrl } from "@/lib/api-url";
+import { Link } from "wouter";
+import { resolveMediaUrl } from "@/lib/api-url";
+import { resolvePublicPresentesHref } from "./public-invite-page-config";
+import { InviteMuralSection } from "./InviteMuralSection";
+import { InvitePhotoCarouselSection } from "./InvitePhotoCarouselSection";
 
 /** Primeiro nome para o hero/rodapé (ex.: "Millena Vieira Martins" → "Millena"). */
 export function primeiroNome(nomeCompleto: string): string {
@@ -124,6 +128,8 @@ export type PublicInviteBotanicoProps = {
   bride: string;
   groom: string;
   invite: PublicInviteResponse;
+  /** Token do convite (URL `/p/convite/:token`) — usado na loja de presentes. */
+  inviteToken: string;
   heroDateLine: string;
   targetMs: number | null;
   countdown: { days: number; hours: number; minutes: number; seconds: number; passed: boolean };
@@ -140,6 +146,7 @@ export function PublicInviteBotanico({
   bride,
   groom,
   invite,
+  inviteToken,
   heroDateLine,
   targetMs,
   countdown,
@@ -157,7 +164,7 @@ export function PublicInviteBotanico({
   const noivaPrimeiro = primeiroNome(bride);
   const noivoPrimeiro = primeiroNome(groom);
   const heroNomesLinha = `${noivoPrimeiro} & ${noivaPrimeiro}`;
-  const giftsSoonHref = `${getSpaBaseHref()}presentes-em-breve.html`;
+  const presentesTarget = resolvePublicPresentesHref(cfg, inviteToken);
 
   const [mainName, setMainName] = useState("");
   const [mainPhone, setMainPhone] = useState("");
@@ -264,9 +271,15 @@ export function PublicInviteBotanico({
             <a href="#padrinhos" className="transition hover:text-[#2C5F7A]">
               Padrinhos
             </a>
-            <a href="#presentes" className="transition hover:text-[#2C5F7A]">
-              Presentes
-            </a>
+            {presentesTarget.external ? (
+              <a href={presentesTarget.href} target="_blank" rel="noreferrer" className="transition hover:text-[#2C5F7A]">
+                Presentes
+              </a>
+            ) : (
+              <Link href={presentesTarget.href} className="transition hover:text-[#2C5F7A]">
+                Presentes
+              </Link>
+            )}
             <a href="#rsvp" className="transition hover:text-[#2C5F7A]">
               RSVP
             </a>
@@ -278,7 +291,11 @@ export function PublicInviteBotanico({
             <a href="#historia" className="transition hover:text-[#2C5F7A]">História</a>
             <a href="#evento" className="transition hover:text-[#2C5F7A]">O Evento</a>
             <a href="#padrinhos" className="transition hover:text-[#2C5F7A]">Padrinhos</a>
-            <a href="#presentes" className="transition hover:text-[#2C5F7A]">Presentes</a>
+            {presentesTarget.external ? (
+              <a href={presentesTarget.href} target="_blank" rel="noreferrer" className="transition hover:text-[#2C5F7A]">Presentes</a>
+            ) : (
+              <Link href={presentesTarget.href} className="transition hover:text-[#2C5F7A]">Presentes</Link>
+            )}
             <a href="#rsvp" className="transition hover:text-[#2C5F7A]">RSVP</a>
           </div>
         </div>
@@ -559,6 +576,12 @@ export function PublicInviteBotanico({
         </div>
       </section>
 
+      <InvitePhotoCarouselSection
+        imageUrls={cfg.weddingCarouselImageUrls}
+        primaryColor={primary}
+        layout="botanico"
+      />
+
       <section id="padrinhos" className="py-24 px-6 overflow-hidden relative" style={{ backgroundColor: "#F4F9FD" }}>
         <div className="max-w-6xl mx-auto text-center relative z-10">
           <div className="flex justify-center mb-8">
@@ -779,17 +802,37 @@ export function PublicInviteBotanico({
           </h2>
           <p className="text-xl mb-4 text-gray-700">{cfg.giftsTagline}</p>
           <p className="mb-8 text-gray-500 italic">{cfg.giftsPresentesDisclaimer}</p>
-          <a
-            href={giftsSoonHref}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center text-white px-10 py-5 rounded-2xl text-xl font-bold uppercase tracking-widest transition shadow-lg transform hover:-translate-y-1 hover:brightness-110"
-            style={{ backgroundColor: "#C9962A" }}
-          >
-            {cfg.giftsVerPresentesButton}
-          </a>
+          {presentesTarget.external ? (
+            <a
+              href={presentesTarget.href}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center text-white px-10 py-5 rounded-2xl text-xl font-bold uppercase tracking-widest transition shadow-lg transform hover:-translate-y-1 hover:brightness-110"
+              style={{ backgroundColor: "#C9962A" }}
+            >
+              {cfg.giftsVerPresentesButton ?? "Ver presentes"}
+            </a>
+          ) : (
+            <Link
+              href={presentesTarget.href}
+              className="inline-flex items-center text-white px-10 py-5 rounded-2xl text-xl font-bold uppercase tracking-widest transition shadow-lg transform hover:-translate-y-1 hover:brightness-110"
+              style={{ backgroundColor: "#C9962A" }}
+            >
+              {cfg.giftsVerPresentesButton ?? "Ver presentes"}
+            </Link>
+          )}
         </div>
       </section>
+
+      {(wedding?.id ?? 0) > 0 && (
+        <InviteMuralSection
+          layout="botanico"
+          cfg={cfg}
+          primaryColor={primary}
+          guestToken={inviteToken}
+          guestName={invite.guest?.name ?? ""}
+        />
+      )}
 
       <section className="py-24 px-6 max-w-4xl mx-auto bg-[#F4F9FD]">
         <div className="text-center mb-12">

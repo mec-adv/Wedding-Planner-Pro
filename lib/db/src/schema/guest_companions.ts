@@ -11,6 +11,7 @@ export const guestCompanionsTable = pgTable("guest_companions", {
   name: varchar("name", { length: 255 }).notNull(),
   age: smallint("age").notNull(),
   phone: varchar("phone", { length: 30 }),
+  cpf: varchar("cpf", { length: 14 }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

@@ -22,9 +22,11 @@ import {
   extFromMime,
   getPublicUrlForRelativeKey,
   getWeddingEventRelativePath,
-  getWeddingGiftDirAbsolute,
+  getWeddingMediaDirAbsolute,
   isManagedGiftImageUrl,
+  type WeddingMediaSubdir,
   unlinkManagedGiftImage,
+  WEDDING_MEDIA_SUBDIR,
 } from "../lib/gift-upload-paths";
 import { createGiftOrderWithPayment } from "../lib/create-gift-order";
 
@@ -58,6 +60,48 @@ function uploadGiftImageMiddleware(req: Request, res: Response, next: NextFuncti
   });
 }
 
+function parseWeddingMediaCategory(body: unknown): WeddingMediaSubdir {
+  const raw =
+    typeof body === "object" && body !== null && "category" in body
+      ? String((body as { category?: unknown }).category ?? "")
+          .trim()
+          .toLowerCase()
+      : "";
+  if (raw === WEDDING_MEDIA_SUBDIR.padrinhos) return WEDDING_MEDIA_SUBDIR.padrinhos;
+  if (raw === WEDDING_MEDIA_SUBDIR.branding) return WEDDING_MEDIA_SUBDIR.branding;
+  if (raw === WEDDING_MEDIA_SUBDIR.gift || raw === "gifts") return WEDDING_MEDIA_SUBDIR.gift;
+  return WEDDING_MEDIA_SUBDIR.gift;
+}
+
+async function writeWeddingMediaUpload(
+  weddingId: number,
+  subdir: WeddingMediaSubdir,
+  file: Express.Multer.File,
+): Promise<{ ok: true; url: string } | { ok: false; status: number; error: string }> {
+  const ext = extFromMime(file.mimetype);
+  if (!ext) {
+    return { ok: false, status: 400, error: "Use JPG, PNG ou WebP" };
+  }
+
+  const [wedding] = await db.select().from(weddingsTable).where(eq(weddingsTable.id, weddingId)).limit(1);
+  if (!wedding) {
+    return { ok: false, status: 404, error: "Casamento não encontrado" };
+  }
+
+  const dir = getWeddingMediaDirAbsolute(wedding.id, wedding.createdById, wedding.title, subdir);
+  await ensureDir(dir);
+  const fileName = `${randomUUID()}${ext}`;
+  const absPath = path.join(dir, fileName);
+  await writeFile(absPath, file.buffer);
+
+  const rel = path.join(
+    getWeddingEventRelativePath(wedding.id, wedding.createdById, wedding.title),
+    subdir,
+    fileName,
+  );
+  return { ok: true, url: getPublicUrlForRelativeKey(rel) };
+}
+
 router.get("/weddings/:weddingId/gifts", async (req, res): Promise<void> => {
   const params = ListGiftsParams.safeParse(req.params);
   if (!params.success) {
@@ -73,6 +117,7 @@ router.get("/weddings/:weddingId/gifts", async (req, res): Promise<void> => {
   })));
 });
 
+/** Multipart: `file` + opcional `category`: `gift` | `padrinhos` | `branding` (padrão: gift). */
 router.post(
   "/weddings/:weddingId/gifts/upload-image",
   authMiddleware,
@@ -91,26 +136,13 @@ router.post(
       return;
     }
 
-    const ext = extFromMime(file.mimetype);
-    if (!ext) {
-      res.status(400).json({ error: "Use JPG, PNG ou WebP" });
+    const subdir = parseWeddingMediaCategory(req.body);
+    const out = await writeWeddingMediaUpload(params.data.weddingId, subdir, file);
+    if (!out.ok) {
+      res.status(out.status).json({ error: out.error });
       return;
     }
-
-    const [wedding] = await db.select().from(weddingsTable).where(eq(weddingsTable.id, params.data.weddingId)).limit(1);
-    if (!wedding) {
-      res.status(404).json({ error: "Casamento não encontrado" });
-      return;
-    }
-
-    const dir = getWeddingGiftDirAbsolute(wedding.id, wedding.createdById, wedding.title);
-    await ensureDir(dir);
-    const fileName = `${randomUUID()}${ext}`;
-    const absPath = path.join(dir, fileName);
-    await writeFile(absPath, file.buffer);
-
-    const rel = path.join(getWeddingEventRelativePath(wedding.id, wedding.createdById, wedding.title), "gifts", fileName);
-    res.json({ url: getPublicUrlForRelativeKey(rel) });
+    res.json({ url: out.url });
   },
 );
 
@@ -253,6 +285,7 @@ router.get("/weddings/:weddingId/gift-orders", authMiddleware, requireWeddingRol
   })));
 });
 
+/** @deprecated Use POST /public/orders instead. This endpoint will be removed after gift_orders data migration. */
 router.post("/weddings/:weddingId/gift-orders", async (req, res): Promise<void> => {
   const params = CreateGiftOrderParams.safeParse(req.params);
   if (!params.success) {

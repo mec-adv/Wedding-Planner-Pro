@@ -320,7 +320,10 @@ export default function Gifts() {
                   id="isHoneymoonFund"
                   name="isHoneymoonFund"
                   className="w-4 h-4"
-                  defaultChecked={editingGift ? Boolean((editingGift as Record<string, unknown>).isHoneymoonFund) : false}
+                  defaultChecked={Boolean(
+                    editingGift &&
+                      (editingGift as unknown as { isHoneymoonFund?: boolean }).isHoneymoonFund,
+                  )}
                 />
                 <label htmlFor="isHoneymoonFund" className="text-sm font-medium">Cota de Lua de Mel (valor livre)</label>
               </div>

@@ -68,6 +68,72 @@ export const ListWeddingsResponseItem = zod.object({
   venue: zod.string().nullish(),
   description: zod.string().nullish(),
   coverImageUrl: zod.string().nullish(),
+  groomContact: zod
+    .object({
+      cep: zod.string().optional(),
+      street: zod.string().optional(),
+      number: zod.string().optional(),
+      complement: zod.string().optional(),
+      neighborhood: zod.string().optional(),
+      city: zod.string().optional(),
+      state: zod.string().optional(),
+      phone: zod.string().optional(),
+      phoneHasWhatsapp: zod.boolean().optional(),
+      email: zod.string().optional(),
+    })
+    .describe(
+      "Dados de endereço e contato de noivo ou noiva (CEP primeiro; demais editáveis).",
+    )
+    .nullish(),
+  brideContact: zod
+    .object({
+      cep: zod.string().optional(),
+      street: zod.string().optional(),
+      number: zod.string().optional(),
+      complement: zod.string().optional(),
+      neighborhood: zod.string().optional(),
+      city: zod.string().optional(),
+      state: zod.string().optional(),
+      phone: zod.string().optional(),
+      phoneHasWhatsapp: zod.boolean().optional(),
+      email: zod.string().optional(),
+    })
+    .describe(
+      "Dados de endereço e contato de noivo ou noiva (CEP primeiro; demais editáveis).",
+    )
+    .nullish(),
+  religiousVenueDetail: zod
+    .object({
+      name: zod.string().optional(),
+      cep: zod.string().optional(),
+      street: zod.string().optional(),
+      number: zod.string().optional(),
+      complement: zod.string().optional(),
+      neighborhood: zod.string().optional(),
+      city: zod.string().optional(),
+      state: zod.string().optional(),
+      mapsUrl: zod.string().optional(),
+    })
+    .describe(
+      "Local de cerimônia (nome + endereço a partir do CEP; mapsUrl opcional).",
+    )
+    .nullish(),
+  civilVenueDetail: zod
+    .object({
+      name: zod.string().optional(),
+      cep: zod.string().optional(),
+      street: zod.string().optional(),
+      number: zod.string().optional(),
+      complement: zod.string().optional(),
+      neighborhood: zod.string().optional(),
+      city: zod.string().optional(),
+      state: zod.string().optional(),
+      mapsUrl: zod.string().optional(),
+    })
+    .describe(
+      "Local de cerimônia (nome + endereço a partir do CEP; mapsUrl opcional).",
+    )
+    .nullish(),
   createdById: zod.number(),
   createdAt: zod.date(),
 });
@@ -86,6 +152,72 @@ export const CreateWeddingBody = zod.object({
   venue: zod.string().nullish(),
   description: zod.string().nullish(),
   coverImageUrl: zod.string().nullish(),
+  groomContact: zod
+    .object({
+      cep: zod.string().optional(),
+      street: zod.string().optional(),
+      number: zod.string().optional(),
+      complement: zod.string().optional(),
+      neighborhood: zod.string().optional(),
+      city: zod.string().optional(),
+      state: zod.string().optional(),
+      phone: zod.string().optional(),
+      phoneHasWhatsapp: zod.boolean().optional(),
+      email: zod.string().optional(),
+    })
+    .describe(
+      "Dados de endereço e contato de noivo ou noiva (CEP primeiro; demais editáveis).",
+    )
+    .nullish(),
+  brideContact: zod
+    .object({
+      cep: zod.string().optional(),
+      street: zod.string().optional(),
+      number: zod.string().optional(),
+      complement: zod.string().optional(),
+      neighborhood: zod.string().optional(),
+      city: zod.string().optional(),
+      state: zod.string().optional(),
+      phone: zod.string().optional(),
+      phoneHasWhatsapp: zod.boolean().optional(),
+      email: zod.string().optional(),
+    })
+    .describe(
+      "Dados de endereço e contato de noivo ou noiva (CEP primeiro; demais editáveis).",
+    )
+    .nullish(),
+  religiousVenueDetail: zod
+    .object({
+      name: zod.string().optional(),
+      cep: zod.string().optional(),
+      street: zod.string().optional(),
+      number: zod.string().optional(),
+      complement: zod.string().optional(),
+      neighborhood: zod.string().optional(),
+      city: zod.string().optional(),
+      state: zod.string().optional(),
+      mapsUrl: zod.string().optional(),
+    })
+    .describe(
+      "Local de cerimônia (nome + endereço a partir do CEP; mapsUrl opcional).",
+    )
+    .nullish(),
+  civilVenueDetail: zod
+    .object({
+      name: zod.string().optional(),
+      cep: zod.string().optional(),
+      street: zod.string().optional(),
+      number: zod.string().optional(),
+      complement: zod.string().optional(),
+      neighborhood: zod.string().optional(),
+      city: zod.string().optional(),
+      state: zod.string().optional(),
+      mapsUrl: zod.string().optional(),
+    })
+    .describe(
+      "Local de cerimônia (nome + endereço a partir do CEP; mapsUrl opcional).",
+    )
+    .nullish(),
 });
 
 /**
@@ -106,6 +238,72 @@ export const GetWeddingResponse = zod.object({
   venue: zod.string().nullish(),
   description: zod.string().nullish(),
   coverImageUrl: zod.string().nullish(),
+  groomContact: zod
+    .object({
+      cep: zod.string().optional(),
+      street: zod.string().optional(),
+      number: zod.string().optional(),
+      complement: zod.string().optional(),
+      neighborhood: zod.string().optional(),
+      city: zod.string().optional(),
+      state: zod.string().optional(),
+      phone: zod.string().optional(),
+      phoneHasWhatsapp: zod.boolean().optional(),
+      email: zod.string().optional(),
+    })
+    .describe(
+      "Dados de endereço e contato de noivo ou noiva (CEP primeiro; demais editáveis).",
+    )
+    .nullish(),
+  brideContact: zod
+    .object({
+      cep: zod.string().optional(),
+      street: zod.string().optional(),
+      number: zod.string().optional(),
+      complement: zod.string().optional(),
+      neighborhood: zod.string().optional(),
+      city: zod.string().optional(),
+      state: zod.string().optional(),
+      phone: zod.string().optional(),
+      phoneHasWhatsapp: zod.boolean().optional(),
+      email: zod.string().optional(),
+    })
+    .describe(
+      "Dados de endereço e contato de noivo ou noiva (CEP primeiro; demais editáveis).",
+    )
+    .nullish(),
+  religiousVenueDetail: zod
+    .object({
+      name: zod.string().optional(),
+      cep: zod.string().optional(),
+      street: zod.string().optional(),
+      number: zod.string().optional(),
+      complement: zod.string().optional(),
+      neighborhood: zod.string().optional(),
+      city: zod.string().optional(),
+      state: zod.string().optional(),
+      mapsUrl: zod.string().optional(),
+    })
+    .describe(
+      "Local de cerimônia (nome + endereço a partir do CEP; mapsUrl opcional).",
+    )
+    .nullish(),
+  civilVenueDetail: zod
+    .object({
+      name: zod.string().optional(),
+      cep: zod.string().optional(),
+      street: zod.string().optional(),
+      number: zod.string().optional(),
+      complement: zod.string().optional(),
+      neighborhood: zod.string().optional(),
+      city: zod.string().optional(),
+      state: zod.string().optional(),
+      mapsUrl: zod.string().optional(),
+    })
+    .describe(
+      "Local de cerimônia (nome + endereço a partir do CEP; mapsUrl opcional).",
+    )
+    .nullish(),
   createdById: zod.number(),
   createdAt: zod.date(),
 });
@@ -127,6 +325,72 @@ export const UpdateWeddingBody = zod.object({
   venue: zod.string().nullish(),
   description: zod.string().nullish(),
   coverImageUrl: zod.string().nullish(),
+  groomContact: zod
+    .object({
+      cep: zod.string().optional(),
+      street: zod.string().optional(),
+      number: zod.string().optional(),
+      complement: zod.string().optional(),
+      neighborhood: zod.string().optional(),
+      city: zod.string().optional(),
+      state: zod.string().optional(),
+      phone: zod.string().optional(),
+      phoneHasWhatsapp: zod.boolean().optional(),
+      email: zod.string().optional(),
+    })
+    .describe(
+      "Dados de endereço e contato de noivo ou noiva (CEP primeiro; demais editáveis).",
+    )
+    .nullish(),
+  brideContact: zod
+    .object({
+      cep: zod.string().optional(),
+      street: zod.string().optional(),
+      number: zod.string().optional(),
+      complement: zod.string().optional(),
+      neighborhood: zod.string().optional(),
+      city: zod.string().optional(),
+      state: zod.string().optional(),
+      phone: zod.string().optional(),
+      phoneHasWhatsapp: zod.boolean().optional(),
+      email: zod.string().optional(),
+    })
+    .describe(
+      "Dados de endereço e contato de noivo ou noiva (CEP primeiro; demais editáveis).",
+    )
+    .nullish(),
+  religiousVenueDetail: zod
+    .object({
+      name: zod.string().optional(),
+      cep: zod.string().optional(),
+      street: zod.string().optional(),
+      number: zod.string().optional(),
+      complement: zod.string().optional(),
+      neighborhood: zod.string().optional(),
+      city: zod.string().optional(),
+      state: zod.string().optional(),
+      mapsUrl: zod.string().optional(),
+    })
+    .describe(
+      "Local de cerimônia (nome + endereço a partir do CEP; mapsUrl opcional).",
+    )
+    .nullish(),
+  civilVenueDetail: zod
+    .object({
+      name: zod.string().optional(),
+      cep: zod.string().optional(),
+      street: zod.string().optional(),
+      number: zod.string().optional(),
+      complement: zod.string().optional(),
+      neighborhood: zod.string().optional(),
+      city: zod.string().optional(),
+      state: zod.string().optional(),
+      mapsUrl: zod.string().optional(),
+    })
+    .describe(
+      "Local de cerimônia (nome + endereço a partir do CEP; mapsUrl opcional).",
+    )
+    .nullish(),
 });
 
 export const UpdateWeddingResponse = zod.object({
@@ -140,6 +404,72 @@ export const UpdateWeddingResponse = zod.object({
   venue: zod.string().nullish(),
   description: zod.string().nullish(),
   coverImageUrl: zod.string().nullish(),
+  groomContact: zod
+    .object({
+      cep: zod.string().optional(),
+      street: zod.string().optional(),
+      number: zod.string().optional(),
+      complement: zod.string().optional(),
+      neighborhood: zod.string().optional(),
+      city: zod.string().optional(),
+      state: zod.string().optional(),
+      phone: zod.string().optional(),
+      phoneHasWhatsapp: zod.boolean().optional(),
+      email: zod.string().optional(),
+    })
+    .describe(
+      "Dados de endereço e contato de noivo ou noiva (CEP primeiro; demais editáveis).",
+    )
+    .nullish(),
+  brideContact: zod
+    .object({
+      cep: zod.string().optional(),
+      street: zod.string().optional(),
+      number: zod.string().optional(),
+      complement: zod.string().optional(),
+      neighborhood: zod.string().optional(),
+      city: zod.string().optional(),
+      state: zod.string().optional(),
+      phone: zod.string().optional(),
+      phoneHasWhatsapp: zod.boolean().optional(),
+      email: zod.string().optional(),
+    })
+    .describe(
+      "Dados de endereço e contato de noivo ou noiva (CEP primeiro; demais editáveis).",
+    )
+    .nullish(),
+  religiousVenueDetail: zod
+    .object({
+      name: zod.string().optional(),
+      cep: zod.string().optional(),
+      street: zod.string().optional(),
+      number: zod.string().optional(),
+      complement: zod.string().optional(),
+      neighborhood: zod.string().optional(),
+      city: zod.string().optional(),
+      state: zod.string().optional(),
+      mapsUrl: zod.string().optional(),
+    })
+    .describe(
+      "Local de cerimônia (nome + endereço a partir do CEP; mapsUrl opcional).",
+    )
+    .nullish(),
+  civilVenueDetail: zod
+    .object({
+      name: zod.string().optional(),
+      cep: zod.string().optional(),
+      street: zod.string().optional(),
+      number: zod.string().optional(),
+      complement: zod.string().optional(),
+      neighborhood: zod.string().optional(),
+      city: zod.string().optional(),
+      state: zod.string().optional(),
+      mapsUrl: zod.string().optional(),
+    })
+    .describe(
+      "Local de cerimônia (nome + endereço a partir do CEP; mapsUrl opcional).",
+    )
+    .nullish(),
   createdById: zod.number(),
   createdAt: zod.date(),
 });
@@ -638,6 +968,7 @@ export const GetPublicInviteResponse = zod.object({
   guest: zod
     .object({
       name: zod.string().optional(),
+      phone: zod.string().nullish(),
       rsvpStatus: zod
         .enum(["pending", "confirmed", "declined", "maybe"])
         .optional(),
@@ -704,6 +1035,7 @@ export const PatchPublicInviteRsvpResponse = zod.object({
   guest: zod
     .object({
       name: zod.string().optional(),
+      phone: zod.string().nullish(),
       rsvpStatus: zod
         .enum(["pending", "confirmed", "declined", "maybe"])
         .optional(),
@@ -1938,6 +2270,8 @@ export const GetIntegrationSettingsResponse = zod.object({
   asaasApiKey: zod.string().nullish(),
   asaasEnvironment: zod.enum(["sandbox", "production"]),
   asaasWebhookToken: zod.string().nullish(),
+  asaasPublicKey: zod.string().nullish(),
+  activePaymentGateway: zod.string().default("asaas"),
 });
 
 /**
@@ -1954,6 +2288,8 @@ export const UpdateIntegrationSettingsBody = zod.object({
   asaasApiKey: zod.string().nullish(),
   asaasEnvironment: zod.enum(["sandbox", "production"]).optional(),
   asaasWebhookToken: zod.string().nullish(),
+  asaasPublicKey: zod.string().nullish(),
+  activePaymentGateway: zod.enum(["asaas"]).optional(),
 });
 
 export const UpdateIntegrationSettingsResponse = zod.object({
@@ -1965,6 +2301,8 @@ export const UpdateIntegrationSettingsResponse = zod.object({
   asaasApiKey: zod.string().nullish(),
   asaasEnvironment: zod.enum(["sandbox", "production"]),
   asaasWebhookToken: zod.string().nullish(),
+  asaasPublicKey: zod.string().nullish(),
+  activePaymentGateway: zod.string().default("asaas"),
 });
 
 /**
@@ -1992,6 +2330,164 @@ export const TestAsaasConnectionResponse = zod.object({
 });
 
 /**
+ * @summary List WhatsApp connections for a wedding
+ */
+export const ListWhatsappConnectionsParams = zod.object({
+  weddingId: zod.coerce.number(),
+});
+
+export const ListWhatsappConnectionsResponseItem = zod.object({
+  id: zod.number(),
+  weddingId: zod.number(),
+  provider: zod.enum(["evolution", "meta_cloud"]),
+  ownerKind: zod.enum(["bride", "groom", "event"]),
+  label: zod.string().nullish(),
+  phoneNumber: zod.string().nullish(),
+  status: zod.enum(["pending", "qr", "connected", "disconnected", "error"]),
+  evolutionInstanceName: zod.string().nullish(),
+  evolutionIntegration: zod.string().nullish(),
+  evolutionInstanceApiKey: zod
+    .string()
+    .nullish()
+    .describe("Masked in responses."),
+  evolutionInstanceId: zod.string().nullish(),
+  metaPhoneNumberId: zod.string().nullish(),
+  metaWabaId: zod.string().nullish(),
+  metaAccessToken: zod.string().nullish().describe("Masked in responses."),
+  lastConnectedAt: zod.date().nullish(),
+  createdAt: zod.date(),
+  updatedAt: zod.date(),
+});
+export const ListWhatsappConnectionsResponse = zod.array(
+  ListWhatsappConnectionsResponseItem,
+);
+
+/**
+ * @summary Create a new WhatsApp connection and return the QR code
+ */
+export const CreateWhatsappConnectionParams = zod.object({
+  weddingId: zod.coerce.number(),
+});
+
+export const CreateWhatsappConnectionBody = zod.object({
+  provider: zod.enum(["evolution", "meta_cloud"]),
+  ownerKind: zod.enum(["bride", "groom", "event"]),
+  label: zod.string().nullish(),
+  phoneNumber: zod
+    .string()
+    .nullish()
+    .describe(
+      "E.164 number (digits only) used by Evolution as hint for QR pairing.",
+    ),
+  evolutionInstanceName: zod.string(),
+});
+
+export const CreateWhatsappConnectionResponse = zod.object({
+  connection: zod.object({
+    id: zod.number(),
+    weddingId: zod.number(),
+    provider: zod.enum(["evolution", "meta_cloud"]),
+    ownerKind: zod.enum(["bride", "groom", "event"]),
+    label: zod.string().nullish(),
+    phoneNumber: zod.string().nullish(),
+    status: zod.enum(["pending", "qr", "connected", "disconnected", "error"]),
+    evolutionInstanceName: zod.string().nullish(),
+    evolutionIntegration: zod.string().nullish(),
+    evolutionInstanceApiKey: zod
+      .string()
+      .nullish()
+      .describe("Masked in responses."),
+    evolutionInstanceId: zod.string().nullish(),
+    metaPhoneNumberId: zod.string().nullish(),
+    metaWabaId: zod.string().nullish(),
+    metaAccessToken: zod.string().nullish().describe("Masked in responses."),
+    lastConnectedAt: zod.date().nullish(),
+    createdAt: zod.date(),
+    updatedAt: zod.date(),
+  }),
+  qrcode: zod
+    .object({
+      base64: zod.string().nullish(),
+      code: zod.string().nullish(),
+      pairingCode: zod.string().nullish(),
+    })
+    .nullish(),
+});
+
+/**
+ * @summary Delete a WhatsApp connection (also removes instance from Evolution)
+ */
+export const DeleteWhatsappConnectionParams = zod.object({
+  weddingId: zod.coerce.number(),
+  id: zod.coerce.number(),
+});
+
+/**
+ * @summary Get (or refresh) the QR code for a connection
+ */
+export const GetWhatsappConnectionQrParams = zod.object({
+  weddingId: zod.coerce.number(),
+  id: zod.coerce.number(),
+});
+
+export const GetWhatsappConnectionQrResponse = zod.object({
+  connectionId: zod.number(),
+  status: zod.enum(["pending", "qr", "connected", "disconnected", "error"]),
+  qrcode: zod
+    .object({
+      base64: zod.string().nullish(),
+      code: zod.string().nullish(),
+      pairingCode: zod.string().nullish(),
+    })
+    .nullish(),
+});
+
+/**
+ * @summary Get the current connection status (polled by the UI)
+ */
+export const GetWhatsappConnectionStatusParams = zod.object({
+  weddingId: zod.coerce.number(),
+  id: zod.coerce.number(),
+});
+
+export const GetWhatsappConnectionStatusResponse = zod.object({
+  connectionId: zod.number(),
+  status: zod.enum(["pending", "qr", "connected", "disconnected", "error"]),
+  evolutionState: zod.string().nullish(),
+});
+
+/**
+ * @summary Disconnect the WhatsApp session (keeps the instance)
+ */
+export const LogoutWhatsappConnectionParams = zod.object({
+  weddingId: zod.coerce.number(),
+  id: zod.coerce.number(),
+});
+
+export const LogoutWhatsappConnectionResponse = zod.object({
+  id: zod.number(),
+  weddingId: zod.number(),
+  provider: zod.enum(["evolution", "meta_cloud"]),
+  ownerKind: zod.enum(["bride", "groom", "event"]),
+  label: zod.string().nullish(),
+  phoneNumber: zod.string().nullish(),
+  status: zod.enum(["pending", "qr", "connected", "disconnected", "error"]),
+  evolutionInstanceName: zod.string().nullish(),
+  evolutionIntegration: zod.string().nullish(),
+  evolutionInstanceApiKey: zod
+    .string()
+    .nullish()
+    .describe("Masked in responses."),
+  evolutionInstanceId: zod.string().nullish(),
+  metaPhoneNumberId: zod.string().nullish(),
+  metaWabaId: zod.string().nullish(),
+  metaAccessToken: zod.string().nullish().describe("Masked in responses."),
+  lastConnectedAt: zod.date().nullish(),
+  createdAt: zod.date(),
+  updatedAt: zod.date(),
+});
+
+/**
  * @summary Asaas payment webhook
  */
 export const AsaasWebhookBody = zod.object({}).passthrough();
@@ -2015,6 +2511,72 @@ export const GetDashboardResponse = zod.object({
     venue: zod.string().nullish(),
     description: zod.string().nullish(),
     coverImageUrl: zod.string().nullish(),
+    groomContact: zod
+      .object({
+        cep: zod.string().optional(),
+        street: zod.string().optional(),
+        number: zod.string().optional(),
+        complement: zod.string().optional(),
+        neighborhood: zod.string().optional(),
+        city: zod.string().optional(),
+        state: zod.string().optional(),
+        phone: zod.string().optional(),
+        phoneHasWhatsapp: zod.boolean().optional(),
+        email: zod.string().optional(),
+      })
+      .describe(
+        "Dados de endereço e contato de noivo ou noiva (CEP primeiro; demais editáveis).",
+      )
+      .nullish(),
+    brideContact: zod
+      .object({
+        cep: zod.string().optional(),
+        street: zod.string().optional(),
+        number: zod.string().optional(),
+        complement: zod.string().optional(),
+        neighborhood: zod.string().optional(),
+        city: zod.string().optional(),
+        state: zod.string().optional(),
+        phone: zod.string().optional(),
+        phoneHasWhatsapp: zod.boolean().optional(),
+        email: zod.string().optional(),
+      })
+      .describe(
+        "Dados de endereço e contato de noivo ou noiva (CEP primeiro; demais editáveis).",
+      )
+      .nullish(),
+    religiousVenueDetail: zod
+      .object({
+        name: zod.string().optional(),
+        cep: zod.string().optional(),
+        street: zod.string().optional(),
+        number: zod.string().optional(),
+        complement: zod.string().optional(),
+        neighborhood: zod.string().optional(),
+        city: zod.string().optional(),
+        state: zod.string().optional(),
+        mapsUrl: zod.string().optional(),
+      })
+      .describe(
+        "Local de cerimônia (nome + endereço a partir do CEP; mapsUrl opcional).",
+      )
+      .nullish(),
+    civilVenueDetail: zod
+      .object({
+        name: zod.string().optional(),
+        cep: zod.string().optional(),
+        street: zod.string().optional(),
+        number: zod.string().optional(),
+        complement: zod.string().optional(),
+        neighborhood: zod.string().optional(),
+        city: zod.string().optional(),
+        state: zod.string().optional(),
+        mapsUrl: zod.string().optional(),
+      })
+      .describe(
+        "Local de cerimônia (nome + endereço a partir do CEP; mapsUrl opcional).",
+      )
+      .nullish(),
     createdById: zod.number(),
     createdAt: zod.date(),
   }),

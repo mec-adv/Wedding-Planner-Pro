@@ -15,9 +15,7 @@ import {
   AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-export default function GiftCategories() {
-  const { weddingId } = useParams();
-  const wid = Number(weddingId);
+export function GiftCategoriesPanel({ weddingId: wid, embedded = false }: { weddingId: number; embedded?: boolean }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -69,10 +67,12 @@ export default function GiftCategories() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Categorias de Presentes</h1>
-        <p className="text-muted-foreground text-sm">Organize os presentes em categorias para facilitar a navegação na loja</p>
-      </div>
+      {!embedded && (
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Categorias de Presentes</h1>
+          <p className="text-muted-foreground text-sm">Organize os presentes em categorias para facilitar a navegação na loja</p>
+        </div>
+      )}
 
       {/* Add new */}
       <Card>
@@ -185,4 +185,10 @@ export default function GiftCategories() {
       </AlertDialog>
     </div>
   );
+}
+
+export default function GiftCategories() {
+  const { weddingId } = useParams();
+  const wid = Number(weddingId);
+  return <GiftCategoriesPanel weddingId={wid} />;
 }

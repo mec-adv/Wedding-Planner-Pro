@@ -1,8 +1,9 @@
-import { useListWeddings, useCreateWedding, useGetMe } from "@workspace/api-client-react";
+import { useListWeddings, useCreateWedding, useGetMe, useDeleteWedding, ApiError } from "@workspace/api-client-react";
+import type { Wedding } from "@workspace/api-client-react";
 import { Link, useLocation } from "wouter";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Heart, Plus, Calendar, MapPin, Church, Scale } from "lucide-react";
+import { Heart, Plus, Calendar, MapPin, Church, Scale, PencilLine, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -11,6 +12,15 @@ import { ptBR } from "date-fns/locale/pt-BR";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 function formatCeremony(iso: string | null | undefined) {
   if (!iso) return "—";
@@ -26,9 +36,32 @@ export default function SelectWedding() {
   const { data: weddings, isLoading } = useListWeddings();
   const { data: user } = useGetMe();
   const createMutation = useCreateWedding();
+  const deleteWeddingMutation = useDeleteWedding();
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
+  const [weddingPendingDelete, setWeddingPendingDelete] = useState<Wedding | null>(null);
+
+  const canEditWedding = user?.role === "admin" || user?.role === "planner";
+  const canDeleteWedding = (w: Wedding) =>
+    Boolean(user && (user.role === "admin" || Number(w.createdById) === user.id));
+
+  const confirmDeleteWedding = async () => {
+    if (!weddingPendingDelete) return;
+    try {
+      await deleteWeddingMutation.mutateAsync({ id: weddingPendingDelete.id });
+      await queryClient.invalidateQueries({ queryKey: ["/api/weddings"] });
+      setWeddingPendingDelete(null);
+      toast({ title: "Casamento removido" });
+    } catch (err) {
+      toast({
+        variant: "destructive",
+        title: "Não foi possível apagar",
+        description:
+          err instanceof ApiError ? err.message : err instanceof Error ? err.message : "Tente novamente.",
+      });
+    }
+  };
 
   const handleCreate = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -148,11 +181,42 @@ export default function SelectWedding() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {weddings?.map((wedding) => (
-              <Link key={wedding.id} href={`/weddings/${wedding.id}/dashboard`}>
-                <Card className="h-full cursor-pointer hover:-translate-y-1 transition-transform duration-300 border-transparent hover:border-primary/20 overflow-hidden group">
-                  <div className="h-28 bg-primary/10 relative">
-                    <Heart className="absolute right-4 bottom-4 w-12 h-12 text-primary/20" />
-                  </div>
+              <Card
+                key={wedding.id}
+                className="h-full border-transparent hover:border-primary/20 overflow-hidden group hover:-translate-y-1 transition-transform duration-300"
+              >
+                <div className="h-28 bg-primary/10 relative">
+                  <Link
+                    href={`/weddings/${wedding.id}/dashboard`}
+                    className="absolute inset-0 z-0"
+                    aria-label={`Abrir dashboard de ${wedding.title}`}
+                  />
+                  <Heart className="absolute right-4 bottom-4 w-12 h-12 text-primary/20 pointer-events-none z-[1]" />
+                  {(canEditWedding || canDeleteWedding(wedding)) && (
+                    <div className="absolute top-2 right-2 z-10 flex gap-1.5">
+                      {canEditWedding && (
+                        <Button variant="secondary" size="icon" className="h-8 w-8 shadow-sm" asChild>
+                          <Link href={`/weddings/${wedding.id}/edit`} title="Editar dados do casamento">
+                            <PencilLine className="w-4 h-4" />
+                          </Link>
+                        </Button>
+                      )}
+                      {canDeleteWedding(wedding) && (
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="icon"
+                          className="h-8 w-8 shadow-sm text-destructive hover:text-destructive hover:bg-destructive/10"
+                          title="Excluir casamento"
+                          onClick={() => setWeddingPendingDelete(wedding)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </div>
+                <Link href={`/weddings/${wedding.id}/dashboard`} className="block cursor-pointer">
                   <CardHeader>
                     <CardTitle className="group-hover:text-primary transition-colors">{wedding.title}</CardTitle>
                     <CardDescription className="flex items-start gap-2 mt-2">
@@ -174,12 +238,37 @@ export default function SelectWedding() {
                       </CardDescription>
                     )}
                   </CardHeader>
-                </Card>
-              </Link>
+                </Link>
+              </Card>
             ))}
           </div>
         )}
       </div>
+
+      <AlertDialog open={weddingPendingDelete != null} onOpenChange={(open) => !open && setWeddingPendingDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Apagar este casamento?</AlertDialogTitle>
+            <AlertDialogDescription>
+              O evento{" "}
+              <span className="font-medium text-foreground">&quot;{weddingPendingDelete?.title}&quot;</span> será
+              excluído com todos os dados vinculados (convidados, orçamento, etc.). Esta ação não pode ser
+              desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteWeddingMutation.isPending}>Cancelar</AlertDialogCancel>
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={deleteWeddingMutation.isPending}
+              onClick={() => void confirmDeleteWedding()}
+            >
+              {deleteWeddingMutation.isPending ? "Apagando…" : "Apagar definitivamente"}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

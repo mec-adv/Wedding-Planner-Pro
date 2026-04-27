@@ -36,17 +36,26 @@ const monorepoRoot = path.resolve(import.meta.dirname, "..", "..");
 const viteMode = process.env.NODE_ENV === "production" ? "production" : "development";
 const rootEnv = loadEnv(viteMode, monorepoRoot, "");
 
-const viteApiBase = rootEnv.VITE_API_BASE?.trim() || defaultViteApiBase;
+const envViteApiBase = rootEnv.VITE_API_BASE?.trim();
+/** Chave do proxy deve coincidir com `resolveViteApiBase()` (BASE_URL + `/api`). Evita `VITE_API_BASE=/api` com app em subcaminho. */
+const viteApiBase =
+  pathPrefix !== "" && (!envViteApiBase || envViteApiBase === "/api")
+    ? defaultViteApiBase
+    : envViteApiBase || defaultViteApiBase;
 
 /** Porta do Express em dev; o Vite usa outra PORT (ex.: 5173). */
 const devApiPort = rootEnv.DEV_API_PORT || process.env.DEV_API_PORT || "8080";
 const devApiProxyTarget = `http://127.0.0.1:${devApiPort}`;
 
+/** Em dev com subcaminho, o browser chama `/{prefix}/api/...`; o Express local monta em `/api`. */
+function rewriteDevProxyToApiRoot(path: string): string {
+  if (pathPrefix === "") return path;
+  const escaped = pathPrefix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return path.replace(new RegExp(`^${escaped}/api`), "/api");
+}
+
 export default defineConfig({
   base: basePath,
-  define: {
-    "import.meta.env.VITE_API_BASE": JSON.stringify(viteApiBase),
-  },
   plugins: [
     react(),
     tailwindcss(),
@@ -86,7 +95,17 @@ export default defineConfig({
         target: devApiProxyTarget,
         changeOrigin: true,
         ws: true,
+        rewrite: rewriteDevProxyToApiRoot,
       },
+      // Fallback: mídias antigas ou links `/api/uploads/...` na raiz do host (sem prefixo do app).
+      ...(pathPrefix !== ""
+        ? {
+            "^/api": {
+              target: devApiProxyTarget,
+              changeOrigin: true,
+            },
+          }
+        : {}),
     },
     fs: {
       strict: true,

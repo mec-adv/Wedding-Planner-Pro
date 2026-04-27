@@ -1980,6 +1980,142 @@ paths:
               schema:
                 $ref: "#/components/schemas/ConnectionTestResult"
 
+  /weddings/{weddingId}/whatsapp/connections:
+    get:
+      operationId: listWhatsappConnections
+      tags: [whatsapp]
+      summary: List WhatsApp connections for a wedding
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Connections
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/WhatsappConnection"
+    post:
+      operationId: createWhatsappConnection
+      tags: [whatsapp]
+      summary: Create a new WhatsApp connection and return the QR code
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WhatsappConnectionCreateInput"
+      responses:
+        "200":
+          description: Connection created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WhatsappConnectionCreateResult"
+
+  /weddings/{weddingId}/whatsapp/connections/{id}:
+    delete:
+      operationId: deleteWhatsappConnection
+      tags: [whatsapp]
+      summary: Delete a WhatsApp connection (also removes instance from Evolution)
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /weddings/{weddingId}/whatsapp/connections/{id}/qr:
+    get:
+      operationId: getWhatsappConnectionQr
+      tags: [whatsapp]
+      summary: Get (or refresh) the QR code for a connection
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: QR code
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WhatsappQrResponse"
+
+  /weddings/{weddingId}/whatsapp/connections/{id}/status:
+    get:
+      operationId: getWhatsappConnectionStatus
+      tags: [whatsapp]
+      summary: Get the current connection status (polled by the UI)
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WhatsappStatusResponse"
+
+  /weddings/{weddingId}/whatsapp/connections/{id}/logout:
+    post:
+      operationId: logoutWhatsappConnection
+      tags: [whatsapp]
+      summary: Disconnect the WhatsApp session (keeps the instance)
+      parameters:
+        - name: weddingId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WhatsappConnection"
+
   /webhooks/asaas:
     post:
       operationId: asaasWebhook
@@ -2086,6 +2222,54 @@ components:
         - role
         - createdAt
 
+    PersonContact:
+      type: object
+      description: Dados de endereço e contato de noivo ou noiva (CEP primeiro; demais editáveis).
+      properties:
+        cep:
+          type: string
+        street:
+          type: string
+        number:
+          type: string
+        complement:
+          type: string
+        neighborhood:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        phone:
+          type: string
+        phoneHasWhatsapp:
+          type: boolean
+        email:
+          type: string
+
+    VenueDetail:
+      type: object
+      description: Local de cerimônia (nome + endereço a partir do CEP; mapsUrl opcional).
+      properties:
+        name:
+          type: string
+        cep:
+          type: string
+        street:
+          type: string
+        number:
+          type: string
+        complement:
+          type: string
+        neighborhood:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        mapsUrl:
+          type: string
+
     Wedding:
       type: object
       properties:
@@ -2114,6 +2298,22 @@ components:
           type: ["string", "null"]
         coverImageUrl:
           type: ["string", "null"]
+        groomContact:
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/PersonContact"
+        brideContact:
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/PersonContact"
+        religiousVenueDetail:
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/VenueDetail"
+        civilVenueDetail:
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/VenueDetail"
         createdById:
           type: integer
         createdAt:
@@ -2152,6 +2352,22 @@ components:
           type: ["string", "null"]
         coverImageUrl:
           type: ["string", "null"]
+        groomContact:
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/PersonContact"
+        brideContact:
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/PersonContact"
+        religiousVenueDetail:
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/VenueDetail"
+        civilVenueDetail:
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/VenueDetail"
 
     GuestGroup:
       type: object
@@ -2603,6 +2819,8 @@ components:
       properties:
         name:
           type: string
+        phone:
+          type: ["string", "null"]
         rsvpStatus:
           type: string
           enum: [pending, confirmed, declined, maybe]
@@ -3295,10 +3513,18 @@ components:
           enum: [sandbox, production]
         asaasWebhookToken:
           type: ["string", "null"]
+        asaasPublicKey:
+          type: ["string", "null"]
+          description: Chave pública Asaas para tokenização client-side via Asaas.js
+        activePaymentGateway:
+          type: string
+          enum: [asaas]
+          description: Gateway de pagamento ativo para este casamento
       required:
         - id
         - weddingId
         - asaasEnvironment
+        - activePaymentGateway
 
     IntegrationSettingsInput:
       type: object
@@ -3316,6 +3542,28 @@ components:
           enum: [sandbox, production]
         asaasWebhookToken:
           type: ["string", "null"]
+        asaasPublicKey:
+          type: ["string", "null"]
+          description: Chave pública Asaas para tokenização client-side via Asaas.js
+        activePaymentGateway:
+          type: string
+          enum: [asaas]
+          description: Gateway de pagamento ativo para este casamento
+
+    PaymentConfig:
+      type: object
+      properties:
+        gatewayName:
+          type: string
+          enum: [asaas]
+        asaasPublicKey:
+          type: ["string", "null"]
+        asaasEnvironment:
+          type: string
+          enum: [sandbox, production]
+      required:
+        - gatewayName
+        - asaasEnvironment
 
     ConnectionTestResult:
       type: object
@@ -3327,6 +3575,138 @@ components:
       required:
         - success
         - message
+
+    WhatsappProvider:
+      type: string
+      enum: [evolution, meta_cloud]
+
+    WhatsappOwnerKind:
+      type: string
+      enum: [bride, groom, event]
+
+    WhatsappConnectionStatus:
+      type: string
+      enum: [pending, qr, connected, disconnected, error]
+
+    WhatsappConnection:
+      type: object
+      properties:
+        id:
+          type: integer
+        weddingId:
+          type: integer
+        provider:
+          $ref: "#/components/schemas/WhatsappProvider"
+        ownerKind:
+          $ref: "#/components/schemas/WhatsappOwnerKind"
+        label:
+          type: ["string", "null"]
+        phoneNumber:
+          type: ["string", "null"]
+        status:
+          $ref: "#/components/schemas/WhatsappConnectionStatus"
+        evolutionInstanceName:
+          type: ["string", "null"]
+        evolutionIntegration:
+          type: ["string", "null"]
+        evolutionInstanceApiKey:
+          type: ["string", "null"]
+          description: Masked in responses.
+        evolutionInstanceId:
+          type: ["string", "null"]
+        metaPhoneNumberId:
+          type: ["string", "null"]
+        metaWabaId:
+          type: ["string", "null"]
+        metaAccessToken:
+          type: ["string", "null"]
+          description: Masked in responses.
+        lastConnectedAt:
+          type: ["string", "null"]
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - weddingId
+        - provider
+        - ownerKind
+        - status
+        - createdAt
+        - updatedAt
+
+    WhatsappConnectionCreateInput:
+      type: object
+      properties:
+        provider:
+          $ref: "#/components/schemas/WhatsappProvider"
+        ownerKind:
+          $ref: "#/components/schemas/WhatsappOwnerKind"
+        label:
+          type: ["string", "null"]
+        phoneNumber:
+          type: ["string", "null"]
+          description: E.164 number (digits only) used by Evolution as hint for QR pairing.
+        evolutionInstanceName:
+          type: string
+      required:
+        - provider
+        - ownerKind
+        - evolutionInstanceName
+
+    WhatsappQrResponse:
+      type: object
+      properties:
+        connectionId:
+          type: integer
+        status:
+          $ref: "#/components/schemas/WhatsappConnectionStatus"
+        qrcode:
+          type: ["object", "null"]
+          properties:
+            base64:
+              type: ["string", "null"]
+            code:
+              type: ["string", "null"]
+            pairingCode:
+              type: ["string", "null"]
+      required:
+        - connectionId
+        - status
+
+    WhatsappConnectionCreateResult:
+      type: object
+      properties:
+        connection:
+          $ref: "#/components/schemas/WhatsappConnection"
+        qrcode:
+          type: ["object", "null"]
+          properties:
+            base64:
+              type: ["string", "null"]
+            code:
+              type: ["string", "null"]
+            pairingCode:
+              type: ["string", "null"]
+      required:
+        - connection
+
+    WhatsappStatusResponse:
+      type: object
+      properties:
+        connectionId:
+          type: integer
+        status:
+          $ref: "#/components/schemas/WhatsappConnectionStatus"
+        evolutionState:
+          type: ["string", "null"]
+      required:
+        - connectionId
+        - status
 
     DashboardData:
       type: object

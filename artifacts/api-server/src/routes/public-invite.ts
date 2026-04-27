@@ -119,6 +119,7 @@ router.get("/public/invite/:token", limitPublic, limitToken, async (req, res): P
     },
     guest: {
       name: guest.name,
+      phone: guest.phone ?? null,
       rsvpStatus: guest.rsvpStatus,
       dietaryRestrictions: guest.dietaryRestrictions ?? null,
       companions,

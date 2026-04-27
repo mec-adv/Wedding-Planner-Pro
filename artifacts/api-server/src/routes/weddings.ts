@@ -15,8 +15,9 @@ import { removeWeddingUploadDirectory } from "../lib/gift-upload-paths";
 const router: IRouter = Router();
 
 function serializeWedding(w: Wedding) {
+  const { updatedAt: _omitUpdated, ...rest } = w;
   return {
-    ...w,
+    ...rest,
     date: w.date.toISOString(),
     createdAt: w.createdAt.toISOString(),
     civilCeremonyAt: w.civilCeremonyAt ? w.civilCeremonyAt.toISOString() : null,
@@ -44,6 +45,10 @@ type WeddingRowUpdate = Partial<
     | "venue"
     | "description"
     | "coverImageUrl"
+    | "groomContact"
+    | "brideContact"
+    | "religiousVenueDetail"
+    | "civilVenueDetail"
   >
 >;
 
@@ -110,8 +115,10 @@ router.post("/weddings", authMiddleware, async (req, res): Promise<void> => {
   const ins = await pool.query(
     `INSERT INTO weddings (
       title, groom_name, bride_name, date, civil_ceremony_at, religious_ceremony_at,
-      venue, description, cover_image_url, created_by_id
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      venue, description, cover_image_url,
+      groom_contact, bride_contact, religious_venue_detail, civil_venue_detail,
+      created_by_id
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
     RETURNING *`,
     [
       parsed.data.title?.trim() || `${groomName} & ${brideName}`,
@@ -123,6 +130,10 @@ router.post("/weddings", authMiddleware, async (req, res): Promise<void> => {
       parsed.data.venue ?? null,
       parsed.data.description ?? null,
       parsed.data.coverImageUrl ?? null,
+      null,
+      null,
+      null,
+      null,
       userId,
     ],
   );
@@ -216,6 +227,10 @@ router.patch("/weddings/:id", authMiddleware, verifyWeddingAccess, async (req, r
     if (d.venue !== undefined) updateValues.venue = d.venue;
     if (d.description !== undefined) updateValues.description = d.description;
     if (d.coverImageUrl !== undefined) updateValues.coverImageUrl = d.coverImageUrl;
+    if (d.groomContact !== undefined) updateValues.groomContact = d.groomContact;
+    if (d.brideContact !== undefined) updateValues.brideContact = d.brideContact;
+    if (d.religiousVenueDetail !== undefined) updateValues.religiousVenueDetail = d.religiousVenueDetail;
+    if (d.civilVenueDetail !== undefined) updateValues.civilVenueDetail = d.civilVenueDetail;
 
     const nextCivil = (d.civilCeremonyAt ?? existing.civilCeremonyAt) ?? null;
     const nextReligious = (d.religiousCeremonyAt ?? existing.religiousCeremonyAt) ?? null;
@@ -253,6 +268,14 @@ router.patch("/weddings/:id", authMiddleware, verifyWeddingAccess, async (req, r
       description: updateValues.description !== undefined ? updateValues.description : existing.description,
       coverImageUrl:
         updateValues.coverImageUrl !== undefined ? updateValues.coverImageUrl : existing.coverImageUrl,
+      groomContact: updateValues.groomContact !== undefined ? updateValues.groomContact : existing.groomContact,
+      brideContact: updateValues.brideContact !== undefined ? updateValues.brideContact : existing.brideContact,
+      religiousVenueDetail:
+        updateValues.religiousVenueDetail !== undefined
+          ? updateValues.religiousVenueDetail
+          : existing.religiousVenueDetail,
+      civilVenueDetail:
+        updateValues.civilVenueDetail !== undefined ? updateValues.civilVenueDetail : existing.civilVenueDetail,
     };
 
     await pool.query(
@@ -266,8 +289,12 @@ router.patch("/weddings/:id", authMiddleware, verifyWeddingAccess, async (req, r
         venue = $7,
         description = $8,
         cover_image_url = $9,
+        groom_contact = $10::jsonb,
+        bride_contact = $11::jsonb,
+        religious_venue_detail = $12::jsonb,
+        civil_venue_detail = $13::jsonb,
         updated_at = NOW()
-      WHERE id = $10`,
+      WHERE id = $14`,
       [
         merged.title,
         merged.groomName,
@@ -278,6 +305,10 @@ router.patch("/weddings/:id", authMiddleware, verifyWeddingAccess, async (req, r
         merged.venue ?? null,
         merged.description ?? null,
         merged.coverImageUrl ?? null,
+        merged.groomContact != null ? JSON.stringify(merged.groomContact) : null,
+        merged.brideContact != null ? JSON.stringify(merged.brideContact) : null,
+        merged.religiousVenueDetail != null ? JSON.stringify(merged.religiousVenueDetail) : null,
+        merged.civilVenueDetail != null ? JSON.stringify(merged.civilVenueDetail) : null,
         params.data.id,
       ],
     );

@@ -5,6 +5,8 @@
  * Wedding Management API
  * OpenAPI spec version: 0.1.0
  */
+import type { PersonContact } from "./personContact";
+import type { VenueDetail } from "./venueDetail";
 
 export interface Wedding {
   id: number;
@@ -20,6 +22,10 @@ export interface Wedding {
   description?: string | null;
   /** @nullable */
   coverImageUrl?: string | null;
+  groomContact?: PersonContact | null;
+  brideContact?: PersonContact | null;
+  religiousVenueDetail?: VenueDetail | null;
+  civilVenueDetail?: VenueDetail | null;
   createdById: number;
   createdAt: Date;
 }

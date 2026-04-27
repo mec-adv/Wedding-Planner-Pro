@@ -82,6 +82,11 @@ import type {
   VendorInput,
   Wedding,
   WeddingInput,
+  WhatsappConnection,
+  WhatsappConnectionCreateInput,
+  WhatsappConnectionCreateResult,
+  WhatsappQrResponse,
+  WhatsappStatusResponse,
 } from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
@@ -7672,6 +7677,584 @@ export const useTestAsaasConnection = <
   TContext
 > => {
   return useMutation(getTestAsaasConnectionMutationOptions(options));
+};
+
+/**
+ * @summary List WhatsApp connections for a wedding
+ */
+export const getListWhatsappConnectionsUrl = (weddingId: number) => {
+  return `/api/weddings/${weddingId}/whatsapp/connections`;
+};
+
+export const listWhatsappConnections = async (
+  weddingId: number,
+  options?: RequestInit,
+): Promise<WhatsappConnection[]> => {
+  return customFetch<WhatsappConnection[]>(
+    getListWhatsappConnectionsUrl(weddingId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getListWhatsappConnectionsQueryKey = (weddingId: number) => {
+  return [`/api/weddings/${weddingId}/whatsapp/connections`] as const;
+};
+
+export const getListWhatsappConnectionsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listWhatsappConnections>>,
+  TError = ErrorType<unknown>,
+>(
+  weddingId: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listWhatsappConnections>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getListWhatsappConnectionsQueryKey(weddingId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listWhatsappConnections>>
+  > = ({ signal }) =>
+    listWhatsappConnections(weddingId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!weddingId,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof listWhatsappConnections>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListWhatsappConnectionsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listWhatsappConnections>>
+>;
+export type ListWhatsappConnectionsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List WhatsApp connections for a wedding
+ */
+
+export function useListWhatsappConnections<
+  TData = Awaited<ReturnType<typeof listWhatsappConnections>>,
+  TError = ErrorType<unknown>,
+>(
+  weddingId: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listWhatsappConnections>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListWhatsappConnectionsQueryOptions(
+    weddingId,
+    options,
+  );
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Create a new WhatsApp connection and return the QR code
+ */
+export const getCreateWhatsappConnectionUrl = (weddingId: number) => {
+  return `/api/weddings/${weddingId}/whatsapp/connections`;
+};
+
+export const createWhatsappConnection = async (
+  weddingId: number,
+  whatsappConnectionCreateInput: WhatsappConnectionCreateInput,
+  options?: RequestInit,
+): Promise<WhatsappConnectionCreateResult> => {
+  return customFetch<WhatsappConnectionCreateResult>(
+    getCreateWhatsappConnectionUrl(weddingId),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(whatsappConnectionCreateInput),
+    },
+  );
+};
+
+export const getCreateWhatsappConnectionMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createWhatsappConnection>>,
+    TError,
+    { weddingId: number; data: BodyType<WhatsappConnectionCreateInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createWhatsappConnection>>,
+  TError,
+  { weddingId: number; data: BodyType<WhatsappConnectionCreateInput> },
+  TContext
+> => {
+  const mutationKey = ["createWhatsappConnection"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createWhatsappConnection>>,
+    { weddingId: number; data: BodyType<WhatsappConnectionCreateInput> }
+  > = (props) => {
+    const { weddingId, data } = props ?? {};
+
+    return createWhatsappConnection(weddingId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateWhatsappConnectionMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createWhatsappConnection>>
+>;
+export type CreateWhatsappConnectionMutationBody =
+  BodyType<WhatsappConnectionCreateInput>;
+export type CreateWhatsappConnectionMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Create a new WhatsApp connection and return the QR code
+ */
+export const useCreateWhatsappConnection = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createWhatsappConnection>>,
+    TError,
+    { weddingId: number; data: BodyType<WhatsappConnectionCreateInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createWhatsappConnection>>,
+  TError,
+  { weddingId: number; data: BodyType<WhatsappConnectionCreateInput> },
+  TContext
+> => {
+  return useMutation(getCreateWhatsappConnectionMutationOptions(options));
+};
+
+/**
+ * @summary Delete a WhatsApp connection (also removes instance from Evolution)
+ */
+export const getDeleteWhatsappConnectionUrl = (
+  weddingId: number,
+  id: number,
+) => {
+  return `/api/weddings/${weddingId}/whatsapp/connections/${id}`;
+};
+
+export const deleteWhatsappConnection = async (
+  weddingId: number,
+  id: number,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getDeleteWhatsappConnectionUrl(weddingId, id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeleteWhatsappConnectionMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteWhatsappConnection>>,
+    TError,
+    { weddingId: number; id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteWhatsappConnection>>,
+  TError,
+  { weddingId: number; id: number },
+  TContext
+> => {
+  const mutationKey = ["deleteWhatsappConnection"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteWhatsappConnection>>,
+    { weddingId: number; id: number }
+  > = (props) => {
+    const { weddingId, id } = props ?? {};
+
+    return deleteWhatsappConnection(weddingId, id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteWhatsappConnectionMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteWhatsappConnection>>
+>;
+
+export type DeleteWhatsappConnectionMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Delete a WhatsApp connection (also removes instance from Evolution)
+ */
+export const useDeleteWhatsappConnection = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteWhatsappConnection>>,
+    TError,
+    { weddingId: number; id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteWhatsappConnection>>,
+  TError,
+  { weddingId: number; id: number },
+  TContext
+> => {
+  return useMutation(getDeleteWhatsappConnectionMutationOptions(options));
+};
+
+/**
+ * @summary Get (or refresh) the QR code for a connection
+ */
+export const getGetWhatsappConnectionQrUrl = (
+  weddingId: number,
+  id: number,
+) => {
+  return `/api/weddings/${weddingId}/whatsapp/connections/${id}/qr`;
+};
+
+export const getWhatsappConnectionQr = async (
+  weddingId: number,
+  id: number,
+  options?: RequestInit,
+): Promise<WhatsappQrResponse> => {
+  return customFetch<WhatsappQrResponse>(
+    getGetWhatsappConnectionQrUrl(weddingId, id),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getGetWhatsappConnectionQrQueryKey = (
+  weddingId: number,
+  id: number,
+) => {
+  return [`/api/weddings/${weddingId}/whatsapp/connections/${id}/qr`] as const;
+};
+
+export const getGetWhatsappConnectionQrQueryOptions = <
+  TData = Awaited<ReturnType<typeof getWhatsappConnectionQr>>,
+  TError = ErrorType<unknown>,
+>(
+  weddingId: number,
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getWhatsappConnectionQr>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetWhatsappConnectionQrQueryKey(weddingId, id);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getWhatsappConnectionQr>>
+  > = ({ signal }) =>
+    getWhatsappConnectionQr(weddingId, id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!(weddingId && id),
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getWhatsappConnectionQr>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetWhatsappConnectionQrQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getWhatsappConnectionQr>>
+>;
+export type GetWhatsappConnectionQrQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get (or refresh) the QR code for a connection
+ */
+
+export function useGetWhatsappConnectionQr<
+  TData = Awaited<ReturnType<typeof getWhatsappConnectionQr>>,
+  TError = ErrorType<unknown>,
+>(
+  weddingId: number,
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getWhatsappConnectionQr>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetWhatsappConnectionQrQueryOptions(
+    weddingId,
+    id,
+    options,
+  );
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get the current connection status (polled by the UI)
+ */
+export const getGetWhatsappConnectionStatusUrl = (
+  weddingId: number,
+  id: number,
+) => {
+  return `/api/weddings/${weddingId}/whatsapp/connections/${id}/status`;
+};
+
+export const getWhatsappConnectionStatus = async (
+  weddingId: number,
+  id: number,
+  options?: RequestInit,
+): Promise<WhatsappStatusResponse> => {
+  return customFetch<WhatsappStatusResponse>(
+    getGetWhatsappConnectionStatusUrl(weddingId, id),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getGetWhatsappConnectionStatusQueryKey = (
+  weddingId: number,
+  id: number,
+) => {
+  return [
+    `/api/weddings/${weddingId}/whatsapp/connections/${id}/status`,
+  ] as const;
+};
+
+export const getGetWhatsappConnectionStatusQueryOptions = <
+  TData = Awaited<ReturnType<typeof getWhatsappConnectionStatus>>,
+  TError = ErrorType<unknown>,
+>(
+  weddingId: number,
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getWhatsappConnectionStatus>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ??
+    getGetWhatsappConnectionStatusQueryKey(weddingId, id);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getWhatsappConnectionStatus>>
+  > = ({ signal }) =>
+    getWhatsappConnectionStatus(weddingId, id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!(weddingId && id),
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getWhatsappConnectionStatus>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetWhatsappConnectionStatusQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getWhatsappConnectionStatus>>
+>;
+export type GetWhatsappConnectionStatusQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get the current connection status (polled by the UI)
+ */
+
+export function useGetWhatsappConnectionStatus<
+  TData = Awaited<ReturnType<typeof getWhatsappConnectionStatus>>,
+  TError = ErrorType<unknown>,
+>(
+  weddingId: number,
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getWhatsappConnectionStatus>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetWhatsappConnectionStatusQueryOptions(
+    weddingId,
+    id,
+    options,
+  );
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Disconnect the WhatsApp session (keeps the instance)
+ */
+export const getLogoutWhatsappConnectionUrl = (
+  weddingId: number,
+  id: number,
+) => {
+  return `/api/weddings/${weddingId}/whatsapp/connections/${id}/logout`;
+};
+
+export const logoutWhatsappConnection = async (
+  weddingId: number,
+  id: number,
+  options?: RequestInit,
+): Promise<WhatsappConnection> => {
+  return customFetch<WhatsappConnection>(
+    getLogoutWhatsappConnectionUrl(weddingId, id),
+    {
+      ...options,
+      method: "POST",
+    },
+  );
+};
+
+export const getLogoutWhatsappConnectionMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof logoutWhatsappConnection>>,
+    TError,
+    { weddingId: number; id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof logoutWhatsappConnection>>,
+  TError,
+  { weddingId: number; id: number },
+  TContext
+> => {
+  const mutationKey = ["logoutWhatsappConnection"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof logoutWhatsappConnection>>,
+    { weddingId: number; id: number }
+  > = (props) => {
+    const { weddingId, id } = props ?? {};
+
+    return logoutWhatsappConnection(weddingId, id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type LogoutWhatsappConnectionMutationResult = NonNullable<
+  Awaited<ReturnType<typeof logoutWhatsappConnection>>
+>;
+
+export type LogoutWhatsappConnectionMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Disconnect the WhatsApp session (keeps the instance)
+ */
+export const useLogoutWhatsappConnection = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof logoutWhatsappConnection>>,
+    TError,
+    { weddingId: number; id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof logoutWhatsappConnection>>,
+  TError,
+  { weddingId: number; id: number },
+  TContext
+> => {
+  return useMutation(getLogoutWhatsappConnectionMutationOptions(options));
 };
 
 /**

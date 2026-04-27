@@ -15,7 +15,8 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Pencil, Trash2, Star, Palette, Image as ImageIcon, Loader2 } from "lucide-react";
-import { uploadWeddingGiftImage } from "@/lib/upload-wedding-gift-image";
+import { uploadWeddingMedia } from "@/lib/upload-wedding-gift-image";
+import { resolveMediaUrl } from "@/lib/api-url";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -35,6 +36,19 @@ import {
   type BotanicoPadrinho,
   type BotanicoFaqItem,
 } from "./public-invite-page-config";
+
+/** Três slots de edição alinhados ao máximo de 3 URLs salvas em `shopCarouselImageUrls`. */
+function getShopCarouselSlots(urls: string[] | undefined): [string, string, string] {
+  const a = urls ?? [];
+  return [a[0] ?? "", a[1] ?? "", a[2] ?? ""];
+}
+
+const WEDDING_CAROUSEL_MAX = 10;
+
+function getWeddingCarouselSlots(urls: string[] | undefined): string[] {
+  const source = urls ?? [];
+  return Array.from({ length: WEDDING_CAROUSEL_MAX }, (_, i) => source[i] ?? "");
+}
 
 function ColorField({
   label,
@@ -62,9 +76,13 @@ function ColorField({
   );
 }
 
-export default function PublicInviteTemplates() {
-  const { weddingId } = useParams();
-  const wid = weddingId ? Number(weddingId) : NaN;
+export function PublicInviteTemplatesPanel({
+  weddingId: wid,
+  embedded = false,
+}: {
+  weddingId: number;
+  embedded?: boolean;
+}) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -89,6 +107,8 @@ export default function PublicInviteTemplates() {
   const [navLogoUploading, setNavLogoUploading] = useState(false);
   const [heroImageUploading, setHeroImageUploading] = useState(false);
   const [padrinhoImageUploading, setPadrinhoImageUploading] = useState<number | null>(null);
+  const [shopCarouselUploading, setShopCarouselUploading] = useState<number | null>(null);
+  const [weddingCarouselUploading, setWeddingCarouselUploading] = useState<number | null>(null);
 
   useEffect(() => {
     if (contentTpl) {
@@ -232,7 +252,7 @@ export default function PublicInviteTemplates() {
     if (!file) return;
     setHeroImageUploading(true);
     try {
-      const url = await uploadWeddingGiftImage(wid, file);
+      const url = await uploadWeddingMedia(wid, file, "branding");
       updateField("heroPosterImageUrl", url);
       toast({ title: "Imagem enviada" });
     } catch (err) {
@@ -252,7 +272,7 @@ export default function PublicInviteTemplates() {
     if (!file) return;
     setNavLogoUploading(true);
     try {
-      const url = await uploadWeddingGiftImage(wid, file);
+      const url = await uploadWeddingMedia(wid, file, "branding");
       updateField("navLogoUrl", url);
       toast({ title: "Monograma enviado" });
     } catch (err) {
@@ -272,7 +292,7 @@ export default function PublicInviteTemplates() {
     if (!file) return;
     setPadrinhoImageUploading(index);
     try {
-      const url = await uploadWeddingGiftImage(wid, file);
+      const url = await uploadWeddingMedia(wid, file, "padrinhos");
       updatePadrinho(index, "photoUrl", url);
       toast({ title: "Imagem enviada" });
     } catch (err) {
@@ -286,8 +306,73 @@ export default function PublicInviteTemplates() {
     }
   };
 
+  const setShopCarouselSlotValue = (slotIndex: number, value: string) => {
+    setPageForm((prev) => {
+      const slots = getShopCarouselSlots(prev.shopCarouselImageUrls);
+      const next: [string, string, string] = [...slots];
+      next[slotIndex] = value;
+      const compact = [next[0], next[1], next[2]].map((s) => s.trim()).filter((s) => s !== "");
+      return { ...prev, shopCarouselImageUrls: compact.length > 0 ? compact : undefined };
+    });
+  };
+
+  const handleShopCarouselFile = async (slotIndex: number, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setShopCarouselUploading(slotIndex);
+    try {
+      const url = await uploadWeddingMedia(wid, file, "branding");
+      setShopCarouselSlotValue(slotIndex, url);
+      toast({ title: "Foto enviada" });
+    } catch (err) {
+      toast({
+        variant: "destructive",
+        title: "Erro no upload",
+        description: err instanceof Error ? err.message : "Tente novamente",
+      });
+    } finally {
+      setShopCarouselUploading(null);
+    }
+  };
+
+  const setWeddingCarouselSlotValue = (slotIndex: number, value: string) => {
+    setPageForm((prev) => {
+      const slots = getWeddingCarouselSlots(prev.weddingCarouselImageUrls);
+      const next = [...slots];
+      next[slotIndex] = value;
+      const compact = next.map((s) => s.trim()).filter((s) => s !== "").slice(0, WEDDING_CAROUSEL_MAX);
+      return { ...prev, weddingCarouselImageUrls: compact.length > 0 ? compact : undefined };
+    });
+  };
+
+  const handleWeddingCarouselFile = async (slotIndex: number, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setWeddingCarouselUploading(slotIndex);
+    try {
+      const url = await uploadWeddingMedia(wid, file, "branding");
+      setWeddingCarouselSlotValue(slotIndex, url);
+      toast({ title: "Foto enviada" });
+    } catch (err) {
+      toast({
+        variant: "destructive",
+        title: "Erro no upload",
+        description: err instanceof Error ? err.message : "Tente novamente",
+      });
+    } finally {
+      setWeddingCarouselUploading(null);
+    }
+  };
+
   const pageSaveDisabled =
-    updateMut.isPending || navLogoUploading || heroImageUploading || padrinhoImageUploading !== null;
+    updateMut.isPending ||
+    navLogoUploading ||
+    heroImageUploading ||
+    padrinhoImageUploading !== null ||
+    shopCarouselUploading !== null ||
+    weddingCarouselUploading !== null;
 
   if (!Number.isFinite(wid) || wid <= 0) {
     return <p className="text-muted-foreground">Casamento inválido.</p>;
@@ -305,16 +390,31 @@ export default function PublicInviteTemplates() {
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-serif text-foreground">Página do Casamento</h1>
-          <p className="text-muted-foreground mt-1 max-w-2xl">
-            Edite textos e cores da página pública (RSVP e lista de presentes). O modelo marcado como padrão é usado nos
-            links dos convidados que não têm outro modelo atribuído em{" "}
-            <Link href={`/weddings/${wid}/guests`} className="text-primary underline underline-offset-2 font-medium">
-              Convidados
-            </Link>
-            .
-          </p>
+        <div className="min-w-0 flex-1">
+          {embedded ? (
+            <>
+              <h2 className="text-xl font-serif text-foreground">Página do casamento</h2>
+              <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
+                Modelos da página pública (RSVP e presentes). O padrão vale para convidados sem modelo em{" "}
+                <Link href={`/weddings/${wid}/guests`} className="text-primary underline underline-offset-2 font-medium">
+                  Convidados
+                </Link>
+                .
+              </p>
+            </>
+          ) : (
+            <>
+              <h1 className="text-3xl font-serif text-foreground">Página do Casamento</h1>
+              <p className="text-muted-foreground mt-1 max-w-2xl">
+                Edite textos e cores da página pública (RSVP e lista de presentes). O modelo marcado como padrão é usado nos
+                links dos convidados que não têm outro modelo atribuído em{" "}
+                <Link href={`/weddings/${wid}/guests`} className="text-primary underline underline-offset-2 font-medium">
+                  Convidados
+                </Link>
+                .
+              </p>
+            </>
+          )}
         </div>
         <div className="flex flex-wrap gap-2 shrink-0">
           <Button
@@ -860,6 +960,132 @@ export default function PublicInviteTemplates() {
                   <Label>Lista vazia</Label>
                   <Input className="mt-1" value={pageForm.giftsEmptyMessage} onChange={(e) => updateField("giftsEmptyMessage", e.target.value)} />
                 </div>
+
+                <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-4 mt-2">
+                  <div>
+                    <h4 className="font-medium text-foreground flex items-center gap-2">
+                      <ImageIcon className="w-4 h-4" />
+                      Carrossel da loja de presentes
+                    </h4>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Até 3 fotos dos noivos no topo da página da lista (rota <span className="font-mono">/presentes</span>). Envie arquivos ou informe URLs. Preencha na ordem (1ª, 2ª, 3ª); ao salvar, entradas vazias no fim são ignoradas.
+                    </p>
+                  </div>
+                  {([0, 1, 2] as const).map((slot) => {
+                    const url = getShopCarouselSlots(pageForm.shopCarouselImageUrls)[slot];
+                    const busy = shopCarouselUploading === slot;
+                    return (
+                      <div
+                        key={slot}
+                        className="rounded-md border border-border/80 bg-background p-3 space-y-2"
+                      >
+                        <Label className="text-xs font-medium text-muted-foreground">
+                          Foto {slot + 1}
+                        </Label>
+                        <Input
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
+                          onChange={(e) => void handleShopCarouselFile(slot, e)}
+                          disabled={busy}
+                          className="cursor-pointer text-sm"
+                        />
+                        {busy ? (
+                          <p className="text-xs text-muted-foreground flex items-center gap-2">
+                            <Loader2 className="w-3 h-3 animate-spin" /> Enviando…
+                          </p>
+                        ) : null}
+                        <p className="text-xs text-muted-foreground">Ou informe uma URL:</p>
+                        <Input
+                          className="font-mono text-xs"
+                          value={url}
+                          onChange={(e) => setShopCarouselSlotValue(slot, e.target.value)}
+                          placeholder="https://..."
+                          autoComplete="off"
+                        />
+                        {url ? (
+                          <div className="flex flex-col sm:flex-row sm:items-start gap-3">
+                            <img
+                              src={resolveMediaUrl(url)}
+                              alt=""
+                              className="h-24 w-40 rounded-md object-cover border border-border"
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setShopCarouselSlotValue(slot, "")}
+                            >
+                              Remover foto {slot + 1}
+                            </Button>
+                          </div>
+                        ) : null}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-4 mt-2">
+                  <div>
+                    <h4 className="font-medium text-foreground flex items-center gap-2">
+                      <ImageIcon className="w-4 h-4" />
+                      Galeria da página de casamento
+                    </h4>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Até 10 fotos no carrossel da página pública do convite. Envie arquivos ou informe URLs.
+                    </p>
+                  </div>
+                  {Array.from({ length: WEDDING_CAROUSEL_MAX }, (_, slot) => {
+                    const url = getWeddingCarouselSlots(pageForm.weddingCarouselImageUrls)[slot];
+                    const busy = weddingCarouselUploading === slot;
+                    return (
+                      <div
+                        key={slot}
+                        className="rounded-md border border-border/80 bg-background p-3 space-y-2"
+                      >
+                        <Label className="text-xs font-medium text-muted-foreground">
+                          Foto {slot + 1}
+                        </Label>
+                        <Input
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
+                          onChange={(e) => void handleWeddingCarouselFile(slot, e)}
+                          disabled={busy}
+                          className="cursor-pointer text-sm"
+                        />
+                        {busy ? (
+                          <p className="text-xs text-muted-foreground flex items-center gap-2">
+                            <Loader2 className="w-3 h-3 animate-spin" /> Enviando…
+                          </p>
+                        ) : null}
+                        <p className="text-xs text-muted-foreground">Ou informe uma URL:</p>
+                        <Input
+                          className="font-mono text-xs"
+                          value={url}
+                          onChange={(e) => setWeddingCarouselSlotValue(slot, e.target.value)}
+                          placeholder="https://..."
+                          autoComplete="off"
+                        />
+                        {url ? (
+                          <div className="flex flex-col sm:flex-row sm:items-start gap-3">
+                            <img
+                              src={resolveMediaUrl(url)}
+                              alt=""
+                              className="h-24 w-40 rounded-md object-cover border border-border"
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setWeddingCarouselSlotValue(slot, "")}
+                            >
+                              Remover foto {slot + 1}
+                            </Button>
+                          </div>
+                        ) : null}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
 
               <div className="space-y-3 border-t pt-4">
@@ -896,4 +1122,13 @@ export default function PublicInviteTemplates() {
       </AlertDialog>
     </div>
   );
+}
+
+export default function PublicInviteTemplates() {
+  const { weddingId } = useParams();
+  const wid = weddingId ? Number(weddingId) : NaN;
+  if (!Number.isFinite(wid) || wid <= 0) {
+    return <p className="text-muted-foreground">Casamento inválido.</p>;
+  }
+  return <PublicInviteTemplatesPanel weddingId={wid} />;
 }

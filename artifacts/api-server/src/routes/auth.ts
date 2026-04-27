@@ -1,7 +1,9 @@
 import { Router, type IRouter, type NextFunction, type Response } from "express";
+import { z } from "zod";
 import { db, usersTable, eq } from "@workspace/db";
 import { RegisterBody, LoginBody } from "@workspace/api-zod";
 import { hashPassword, comparePassword, generateToken, authMiddleware } from "../lib/auth";
+import type { AuthRequest } from "../lib/auth";
 import { createRateLimiter } from "../lib/public-rate-limit";
 
 const router: IRouter = Router();
@@ -154,6 +156,73 @@ router.get("/auth/me", authMiddleware, async (req, res): Promise<void> => {
     role: user.role,
     createdAt: user.createdAt.toISOString(),
   });
+});
+
+const UpdateMeBody = z
+  .object({
+    name: z.string().min(1).max(255).optional(),
+    currentPassword: z.string().optional(),
+    newPassword: z.string().min(8).optional(),
+  })
+  .strict();
+
+router.patch("/auth/me", authMiddleware, async (req, res, next): Promise<void> => {
+  try {
+    const authReq = req as AuthRequest;
+    const parsed = UpdateMeBody.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.issues.map((i) => i.message).join(" ") || "Dados inválidos" });
+      return;
+    }
+    const { name, currentPassword, newPassword } = parsed.data;
+    if (name === undefined && !newPassword) {
+      res.status(400).json({ error: "Nada para atualizar" });
+      return;
+    }
+    if (newPassword && !currentPassword) {
+      res.status(400).json({ error: "Informe a senha atual para alterar a senha" });
+      return;
+    }
+
+    const [user] = await db.select().from(usersTable).where(eq(usersTable.id, authReq.userId));
+    if (!user) {
+      res.status(404).json({ error: "Usuário não encontrado" });
+      return;
+    }
+
+    if (newPassword) {
+      const valid = await comparePassword(currentPassword!, user.passwordHash);
+      if (!valid) {
+        res.status(401).json({ error: "Senha atual incorreta" });
+        return;
+      }
+    }
+
+    const setData: { name?: string; passwordHash?: string } = {};
+    if (name !== undefined) setData.name = name.trim();
+    if (newPassword) setData.passwordHash = await hashPassword(newPassword);
+
+    const [updated] = await db
+      .update(usersTable)
+      .set(setData)
+      .where(eq(usersTable.id, authReq.userId))
+      .returning();
+
+    if (!updated) {
+      res.status(404).json({ error: "Usuário não encontrado" });
+      return;
+    }
+
+    res.json({
+      id: updated.id,
+      name: updated.name,
+      email: updated.email,
+      role: updated.role,
+      createdAt: updated.createdAt.toISOString(),
+    });
+  } catch (err) {
+    next(err);
+  }
 });
 
 export default router;

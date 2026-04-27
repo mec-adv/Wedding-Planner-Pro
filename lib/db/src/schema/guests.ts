@@ -11,6 +11,7 @@ export const guestsTable = pgTable("guests", {
   name: varchar("name", { length: 255 }).notNull(),
   email: varchar("email", { length: 255 }),
   phone: varchar("phone", { length: 50 }),
+  cpf: varchar("cpf", { length: 14 }),
   guestGroupId: integer("guest_group_id").references(() => guestGroupsTable.id, { onDelete: "set null" }),
   /** Convidado pelo noivo (`groom`) ou pela noiva (`bride`); nomes vêm do cadastro do casamento */
   invitedBy: varchar("invited_by", { length: 10 }),

@@ -55,6 +55,37 @@ export interface AuthResponse {
   user: User;
 }
 
+/**
+ * Dados de endereço e contato de noivo ou noiva (CEP primeiro; demais editáveis).
+ */
+export interface PersonContact {
+  cep?: string;
+  street?: string;
+  number?: string;
+  complement?: string;
+  neighborhood?: string;
+  city?: string;
+  state?: string;
+  phone?: string;
+  phoneHasWhatsapp?: boolean;
+  email?: string;
+}
+
+/**
+ * Local de cerimônia (nome + endereço a partir do CEP; mapsUrl opcional).
+ */
+export interface VenueDetail {
+  name?: string;
+  cep?: string;
+  street?: string;
+  number?: string;
+  complement?: string;
+  neighborhood?: string;
+  city?: string;
+  state?: string;
+  mapsUrl?: string;
+}
+
 export interface Wedding {
   id: number;
   title: string;
@@ -69,6 +100,10 @@ export interface Wedding {
   description?: string | null;
   /** @nullable */
   coverImageUrl?: string | null;
+  groomContact?: PersonContact | null;
+  brideContact?: PersonContact | null;
+  religiousVenueDetail?: VenueDetail | null;
+  civilVenueDetail?: VenueDetail | null;
   createdById: number;
   createdAt: string;
 }
@@ -86,6 +121,10 @@ export interface WeddingInput {
   description?: string | null;
   /** @nullable */
   coverImageUrl?: string | null;
+  groomContact?: PersonContact | null;
+  brideContact?: PersonContact | null;
+  religiousVenueDetail?: VenueDetail | null;
+  civilVenueDetail?: VenueDetail | null;
 }
 
 export interface GuestGroup {
@@ -465,6 +504,8 @@ export const PublicInviteGuestRsvpStatus = {
 
 export interface PublicInviteGuest {
   name?: string;
+  /** @nullable */
+  phone?: string | null;
   rsvpStatus?: PublicInviteGuestRsvpStatus;
   /** @nullable */
   dietaryRestrictions?: string | null;
@@ -943,6 +984,10 @@ export interface IntegrationSettings {
   asaasEnvironment: IntegrationSettingsAsaasEnvironment;
   /** @nullable */
   asaasWebhookToken?: string | null;
+  /** Chave pública Asaas para tokenização client-side via Asaas.js @nullable */
+  asaasPublicKey?: string | null;
+  /** Gateway de pagamento ativo para este casamento */
+  activePaymentGateway: string;
 }
 
 export type IntegrationSettingsInputAsaasEnvironment =
@@ -965,11 +1010,136 @@ export interface IntegrationSettingsInput {
   asaasEnvironment?: IntegrationSettingsInputAsaasEnvironment;
   /** @nullable */
   asaasWebhookToken?: string | null;
+  /** Chave pública Asaas para tokenização client-side via Asaas.js @nullable */
+  asaasPublicKey?: string | null;
+  /** Gateway de pagamento ativo para este casamento */
+  activePaymentGateway?: string;
 }
 
 export interface ConnectionTestResult {
   success: boolean;
   message: string;
+}
+
+export type WhatsappProvider =
+  (typeof WhatsappProvider)[keyof typeof WhatsappProvider];
+
+export const WhatsappProvider = {
+  evolution: "evolution",
+  meta_cloud: "meta_cloud",
+} as const;
+
+export type WhatsappOwnerKind =
+  (typeof WhatsappOwnerKind)[keyof typeof WhatsappOwnerKind];
+
+export const WhatsappOwnerKind = {
+  bride: "bride",
+  groom: "groom",
+  event: "event",
+} as const;
+
+export type WhatsappConnectionStatus =
+  (typeof WhatsappConnectionStatus)[keyof typeof WhatsappConnectionStatus];
+
+export const WhatsappConnectionStatus = {
+  pending: "pending",
+  qr: "qr",
+  connected: "connected",
+  disconnected: "disconnected",
+  error: "error",
+} as const;
+
+export interface WhatsappConnection {
+  id: number;
+  weddingId: number;
+  provider: WhatsappProvider;
+  ownerKind: WhatsappOwnerKind;
+  /** @nullable */
+  label?: string | null;
+  /** @nullable */
+  phoneNumber?: string | null;
+  status: WhatsappConnectionStatus;
+  /** @nullable */
+  evolutionInstanceName?: string | null;
+  /** @nullable */
+  evolutionIntegration?: string | null;
+  /**
+   * Masked in responses.
+   * @nullable
+   */
+  evolutionInstanceApiKey?: string | null;
+  /** @nullable */
+  evolutionInstanceId?: string | null;
+  /** @nullable */
+  metaPhoneNumberId?: string | null;
+  /** @nullable */
+  metaWabaId?: string | null;
+  /**
+   * Masked in responses.
+   * @nullable
+   */
+  metaAccessToken?: string | null;
+  /** @nullable */
+  lastConnectedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface WhatsappConnectionCreateInput {
+  provider: WhatsappProvider;
+  ownerKind: WhatsappOwnerKind;
+  /** @nullable */
+  label?: string | null;
+  /**
+   * E.164 number (digits only) used by Evolution as hint for QR pairing.
+   * @nullable
+   */
+  phoneNumber?: string | null;
+  evolutionInstanceName: string;
+}
+
+/**
+ * @nullable
+ */
+export type WhatsappQrResponseQrcode = {
+  /** @nullable */
+  base64?: string | null;
+  /** @nullable */
+  code?: string | null;
+  /** @nullable */
+  pairingCode?: string | null;
+} | null;
+
+export interface WhatsappQrResponse {
+  connectionId: number;
+  status: WhatsappConnectionStatus;
+  /** @nullable */
+  qrcode?: WhatsappQrResponseQrcode;
+}
+
+/**
+ * @nullable
+ */
+export type WhatsappConnectionCreateResultQrcode = {
+  /** @nullable */
+  base64?: string | null;
+  /** @nullable */
+  code?: string | null;
+  /** @nullable */
+  pairingCode?: string | null;
+} | null;
+
+export interface WhatsappConnectionCreateResult {
+  connection: WhatsappConnection;
+  /** @nullable */
+  qrcode?: WhatsappConnectionCreateResultQrcode;
+}
+
+export interface WhatsappStatusResponse {
+  connectionId: number;
+  status: WhatsappConnectionStatus;
+  /** @nullable */
+  evolutionState?: string | null;
 }
 
 export interface DashboardData {

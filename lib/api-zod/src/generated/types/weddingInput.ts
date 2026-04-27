@@ -5,6 +5,8 @@
  * Wedding Management API
  * OpenAPI spec version: 0.1.0
  */
+import type { PersonContact } from "./personContact";
+import type { VenueDetail } from "./venueDetail";
 
 export interface WeddingInput {
   title?: string;
@@ -19,4 +21,8 @@ export interface WeddingInput {
   description?: string | null;
   /** @nullable */
   coverImageUrl?: string | null;
+  groomContact?: PersonContact | null;
+  brideContact?: PersonContact | null;
+  religiousVenueDetail?: VenueDetail | null;
+  civilVenueDetail?: VenueDetail | null;
 }

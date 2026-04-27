@@ -15,7 +15,7 @@ import {
   AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { fetchAdminOrders, fetchOrderSummary, cancelOrder, exportOrders } from "@/lib/shop-admin-api";
+import { fetchAdminOrders, fetchAdminOrderDetail, fetchOrderSummary, cancelOrder, exportOrders } from "@/lib/shop-admin-api";
 import type { AdminOrder } from "@/lib/shop-admin-api";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -49,6 +49,16 @@ function OrderRow({ order, weddingId, canCancel, onCancelRequest }: {
   const [expanded, setExpanded] = useState(false);
   const s = STATUS_LABELS[order.status] ?? { label: order.status, variant: "outline" as const };
 
+  const { data: detail, isPending: detailPending, isError: detailError } = useQuery({
+    queryKey: ["admin-order-detail", weddingId, order.id],
+    queryFn: () => fetchAdminOrderDetail(weddingId, order.id),
+    enabled: expanded && Number.isFinite(weddingId) && weddingId > 0,
+  });
+
+  const lineItems = detail?.items ?? order.items ?? [];
+  const guestPhone = order.guestPhone ?? detail?.guest?.phone ?? null;
+  const guestEmail = order.guestEmail ?? detail?.guest?.email ?? null;
+
   return (
     <div className="border border-border rounded-lg overflow-hidden">
       <button
@@ -80,20 +90,35 @@ function OrderRow({ order, weddingId, canCancel, onCancelRequest }: {
 
       {expanded && (
         <div className="px-4 pb-4 border-t bg-muted/10 pt-3 space-y-3">
-          {/* Items */}
-          <div className="space-y-1">
-            {order.items.map((item) => (
-              <div key={item.id} className="flex justify-between text-sm">
-                <span className="text-muted-foreground">{item.giftNameSnapshot} ×{item.quantity}</span>
-                <span className="font-medium">{fmtBrl(item.subtotal)}</span>
-              </div>
-            ))}
-          </div>
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Itens comprados</p>
+          {detailPending && lineItems.length === 0 ? (
+            <div className="space-y-2 py-1">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="h-4 rounded bg-muted animate-pulse" />
+              ))}
+            </div>
+          ) : detailError ? (
+            <p className="text-sm text-destructive">Não foi possível carregar os itens deste pedido.</p>
+          ) : lineItems.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Nenhum item registrado neste pedido.</p>
+          ) : (
+            <div className="space-y-1">
+              {lineItems.map((item) => (
+                <div key={item.id} className="flex justify-between text-sm gap-2">
+                  <span className="text-muted-foreground">
+                    {item.giftNameSnapshot}
+                    <span className="text-foreground/80"> ×{item.quantity}</span>
+                  </span>
+                  <span className="font-medium shrink-0">{fmtBrl(item.subtotal)}</span>
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* Details */}
           <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
-            {order.guestPhone && <span>Tel: {order.guestPhone}</span>}
-            {order.guestEmail && <span>Email: {order.guestEmail}</span>}
+            {guestPhone && <span>Tel: {guestPhone}</span>}
+            {guestEmail && <span>Email: {guestEmail}</span>}
             {order.asaasPaymentId && <span>Asaas: {order.asaasPaymentId}</span>}
             {order.muralMessage && <span className="col-span-2">Mural: "{order.muralMessage}"</span>}
             {order.whatsappSentAt && <span>WhatsApp enviado: {fmtDate(order.whatsappSentAt)}</span>}
@@ -155,6 +180,7 @@ export default function Orders() {
       setCancelTarget(null);
       void queryClient.invalidateQueries({ queryKey: ["admin-orders", wid] });
       void queryClient.invalidateQueries({ queryKey: ["admin-orders-summary", wid] });
+      void queryClient.invalidateQueries({ queryKey: ["admin-order-detail", wid] });
     },
     onError: (err: Error) => {
       toast({ variant: "destructive", title: err.message });

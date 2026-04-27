@@ -1,12 +1,22 @@
 import { apiFetchPath } from "@/lib/api-url";
 
+/** Subpastas em `uploads/users/.../evento/`: presentes, padrinhos, artes do hero/nav. */
+export type WeddingMediaCategory = "gift" | "padrinhos" | "branding";
+
 /**
- * Envia imagem para o armazenamento do casamento (mesmo endpoint dos presentes).
- * Retorna a URL pública para usar em config da página ou em `imageUrl` de presentes.
+ * Envia imagem para a pasta do casamento conforme a categoria.
+ * - `gift` — catálogo de presentes
+ * - `padrinhos` — fotos dos padrinhos no convite
+ * - `branding` — poster do hero e monograma/logo no menu
  */
-export async function uploadWeddingGiftImage(weddingId: number, file: File): Promise<string> {
+export async function uploadWeddingMedia(
+  weddingId: number,
+  file: File,
+  category: WeddingMediaCategory,
+): Promise<string> {
   const body = new FormData();
   body.append("file", file);
+  body.append("category", category);
   const res = await fetch(apiFetchPath(`/weddings/${weddingId}/gifts/upload-image`), {
     method: "POST",
     body,
@@ -17,4 +27,9 @@ export async function uploadWeddingGiftImage(weddingId: number, file: File): Pro
   }
   const data = (await res.json()) as { url: string };
   return data.url;
+}
+
+/** Presentes: pasta `gift`. */
+export async function uploadWeddingGiftImage(weddingId: number, file: File): Promise<string> {
+  return uploadWeddingMedia(weddingId, file, "gift");
 }

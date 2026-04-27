@@ -1,3 +1,5 @@
+import { resolveViteApiBase } from "./resolve-vite-api-base";
+
 export type CustomFetchOptions = RequestInit & {
   responseType?: "json" | "text" | "blob" | "auto";
 };
@@ -31,13 +33,8 @@ function resolveUrl(input: RequestInfo | URL): string {
   return input.url;
 }
 
-/** Prefixo da API no cliente (Vite: `VITE_API_BASE`). Default `/api`. */
 function getBrowserApiBase(): string {
-  if (typeof import.meta !== "undefined" && import.meta.env?.VITE_API_BASE) {
-    const raw = import.meta.env.VITE_API_BASE as string;
-    if (raw.length > 0) return raw.replace(/\/$/, "");
-  }
-  return "/api";
+  return resolveViteApiBase();
 }
 
 function rewriteApiUrl(input: RequestInfo | URL): RequestInfo | URL {

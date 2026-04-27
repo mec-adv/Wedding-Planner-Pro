@@ -10,6 +10,8 @@ import type { PublicInviteGuestRsvpStatus } from "./publicInviteGuestRsvpStatus"
 
 export interface PublicInviteGuest {
   name?: string;
+  /** @nullable */
+  phone?: string | null;
   rsvpStatus?: PublicInviteGuestRsvpStatus;
   /** @nullable */
   dietaryRestrictions?: string | null;

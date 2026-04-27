@@ -1,6 +1,6 @@
 import {
   pgTable, pgEnum, serial, integer, varchar, text,
-  numeric, smallint, timestamp, uuid,
+  numeric, smallint, timestamp,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
@@ -31,12 +31,16 @@ export const ordersTable = pgTable("orders", {
   guestId: integer("guest_id").references(() => guestsTable.id, { onDelete: "set null" }),
   companionId: integer("companion_id").references(() => guestCompanionsTable.id, { onDelete: "set null" }),
   buyerName: varchar("buyer_name", { length: 255 }).notNull(),
+  /** Telefone informado no checkout (quem pagou; pode diferir do convidado dono do link). */
+  buyerPhone: varchar("buyer_phone", { length: 50 }),
   status: orderStatusEnum("status").notNull().default("pending"),
   paymentMethod: orderPaymentMethodEnum("payment_method").notNull(),
   installments: smallint("installments").notNull().default(1),
   totalAmount: numeric("total_amount", { precision: 10, scale: 2 }).notNull(),
-  asaasPaymentId: varchar("asaas_payment_id", { length: 255 }),
-  asaasStatus: varchar("asaas_status", { length: 50 }),
+  gatewayPaymentId: varchar("gateway_payment_id", { length: 255 }),
+  gatewayStatus: varchar("gateway_status", { length: 50 }),
+  paymentGateway: varchar("payment_gateway", { length: 30 }).default("asaas"),
+  idempotencyKey: varchar("idempotency_key", { length: 128 }),
   muralMessage: text("mural_message"),
   whatsappSentAt: timestamp("whatsapp_sent_at", { withTimezone: true }),
   emailSentAt: timestamp("email_sent_at", { withTimezone: true }),
@@ -84,3 +88,21 @@ export const muralMessagesTable = pgTable("mural_messages", {
 export const insertMuralMessageSchema = createInsertSchema(muralMessagesTable).omit({ id: true, createdAt: true });
 export type InsertMuralMessage = z.infer<typeof insertMuralMessageSchema>;
 export type MuralMessage = typeof muralMessagesTable.$inferSelect;
+
+// ---------------------------------------------------------------------------
+// order_transitions (audit log de ciclo de vida do pedido)
+// ---------------------------------------------------------------------------
+export const orderTransitionsTable = pgTable("order_transitions", {
+  id: serial("id").primaryKey(),
+  orderId: integer("order_id").notNull().references(() => ordersTable.id, { onDelete: "cascade" }),
+  fromStatus: varchar("from_status", { length: 20 }),
+  toStatus: varchar("to_status", { length: 20 }).notNull(),
+  gatewayEvent: varchar("gateway_event", { length: 100 }),
+  actor: varchar("actor", { length: 50 }).notNull(),
+  note: text("note"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const insertOrderTransitionSchema = createInsertSchema(orderTransitionsTable).omit({ id: true, createdAt: true });
+export type InsertOrderTransition = z.infer<typeof insertOrderTransitionSchema>;
+export type OrderTransition = typeof orderTransitionsTable.$inferSelect;

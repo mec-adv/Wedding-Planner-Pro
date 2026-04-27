@@ -1,5 +1,6 @@
 import { useParams, Link } from "wouter";
 import { useGetWedding, useUpdateWedding, ApiError, getGetWeddingQueryKey } from "@workspace/api-client-react";
+import type { PersonContact, VenueDetail } from "@workspace/api-client-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Scale, Church, Copy } from "lucide-react";
 import { copyTextToClipboard } from "@/lib/clipboard";
+import { AddressCepFields, type AddressSlice } from "@/components/wedding/AddressCepFields";
 
 /** Valor para input datetime-local no fuso local */
 function isoToDatetimeLocal(iso: string | null | undefined): string {
@@ -21,6 +23,71 @@ function isoToDatetimeLocal(iso: string | null | undefined): string {
   const h = String(d.getHours()).padStart(2, "0");
   const min = String(d.getMinutes()).padStart(2, "0");
   return `${y}-${m}-${day}T${h}:${min}`;
+}
+
+function emptyPerson(): PersonContact {
+  return {
+    cep: "",
+    street: "",
+    number: "",
+    complement: "",
+    neighborhood: "",
+    city: "",
+    state: "",
+    phone: "",
+    phoneHasWhatsapp: false,
+    email: "",
+  };
+}
+
+function mergePerson(p?: PersonContact | null): PersonContact {
+  return { ...emptyPerson(), ...p, phoneHasWhatsapp: p?.phoneHasWhatsapp ?? false };
+}
+
+function emptyVenue(): VenueDetail {
+  return {
+    name: "",
+    cep: "",
+    street: "",
+    number: "",
+    complement: "",
+    neighborhood: "",
+    city: "",
+    state: "",
+    mapsUrl: "",
+  };
+}
+
+function mergeVenue(v?: VenueDetail | null, legacyVenueName?: string | null): VenueDetail {
+  return {
+    ...emptyVenue(),
+    ...v,
+    name: v?.name?.trim() ? v.name : legacyVenueName ?? "",
+  };
+}
+
+function personToAddressSlice(p: PersonContact): AddressSlice {
+  return {
+    cep: p.cep,
+    street: p.street,
+    number: p.number,
+    complement: p.complement,
+    neighborhood: p.neighborhood,
+    city: p.city,
+    state: p.state,
+  };
+}
+
+function venueToAddressSlice(v: VenueDetail): AddressSlice {
+  return {
+    cep: v.cep,
+    street: v.street,
+    number: v.number,
+    complement: v.complement,
+    neighborhood: v.neighborhood,
+    city: v.city,
+    state: v.state,
+  };
 }
 
 export default function EditWedding() {
@@ -41,8 +108,12 @@ export default function EditWedding() {
   const [brideName, setBrideName] = useState("");
   const [civil, setCivil] = useState("");
   const [religious, setReligious] = useState("");
-  const [venue, setVenue] = useState("");
   const [description, setDescription] = useState("");
+
+  const [groomContact, setGroomContact] = useState<PersonContact>(() => emptyPerson());
+  const [brideContact, setBrideContact] = useState<PersonContact>(() => emptyPerson());
+  const [religiousVenue, setReligiousVenue] = useState<VenueDetail>(() => emptyVenue());
+  const [civilVenue, setCivilVenue] = useState<VenueDetail>(() => emptyVenue());
 
   useEffect(() => {
     if (!data) return;
@@ -51,8 +122,11 @@ export default function EditWedding() {
     setBrideName(data.brideName);
     setCivil(isoToDatetimeLocal(data.civilCeremonyAt ?? data.date));
     setReligious(isoToDatetimeLocal(data.religiousCeremonyAt ?? data.date));
-    setVenue(data.venue ?? "");
     setDescription(data.description ?? "");
+    setGroomContact(mergePerson(data.groomContact));
+    setBrideContact(mergePerson(data.brideContact));
+    setReligiousVenue(mergeVenue(data.religiousVenueDetail, data.venue));
+    setCivilVenue(mergeVenue(data.civilVenueDetail));
   }, [data]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -71,6 +145,17 @@ export default function EditWedding() {
       toast({ variant: "destructive", title: "Datas inválidas" });
       return;
     }
+
+    const relVenuePayload: VenueDetail = {
+      ...religiousVenue,
+      name: religiousVenue.name?.trim() ?? "",
+    };
+    const civilVenuePayload: VenueDetail = {
+      ...civilVenue,
+      name: civilVenue.name?.trim() ?? "",
+    };
+    const venueLegacy = relVenuePayload.name || null;
+
     try {
       await updateMutation.mutateAsync({
         id: wid,
@@ -80,8 +165,12 @@ export default function EditWedding() {
           brideName: brideName.trim(),
           civilCeremonyAt: civilD.toISOString(),
           religiousCeremonyAt: relD.toISOString(),
-          venue: venue.trim() || null,
+          venue: venueLegacy,
           description: description.trim() || null,
+          groomContact,
+          brideContact,
+          religiousVenueDetail: relVenuePayload,
+          civilVenueDetail: civilVenuePayload,
         },
       });
       queryClient.invalidateQueries({ queryKey: ["/api/weddings"] });
@@ -124,7 +213,10 @@ export default function EditWedding() {
   if (!Number.isFinite(wid) || wid <= 0) {
     return (
       <div className="text-destructive">
-        ID inválido. <Link href="/" className="underline">Voltar aos casamentos</Link>
+        ID inválido.{" "}
+        <Link href="/" className="underline">
+          Voltar aos casamentos
+        </Link>
       </div>
     );
   }
@@ -160,18 +252,18 @@ export default function EditWedding() {
           </Button>
           <h1 className="text-3xl font-serif text-foreground">Dados do casamento</h1>
           <p className="text-muted-foreground mt-1 text-sm">
-            Altere título, nomes, cerimônias civil e religiosa, local e observações.
+            Dados do casal, contatos, endereços (CEP com consulta automática) e locais das cerimônias.
           </p>
         </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Editar informações</CardTitle>
-          <CardDescription>As alterações são salvas na nuvem e refletem no dashboard e na lista.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4 max-w-xl">
+      <form onSubmit={handleSubmit} className="space-y-6 max-w-3xl">
+        <Card>
+          <CardHeader>
+            <CardTitle>Evento e cerimônias</CardTitle>
+            <CardDescription>Título, nomes e datas das cerimônias civil e religiosa.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
             <div>
               <label className="block text-sm font-medium mb-1">Título do evento</label>
               <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Ex.: Casamento Ana & Bruno" />
@@ -201,10 +293,6 @@ export default function EditWedding() {
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Local principal</label>
-              <Input value={venue} onChange={(e) => setVenue(e.target.value)} placeholder="Igreja, cartório, salão…" />
-            </div>
-            <div>
               <label className="block text-sm font-medium mb-1">Observações</label>
               <Textarea
                 value={description}
@@ -214,12 +302,178 @@ export default function EditWedding() {
                 placeholder="Notas internas"
               />
             </div>
-            <Button type="submit" disabled={updateMutation.isPending}>
-              {updateMutation.isPending ? "Salvando…" : "Salvar alterações"}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Noivo / parceiro 1</CardTitle>
+            <CardDescription>Endereço (comece pelo CEP), telefone e e-mail.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <AddressCepFields
+              idPrefix="groom"
+              value={personToAddressSlice(groomContact)}
+              onChange={(next) => setGroomContact({ ...groomContact, ...next })}
+            />
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:gap-4">
+              <div className="flex-1 min-w-0">
+                <label className="block text-sm font-medium mb-1" htmlFor="groom-phone">
+                  Telefone
+                </label>
+                <Input
+                  id="groom-phone"
+                  type="tel"
+                  inputMode="tel"
+                  autoComplete="tel"
+                  value={groomContact.phone ?? ""}
+                  onChange={(e) => setGroomContact({ ...groomContact, phone: e.target.value })}
+                  placeholder="(00) 00000-0000"
+                />
+              </div>
+              <label className="flex items-center gap-2 text-sm pb-2 sm:pb-0 cursor-pointer shrink-0">
+                <input
+                  type="checkbox"
+                  className="rounded border-input"
+                  checked={groomContact.phoneHasWhatsapp ?? false}
+                  onChange={(e) => setGroomContact({ ...groomContact, phoneHasWhatsapp: e.target.checked })}
+                />
+                Número possui WhatsApp
+              </label>
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1" htmlFor="groom-email">
+                E-mail
+              </label>
+              <Input
+                id="groom-email"
+                type="email"
+                autoComplete="email"
+                value={groomContact.email ?? ""}
+                onChange={(e) => setGroomContact({ ...groomContact, email: e.target.value })}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Noiva / parceiro 2</CardTitle>
+            <CardDescription>Endereço (comece pelo CEP), telefone e e-mail.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <AddressCepFields
+              idPrefix="bride"
+              value={personToAddressSlice(brideContact)}
+              onChange={(next) => setBrideContact({ ...brideContact, ...next })}
+            />
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:gap-4">
+              <div className="flex-1 min-w-0">
+                <label className="block text-sm font-medium mb-1" htmlFor="bride-phone">
+                  Telefone
+                </label>
+                <Input
+                  id="bride-phone"
+                  type="tel"
+                  inputMode="tel"
+                  autoComplete="tel"
+                  value={brideContact.phone ?? ""}
+                  onChange={(e) => setBrideContact({ ...brideContact, phone: e.target.value })}
+                  placeholder="(00) 00000-0000"
+                />
+              </div>
+              <label className="flex items-center gap-2 text-sm pb-2 sm:pb-0 cursor-pointer shrink-0">
+                <input
+                  type="checkbox"
+                  className="rounded border-input"
+                  checked={brideContact.phoneHasWhatsapp ?? false}
+                  onChange={(e) => setBrideContact({ ...brideContact, phoneHasWhatsapp: e.target.checked })}
+                />
+                Número possui WhatsApp
+              </label>
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1" htmlFor="bride-email">
+                E-mail
+              </label>
+              <Input
+                id="bride-email"
+                type="email"
+                autoComplete="email"
+                value={brideContact.email ?? ""}
+                onChange={(e) => setBrideContact({ ...brideContact, email: e.target.value })}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Local da cerimônia civil</CardTitle>
+            <CardDescription>Nome do local e endereço completo (CEP com busca automática).</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-1" htmlFor="civil-venue-name">
+                Nome do local
+              </label>
+              <Input
+                id="civil-venue-name"
+                value={civilVenue.name ?? ""}
+                onChange={(e) => setCivilVenue({ ...civilVenue, name: e.target.value })}
+                placeholder="Ex.: Cartório Central"
+              />
+            </div>
+            <AddressCepFields
+              idPrefix="civil-venue"
+              value={venueToAddressSlice(civilVenue)}
+              onChange={(next) => setCivilVenue({ ...civilVenue, ...next })}
+            />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Local da cerimônia religiosa</CardTitle>
+            <CardDescription>Nome do local, endereço e link do Google Maps, se desejar.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-1" htmlFor="rel-venue-name">
+                Nome do local
+              </label>
+              <Input
+                id="rel-venue-name"
+                value={religiousVenue.name ?? ""}
+                onChange={(e) => setReligiousVenue({ ...religiousVenue, name: e.target.value })}
+                placeholder="Ex.: Capela Nossa Senhora…"
+              />
+            </div>
+            <AddressCepFields
+              idPrefix="rel-venue"
+              value={venueToAddressSlice(religiousVenue)}
+              onChange={(next) => setReligiousVenue({ ...religiousVenue, ...next })}
+            />
+            <div>
+              <label className="block text-sm font-medium mb-1" htmlFor="rel-maps">
+                Link do Google Maps
+              </label>
+              <Input
+                id="rel-maps"
+                type="url"
+                value={religiousVenue.mapsUrl ?? ""}
+                onChange={(e) => setReligiousVenue({ ...religiousVenue, mapsUrl: e.target.value })}
+                placeholder="https://maps.google.com/..."
+                autoComplete="off"
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Button type="submit" disabled={updateMutation.isPending} size="lg">
+          {updateMutation.isPending ? "Salvando…" : "Salvar alterações"}
+        </Button>
+      </form>
     </div>
   );
 }

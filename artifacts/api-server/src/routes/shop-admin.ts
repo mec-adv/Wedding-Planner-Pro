@@ -1,12 +1,13 @@
 import { Router, type IRouter } from "express";
 import { z } from "zod";
 import {
-  db, ordersTable, orderItemsTable, muralMessagesTable,
+  db, ordersTable, orderItemsTable, orderTransitionsTable, muralMessagesTable,
   giftCategoriesTable, giftsTable, guestsTable, weddingsTable,
   eq, and, sql, asc,
 } from "@workspace/db";
 import { authMiddleware, requireWeddingRole, type AuthRequest } from "../lib/auth";
-import { cancelAsaasPayment } from "../lib/asaas";
+import { loadGatewayConfig } from "../lib/payment-gateway/load-config";
+import { getGateway } from "../lib/payment-gateway/registry";
 
 const router: IRouter = Router();
 
@@ -14,8 +15,13 @@ const router: IRouter = Router();
 // Helpers
 // ---------------------------------------------------------------------------
 
+function routeParam(p: string | string[] | undefined): string {
+  if (p == null) return "";
+  return Array.isArray(p) ? (p[0] ?? "") : p;
+}
+
 function wId(req: AuthRequest): number {
-  return parseInt((req as unknown as { params: Record<string, string> }).params.weddingId, 10);
+  return parseInt(routeParam(req.params.weddingId), 10);
 }
 
 // ---------------------------------------------------------------------------
@@ -94,7 +100,7 @@ router.get(
   async (req, res): Promise<void> => {
     const authReq = req as AuthRequest;
     const weddingId = wId(authReq);
-    const orderId = parseInt(req.params.orderId, 10);
+    const orderId = parseInt(routeParam(req.params.orderId), 10);
 
     const [order] = await db.select().from(ordersTable)
       .where(and(eq(ordersTable.id, orderId), eq(ordersTable.weddingId, weddingId))).limit(1);
@@ -123,7 +129,7 @@ router.post(
   async (req, res): Promise<void> => {
     const authReq = req as AuthRequest;
     const weddingId = wId(authReq);
-    const orderId = parseInt(req.params.orderId, 10);
+    const orderId = parseInt(routeParam(req.params.orderId), 10);
 
     const [order] = await db.select().from(ordersTable)
       .where(and(eq(ordersTable.id, orderId), eq(ordersTable.weddingId, weddingId))).limit(1);
@@ -134,21 +140,35 @@ router.post(
       return;
     }
 
-    if (order.asaasPaymentId) {
+    if (order.gatewayPaymentId) {
       try {
-        await cancelAsaasPayment(weddingId, order.asaasPaymentId);
+        const gatewayConfig = await loadGatewayConfig(weddingId);
+        if (gatewayConfig) {
+          const gateway = getGateway(gatewayConfig.gatewayName);
+          await gateway.cancelPayment(gatewayConfig, order.gatewayPaymentId);
+        }
       } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : "Erro ao estornar no Asaas";
+        const msg = err instanceof Error ? err.message : "Erro ao estornar no gateway";
         res.status(502).json({ error: msg });
         return;
       }
     }
 
-    await db.update(ordersTable).set({
-      status: "refunded",
-      cancelledAt: new Date(),
-      cancelledBy: authReq.userId,
-    }).where(eq(ordersTable.id, orderId));
+    await db.transaction(async (tx) => {
+      await tx.update(ordersTable).set({
+        status: "refunded",
+        cancelledAt: new Date(),
+        cancelledBy: authReq.userId,
+      }).where(eq(ordersTable.id, orderId));
+
+      await tx.insert(orderTransitionsTable).values({
+        orderId,
+        fromStatus: "paid",
+        toStatus: "refunded",
+        gatewayEvent: "manual_refund",
+        actor: `admin:${authReq.userId}`,
+      });
+    });
 
     res.json({ success: true, orderId, status: "refunded" });
   },
@@ -335,7 +355,7 @@ router.patch(
   async (req, res): Promise<void> => {
     const authReq = req as AuthRequest;
     const weddingId = wId(authReq);
-    const catId = parseInt(req.params.id, 10);
+    const catId = parseInt(routeParam(req.params.id), 10);
     const parsed = GiftCategoryBody.partial().safeParse(req.body);
     if (!parsed.success) { res.status(400).json({ error: parsed.error.issues[0]?.message }); return; }
 
@@ -359,7 +379,7 @@ router.delete(
   async (req, res): Promise<void> => {
     const authReq = req as AuthRequest;
     const weddingId = wId(authReq);
-    const catId = parseInt(req.params.id, 10);
+    const catId = parseInt(routeParam(req.params.id), 10);
 
     await db.delete(giftCategoriesTable)
       .where(and(eq(giftCategoriesTable.id, catId), eq(giftCategoriesTable.weddingId, weddingId)));
@@ -378,7 +398,7 @@ router.patch(
   async (req, res): Promise<void> => {
     const authReq = req as AuthRequest;
     const weddingId = wId(authReq);
-    const giftId = parseInt(req.params.giftId, 10);
+    const giftId = parseInt(routeParam(req.params.giftId), 10);
     const parsed = z.object({ active: z.boolean() }).safeParse(req.body);
     if (!parsed.success) { res.status(400).json({ error: "active (boolean) é obrigatório" }); return; }
 
